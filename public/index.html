@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>כניסה למערכת דיווח שעות של"ח – משרד החינוך</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <style>
+    .login-wrapper {
+      min-height: calc(100vh - 200px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 480px;
+      background-color: var(--surface-container);
+      border-radius: var(--rounded-lg);
+      border: 1px solid var(--outline);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+    .login-card-header {
+      background: linear-gradient(135deg, #0c3058 0%, #007bff 100%);
+      color: #ffffff;
+      padding: 30px 24px;
+      text-align: center;
+    }
+    .login-emblem {
+      width: 60px;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px auto;
+    }
+    .login-emblem svg {
+      width: 36px;
+      height: 36px;
+      fill: #ffffff;
+    }
+    .login-card-body {
+      padding: 32px 24px;
+    }
+    .quick-login-box {
+      margin-top: 24px;
+      padding: 16px;
+      background-color: var(--surface-container-high);
+      border: 1px dashed var(--outline-variant);
+      border-radius: var(--rounded-md);
+    }
+    .quick-login-title {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .quick-login-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .quick-btn {
+      background: #ffffff;
+      border: 1px solid var(--outline);
+      padding: 8px 10px;
+      border-radius: var(--rounded-sm);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: right;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .quick-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background-color: #f0f7ff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Gov Header Mount -->
+  <div id="gov-header-mount"></div>
+
+  <main class="login-wrapper">
+    <div class="login-card animate-fade-in">
+      <div class="login-card-header">
+        <div class="login-emblem">
+          <svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>
+        </div>
+        <h2 style="color:#ffffff; margin-bottom: 4px; font-size: 1.35rem;">הזדהות עובדי הוראה</h2>
+        <p style="color:#e2f0fc; font-size: 0.875rem; margin-bottom: 0;">תחום של"ח וידיעת הארץ • מינהל חברה ונוער</p>
+      </div>
+
+      <div class="login-card-body">
+        <form id="login-form">
+          <div class="form-group">
+            <label class="form-label" for="login-id">
+              <span>מספר תעודת זהות (9 ספרות)</span>
+              <span class="required">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="login-id" 
+              class="form-control" 
+              placeholder="לדוגמה: 012345678" 
+              maxlength="9" 
+              pattern="[0-9]{9}" 
+              required
+              autocomplete="username"
+            >
+            <span class="form-text">הזן 9 ספרות כולל ספרת ביקורת</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="login-phone">
+              <span>מספר טלפון נייד</span>
+              <span class="required">*</span>
+            </label>
+            <input 
+              type="tel" 
+              id="login-phone" 
+              class="form-control" 
+              placeholder="לדוגמה: 050-1234567" 
+              required
+              autocomplete="tel"
+            >
+            <span class="form-text">מספר הנייד המעודכן במאגר עובדי ההוראה</span>
+          </div>
+
+          <div id="login-error" class="form-error mb-2" style="display:none;"></div>
+
+          <button type="submit" id="login-submit-btn" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 8px;">
+            <span>כניסה מאובטחת</span>
+            <span>➔</span>
+          </button>
+        </form>
+
+        <!-- Reviewer Quick Access Helpers -->
+        <div class="quick-login-box">
+          <div class="quick-login-title">
+            <span>⚡ כניסה מהירה לבדיקה והערכה (הקלקה אחת):</span>
+          </div>
+          <div class="quick-login-grid">
+            <button class="quick-btn" type="button" onclick="fillAndLogin('012345678', '0501234567')">
+              <strong>👨‍🏫 מורה של"ח</strong><br><small>ישראל ישראלי</small>
+            </button>
+            <button class="quick-btn" type="button" onclick="fillAndLogin('011111111', '0521111111')">
+              <strong>🔍 מנחה מחוזי</strong><br><small>דוד לוי (מרכז)</small>
+            </button>
+            <button class="quick-btn" type="button" onclick="fillAndLogin('000000001', '0500000000')">
+              <strong>👑 ממונה ארצי</strong><br><small>רונן (Super Admin)</small>
+            </button>
+            <button class="quick-btn" type="button" onclick="Auth.switchDemoRole('principal')">
+              <strong>🏫 מנהלת בי"ס</strong><br><small>קישור מאובטח (רונית)</small>
+            </button>
+          </div>
+        </div>
+
+        <div class="text-center mt-3">
+          <a href="verify.html" style="font-size: 0.875rem; color: var(--primary);">
+            🔏 בדיקת אמינות ואימות חתימה דיגיטלית לדוח מאושר
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Universal Footer Mount -->
+  <div id="gov-footer-mount"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      Auth.renderHeader();
+      Auth.renderFooter();
+
+      const form = document.getElementById('login-form');
+      const errBox = document.getElementById('login-error');
+      const submitBtn = document.getElementById('login-submit-btn');
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        errBox.style.display = 'none';
+        errBox.textContent = '';
+
+        const idVal = document.getElementById('login-id').value;
+        const phoneVal = document.getElementById('login-phone').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<div class="spinner"></div><span>מאמת פרטים...</span>';
+
+        setTimeout(() => {
+          try {
+            const user = Auth.login(idVal, phoneVal);
+            showToast(`ברוך הבא, ${user.name}!`, 'success');
+
+            // Route based on role
+            setTimeout(() => {
+              if (user.role === 'teacher') {
+                window.location.href = user.consentSigned ? 'teacher.html' : 'profile.html';
+              } else if (user.role === 'supervisor') {
+                window.location.href = 'supervisor.html';
+              } else if (user.role === 'admin') {
+                window.location.href = 'admin.html';
+              } else if (user.role === 'principal') {
+                window.location.href = 'principal.html';
+              } else {
+                window.location.href = 'teacher.html';
+              }
+            }, 400);
+          } catch (err) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>כניסה מאובטחת</span><span>➔</span>';
+            errBox.textContent = err.message;
+            errBox.style.display = 'flex';
+            showToast(err.message, 'error');
+          }
+        }, 500);
+      });
+    });
+
+    function fillAndLogin(id, phone) {
+      document.getElementById('login-id').value = id;
+      document.getElementById('login-phone').value = phone;
+      document.getElementById('login-form').dispatchEvent(new Event('submit'));
+    }
+  </script>
+</body>
+</html>

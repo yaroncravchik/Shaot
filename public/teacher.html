@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>לוח בקרה מורה של"ח – מערכת דיווח שעות חודשית</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <style>
+    .teacher-profile-bar {
+      background: linear-gradient(135deg, #0c3058 0%, #0056b3 100%);
+      color: #ffffff;
+      border-radius: var(--rounded-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-md);
+    }
+    .profile-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .info-item .lbl {
+      font-size: 0.75rem;
+      color: #8dcdff;
+      font-weight: 500;
+    }
+    .info-item .val {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+    .auto-save-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8125rem;
+      color: var(--on-surface-variant);
+      background: #f0f4f8;
+      padding: 4px 10px;
+      border-radius: var(--rounded-full);
+    }
+    .auto-save-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--success);
+    }
+    .report-remarks-card {
+      background-color: #fff9e6;
+      border: 1px solid #ffe58f;
+      border-radius: var(--rounded-md);
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Gov Header Mount -->
+  <div id="gov-header-mount"></div>
+
+  <main class="container mb-4">
+    <!-- Teacher Info Banner -->
+    <div class="teacher-profile-bar animate-fade-in">
+      <div class="flex justify-between items-center flex-wrap gap-md">
+        <div>
+          <span style="font-size:0.875rem; color:#8dcdff;">פורטל מורה של"ח וידיעת הארץ</span>
+          <h1 style="color:#ffffff; margin:4px 0 0 0; font-size:1.75rem;" id="teacher-display-name">ישראל ישראלי</h1>
+        </div>
+        <div class="flex gap-sm">
+          <a href="profile.html" class="btn btn-secondary btn-sm" style="background:rgba(255,255,255,0.15); color:#ffffff; border-color:rgba(255,255,255,0.3);">
+            ⚙️ עדכון פרטים ומערכת שעות
+          </a>
+        </div>
+      </div>
+
+      <div class="profile-info-grid">
+        <div class="info-item">
+          <span class="lbl">תעודת זהות</span>
+          <span class="val" id="prof-disp-id">012345678</span>
+        </div>
+        <div class="info-item">
+          <span class="lbl">בית ספר וסמל מוסד</span>
+          <span class="val" id="prof-disp-school">תיכון רבין (440123)</span>
+        </div>
+        <div class="info-item">
+          <span class="lbl">מחוז ורשות</span>
+          <span class="val" id="prof-disp-district">מרכז • כפר סבא</span>
+        </div>
+        <div class="info-item">
+          <span class="lbl">מנחה מחוזי</span>
+          <span class="val" id="prof-disp-supervisor">דוד לוי</span>
+        </div>
+        <div class="info-item">
+          <span class="lbl">מנהל/ת בית הספר</span>
+          <span class="val" id="prof-disp-principal">רונית שחר</span>
+        </div>
+        <div class="info-item">
+          <span class="lbl">היקף משרה בשל"ח</span>
+          <span class="val" id="prof-disp-scope">100%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Reporting Window Announcement Banner -->
+    <div class="banner-alert banner-info">
+      <div class="banner-alert-icon">📢</div>
+      <div class="banner-alert-content">
+        <div class="banner-alert-title">חלון הדיווח החודשי פתוח כעת:</div>
+        <div>
+          על פי הנחיות משרד החינוך, הגשת דוחות שעות חודשיים מתבצעת בין ה-25 לכל חודש ועד ה-5 לחודש העוקב. מומלץ להגיש את הדוח בהקדם לאישור מנהל/ת בית הספר.
+        </div>
+      </div>
+    </div>
+
+    <!-- Active In-App Status & Supervisor Feedback (If returned or supervisor edited) -->
+    <div id="teacher-feedback-container"></div>
+
+    <!-- Month Selector & Report Actions Header -->
+    <div class="card mb-3">
+      <div class="card-body flex justify-between items-center flex-wrap gap-md">
+        <div class="flex items-center gap-md flex-wrap">
+          <div>
+            <label class="form-label" for="select-report-month" style="margin-bottom:2px; font-size:0.8125rem;">בחר חודש לדיווח / צפייה:</label>
+            <select id="select-report-month" class="form-select" style="min-width: 220px; font-weight:600;">
+              <!-- Populated dynamically via JS -->
+            </select>
+          </div>
+          <div id="current-month-status-pill" class="mt-2"></div>
+        </div>
+
+        <div class="flex gap-sm">
+          <button type="button" id="btn-open-report-form" class="btn btn-primary btn-lg">
+            <span>📝 פתיחת דוח שעות לחודש זה</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Stat Cards -->
+    <div class="grid grid-4 mb-3">
+      <div class="stat-card stat-info">
+        <div class="stat-icon">🕒</div>
+        <div class="stat-details">
+          <span class="stat-label">שעות קבועות לחודש</span>
+          <span class="stat-value" id="stat-fixed-hours">0</span>
+          <span class="stat-desc">מתוך מערכת השעות</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-warning">
+        <div class="stat-icon">➕</div>
+        <div class="stat-details">
+          <span class="stat-label">שעות נוספות / סיורים</span>
+          <span class="stat-value" id="stat-overtime-hours">0</span>
+          <span class="stat-desc">ימי שדה ומסעות</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-danger">
+        <div class="stat-icon">🏖️</div>
+        <div class="stat-details">
+          <span class="stat-label">שעות היעדרות</span>
+          <span class="stat-value" id="stat-absence-hours">0</span>
+          <span class="stat-desc">מחלה / מילואים / חופשה</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-success">
+        <div class="stat-icon">💰</div>
+        <div class="stat-details">
+          <span class="stat-label">סך שעות מאושר לתשלום</span>
+          <span class="stat-value" id="stat-payable-hours">0</span>
+          <span class="stat-desc">שעות לתשלום בשכר</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Historical Reports Tracking Table -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h3 class="card-title">
+          <span>📑</span>
+          <span>מעקב היסטוריית דוחות שעות חודשיים</span>
+        </h3>
+        <span class="text-muted" style="font-size:0.875rem;">ריכוז סטטוסים, חתימות דיגיטליות ועדכוני מנחה</span>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <div class="table-responsive" style="margin:0;">
+          <table class="gov-table">
+            <thead>
+              <tr>
+                <th>חודש ושנה</th>
+                <th>סטטוס הדוח</th>
+                <th>תאריך הגשה</th>
+                <th>שעות קבועות</th>
+                <th>שעות נוספות</th>
+                <th>סך לתשלום</th>
+                <th>מזהה חתימה דיגיטלית</th>
+                <th>הערות / שינויי מנחה</th>
+                <th style="text-align: center;">פעולות</th>
+              </tr>
+            </thead>
+            <tbody id="history-reports-tbody">
+              <!-- Loaded dynamically via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       MONTHLY REPORT FORM MODAL (PRD 4.4 Standardized Grid)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="monthly-report-modal">
+    <div class="modal-container modal-xl">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title" id="report-modal-title">מילוי דוח שעות פעילות – אוגוסט 2026</h2>
+          <span class="text-muted" style="font-size:0.8125rem;">ימי ראשון עד שישי • סימון ימי שדה וחגים • שעות קבועות לקריאה בלבד</span>
+        </div>
+        <div class="flex items-center gap-sm">
+          <div class="auto-save-indicator">
+            <span class="auto-save-dot"></span>
+            <span id="auto-save-text">שמירה אוטומטית מופעלת</span>
+          </div>
+          <button type="button" class="modal-close-btn" onclick="closeModal('monthly-report-modal')">&times;</button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <!-- Banner in modal if report was returned with supervisor remarks -->
+        <div id="modal-remarks-banner" style="display:none;"></div>
+
+        <!-- Monthly Report Calendar Table -->
+        <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
+          <table class="gov-table" id="report-grid-table">
+            <thead style="position: sticky; top: 0; z-index: 10;">
+              <tr>
+                <th style="width: 50px; text-align: center;">יום</th>
+                <th style="width: 80px;">יום בשבוע</th>
+                <th style="width: 100px; text-align: center;" title="שעות קבועות לפי מערכת השעות שהוגדרה בפרופיל (לקריאה בלבד)">
+                  שעות קבועות<br><small class="text-muted">(לקריאה בלבד)</small>
+                </th>
+                <th style="width: 90px; text-align: center;">שעות היעדרות</th>
+                <th style="width: 130px;">סיבת היעדרות</th>
+                <th style="width: 90px; text-align: center;">שעות נוספות</th>
+                <th style="width: 150px;">סיבת שעות נוספות</th>
+                <th style="width: 100px;">שכבה / כיתה</th>
+                <th>פירוט הפעילות</th>
+              </tr>
+            </thead>
+            <tbody id="report-grid-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+            <tfoot>
+              <!-- Bottom-Only Totals Row (PRD line 176 requirement) -->
+              <tr class="totals-row">
+                <td colspan="2" style="text-align:center;"><strong>סיכום שעות חודשי:</strong></td>
+                <td style="text-align:center;"><span id="grid-total-fixed" class="totals-number">0</span> שעות</td>
+                <td style="text-align:center;"><span id="grid-total-absence" class="totals-number">0</span> שעות</td>
+                <td></td>
+                <td style="text-align:center;"><span id="grid-total-overtime" class="totals-number">0</span> שעות</td>
+                <td></td>
+                <td colspan="2" style="text-align:left;">
+                  <span style="font-size:1.05rem; font-weight:700; color:#ffffff;">
+                    סך הכל שעות לתשלום: <strong id="grid-total-payable" style="color:#8dcdff; font-size:1.3rem;">0</strong> שעות
+                  </span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Attachments Section (PRD 4.4 Up to 10MB) -->
+        <div class="mt-3">
+          <label class="form-label">
+            <span>📎 נספחים ואישורים מצורפים (אישורי מחלה, מילואים, תוכניות סיור - עד 10MB לקובץ)</span>
+          </label>
+          <div class="file-dropzone" id="file-dropzone" onclick="document.getElementById('file-upload-input').click()">
+            <input type="file" id="file-upload-input" style="display: none;" multiple accept=".pdf,.png,.jpg,.jpeg">
+            <div class="dropzone-icon">📁</div>
+            <div class="dropzone-title">לחץ להעלאת קבצים או גרור קבצים לכאן</div>
+            <div class="dropzone-desc">פורמטים נתמכים: PDF, PNG, JPG (עד 10MB לקובץ)</div>
+          </div>
+
+          <div class="attachments-list" id="report-attachments-list">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+        <!-- Mandatory Declaration before submission -->
+        <div class="mt-3 p-2" style="background-color:var(--surface-container-high); border:1px solid var(--outline); border-radius:var(--rounded-md);">
+          <label class="form-check" style="margin:0;">
+            <input type="checkbox" id="report-submit-declaration" class="form-check-input" checked>
+            <span class="form-check-label" style="font-size:0.875rem;">
+              אני מצהיר/ה בזאת כי כל שעות הפעילות, השעות הנוספות וההיעדרויות המדווחות לעיל בוצעו במלואן ותואמות את ההנחיות.
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('monthly-report-modal')">סגירה</button>
+        <button type="button" id="btn-save-draft" class="btn btn-secondary">
+          <span>💾 שמירת טיוטה</span>
+        </button>
+        <button type="button" id="btn-submit-report" class="btn btn-primary btn-lg">
+          <span>🚀 הגשת דוח לאישור מנהל/ת</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Universal Footer Mount -->
+  <div id="gov-footer-mount"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/teacher.js"></script>
+</body>
+</html>
