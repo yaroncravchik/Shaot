@@ -1,0 +1,7 @@
+node_modules/
+data/shalah.db*
+.env
+.DS_Store
+screenshots/
+dist/
+*.log
