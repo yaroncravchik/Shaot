@@ -15,10 +15,14 @@ const { seed } = require('./db/seed');
 initSchema();
 
 // Auto-seed if database has no users
-const userCountRow = db.prepare('SELECT COUNT(*) as count FROM users').get();
-if (!userCountRow || userCountRow.count === 0) {
- console.log('Database empty. Running initial seed...');
- seed();
+try {
+  const userCountRow = db.prepare('SELECT COUNT(*) as count FROM users').get();
+  if (!userCountRow || userCountRow.count === 0) {
+    console.log('Database empty. Running initial seed...');
+    seed();
+  }
+} catch (e) {
+  console.log('Database check on startup:', e.message);
 }
 
 const app = express();
@@ -59,20 +63,24 @@ app.use('/api/upload', require('./routes/upload'));
 
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {
- const users = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
- const reports = db.prepare('SELECT COUNT(*) as c FROM reports').get().c;
+  let userCount = 0;
+  let reportCount = 0;
+  try {
+    userCount = db.prepare('SELECT COUNT(*) as c FROM users').get()?.c || 0;
+    reportCount = db.prepare('SELECT COUNT(*) as c FROM reports').get()?.c || 0;
+  } catch (e) {}
 
- res.json({
- status: 'healthy',
- system: 'מערכת דיווח שעות פעילות חודשית של"ח',
- version: '2.1.0',
- timestamp: new Date().toISOString(),
- database: 'SQLite',
- stats: {
- totalUsers: users,
- totalReports: reports
- }
- });
+  res.json({
+    status: 'healthy',
+    system: 'מערכת דיווח שעות פעילות חודשית של"ח',
+    version: '2.1.0',
+    timestamp: new Date().toISOString(),
+    database: process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite',
+    stats: {
+      totalUsers: userCount,
+      totalReports: reportCount
+    }
+  });
 });
 
 // Single-page App fallback for client-side routing
