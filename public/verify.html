@@ -1,83 +1,83 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>אימות חתימה דיגיטלית – משרד החינוך (של"ח)</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/components.css">
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>אימות חתימה דיגיטלית – משרד החינוך (של"ח)</title>
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="css/style.css">
+ <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
 
-  <!-- Top Gov Header Mount -->
-  <div id="gov-header-mount"></div>
+ <!-- Top Gov Header Mount -->
+ <div id="gov-header-mount"></div>
 
-  <main class="container mb-4">
-    <!-- Verification Page Header -->
-    <div class="page-header text-center">
-      <div class="breadcrumb justify-center">
-        <span>משרד החינוך</span>
-        <span class="breadcrumb-sep">/</span>
-        <span>פורטל שירותים ציבוריים</span>
-        <span class="breadcrumb-sep">/</span>
-        <span>אימות חתימות דיגיטליות</span>
-      </div>
-      <h1 class="page-title" style="font-size:2rem; margin-top:8px;">שירות ציבורי לאימות חתימות דיגיטליות</h1>
-      <p class="page-subtitle" style="max-width:700px; margin:8px auto 0 auto;">
-        בדיקת מקוריות, שלמות ואמיתות של דוחות שעות פעילות חודשיים של"ח שנחתמו ע"י מנהלי בתיה"ס והממונה הארצי.
-      </p>
-    </div>
+ <main class="container mb-4">
+ <!-- Verification Page Header -->
+ <div class="page-header text-center">
+ <div class="breadcrumb justify-center">
+ <span>משרד החינוך</span>
+ <span class="breadcrumb-sep">/</span>
+ <span>פורטל שירותים ציבוריים</span>
+ <span class="breadcrumb-sep">/</span>
+ <span>אימות חתימות דיגיטליות</span>
+ </div>
+ <h1 class="page-title" style="font-size:2rem; margin-top:8px;">שירות ציבורי לאימות חתימות דיגיטליות</h1>
+ <p class="page-subtitle" style="max-width:700px; margin:8px auto 0 auto;">
+ בדיקת מקוריות, שלמות ואמיתות של דוחות שעות פעילות חודשיים של"ח שנחתמו ע"י מנהלי בתיה"ס והממונה הארצי.
+ </p>
+ </div>
 
-    <!-- Search Form Box -->
-    <div class="card mb-4" style="max-width: 680px; margin-left:auto; margin-right:auto;">
-      <div class="card-body">
-        <form id="verify-form">
-          <div class="form-group">
-            <label class="form-label" for="verify-sig-input">
-              <span>הזן מזהה חתימה דיגיטלית (Digital Signature ID)</span>
-              <span class="required">*</span>
-            </label>
-            <div class="flex gap-sm">
-              <input 
-                type="text" 
-                id="verify-sig-input" 
-                class="form-control" 
-                placeholder="לדוגמה: SIG-2026-07-948217" 
-                required 
-                style="font-family:monospace; font-size:1.05rem; letter-spacing:1px;"
-              >
-              <button type="submit" id="btn-verify-submit" class="btn btn-primary" style="min-width:140px;">
-                <span>🔍 אימות חתימה</span>
-              </button>
-            </div>
-            <span class="form-text">המזהה מופיע בתחתית דוח השעות המאושר או באישור התשלום.</span>
-          </div>
-        </form>
+ <!-- Search Form Box -->
+ <div class="card mb-4" style="max-width: 680px; margin-left:auto; margin-right:auto;">
+ <div class="card-body">
+ <form id="verify-form">
+ <div class="form-group">
+ <label class="form-label" for="verify-sig-input">
+ <span>הזן מזהה חתימה דיגיטלית (Digital Signature ID)</span>
+ <span class="required">*</span>
+ </label>
+ <div class="flex gap-sm">
+ <input 
+ type="text" 
+ id="verify-sig-input" 
+ class="form-control" 
+ placeholder="לדוגמה: SIG-2026-07-948217" 
+ required 
+ style="font-family:monospace; font-size:1.05rem; letter-spacing:1px;"
+ >
+ <button type="submit" id="btn-verify-submit" class="btn btn-primary" style="min-width:140px;">
+ <span> אימות חתימה</span>
+ </button>
+ </div>
+ <span class="form-text">המזהה מופיע בתחתית דוח השעות המאושר או באישור התשלום.</span>
+ </div>
+ </form>
 
-        <!-- Quick Demo Signature IDs to test with 1 click -->
-        <div class="mt-2 p-2" style="background-color:var(--surface-container-high); border-radius:var(--rounded-md);">
-          <span style="font-size:0.8125rem; font-weight:700; color:var(--on-surface);">לחיצה מהירה לבדיקת חתימות לדוגמה:</span>
-          <div class="flex gap-xs flex-wrap mt-1" id="demo-sig-chips">
-            <!-- Rendered via JS -->
-          </div>
-        </div>
-      </div>
-    </div>
+ <!-- Quick Demo Signature IDs to test with 1 click -->
+ <div class="mt-2 p-2" style="background-color:var(--surface-container-high); border-radius:var(--rounded-md);">
+ <span style="font-size:0.8125rem; font-weight:700; color:var(--on-surface);">לחיצה מהירה לבדיקת חתימות לדוגמה:</span>
+ <div class="flex gap-xs flex-wrap mt-1" id="demo-sig-chips">
+ <!-- Rendered via JS -->
+ </div>
+ </div>
+ </div>
+ </div>
 
-    <!-- Result Certificate Box -->
-    <div id="verification-result-container" style="max-width: 800px; margin-left:auto; margin-right:auto;">
-      <!-- Populated via JS -->
-    </div>
-  </main>
+ <!-- Result Certificate Box -->
+ <div id="verification-result-container" style="max-width: 800px; margin-left:auto; margin-right:auto;">
+ <!-- Populated via JS -->
+ </div>
+ </main>
 
-  <!-- Universal Footer Mount -->
-  <div id="gov-footer-mount"></div>
+ <!-- Universal Footer Mount -->
+ <div id="gov-footer-mount"></div>
 
-  <script src="js/api.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/verify.js"></script>
+ <script src="js/api.js"></script>
+ <script src="js/auth.js"></script>
+ <script src="js/verify.js"></script>
 </body>
 </html>

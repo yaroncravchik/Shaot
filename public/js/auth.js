@@ -1,6 +1,6 @@
 /**
  * Shalah Monthly Activity Hours Reporting System (מערכת דיווח שעות של"ח)
- * Authentication, Session Management, Role Switching & Universal Header Renderer
+ * Authentication, Session Management & Universal Header Renderer
  */
 
 const Auth = {
@@ -51,48 +51,6 @@ const Auth = {
   },
 
   /**
-   * Switch active demo role effortlessly for reviewer inspection
-   */
-  switchDemoRole(roleKey) {
-    const users = API.getUsers();
-    let targetUser = null;
-    let targetUrl = 'index.html';
-
-    switch (roleKey) {
-      case 'teacher':
-        targetUser = users.find(u => u.role === 'teacher' && u.id === '012345678') || users.find(u => u.role === 'teacher');
-        targetUrl = 'teacher.html';
-        break;
-      case 'principal':
-        targetUser = users.find(u => u.role === 'principal');
-        targetUrl = 'principal.html?token=PRINCIPAL_TOKEN_KFS_440123';
-        break;
-      case 'supervisor':
-        targetUser = users.find(u => u.role === 'supervisor' && u.district === 'מרכז') || users.find(u => u.role === 'supervisor');
-        targetUrl = 'supervisor.html';
-        break;
-      case 'admin':
-        targetUser = users.find(u => u.role === 'admin');
-        targetUrl = 'admin.html';
-        break;
-      case 'verify':
-        window.location.href = 'verify.html';
-        return;
-      case 'profile':
-        targetUser = users.find(u => u.role === 'teacher');
-        targetUrl = 'profile.html';
-        break;
-      default:
-        targetUrl = 'index.html';
-    }
-
-    if (targetUser) {
-      this.setCurrentUser(targetUser);
-    }
-    window.location.href = targetUrl;
-  },
-
-  /**
    * Protect a page by verifying logged-in role
    */
   requireAuth(allowedRoles = []) {
@@ -116,7 +74,6 @@ const Auth = {
 
     if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
       showToast('אין לך הרשאה לגשת לעמוד זה', 'error');
-      // Redirect to user's home dashboard
       if (user.role === 'teacher') window.location.href = 'teacher.html';
       else if (user.role === 'principal') window.location.href = 'principal.html';
       else if (user.role === 'supervisor') window.location.href = 'supervisor.html';
@@ -125,7 +82,6 @@ const Auth = {
       return null;
     }
 
-    // If teacher hasn't filled profile & signed consent, redirect to profile setup
     if (user.role === 'teacher' && !user.consentSigned && !window.location.pathname.includes('profile.html')) {
       window.location.href = 'profile.html';
       return null;
@@ -135,21 +91,20 @@ const Auth = {
   },
 
   /**
-   * Injects the unified Top Gov Bar, Navigation, and Demo Switcher
+   * Injects the formal Top Gov Bar and Navigation Header (Zero Emojis, Pure Civic Clarity)
    */
   renderHeader(activeNav = '') {
     const headerMount = document.getElementById('gov-header-mount');
     if (!headerMount) return;
 
     const user = this.getCurrentUser();
-    const currentRole = user ? user.role : 'guest';
 
     const roleLabels = {
       teacher: 'מורה של"ח',
       principal: 'מנהל/ת בית ספר',
       supervisor: 'מנחה מחוזי',
-      admin: 'ממונה ארצי (רונן)',
-      guest: 'אורח / הזדהות'
+      admin: 'ממונה ארצי',
+      guest: 'הזדהות'
     };
 
     headerMount.innerHTML = `
@@ -165,33 +120,6 @@ const Auth = {
             </a>
             <span>|</span>
             <a href="https://education.gov.il" target="_blank" rel="noopener">פורטל עובדי הוראה</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Demo Switcher Bar -->
-      <div class="demo-bar">
-        <div class="container demo-bar-container">
-          <div class="demo-bar-title">
-            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
-            <span>מעבר מהיר לבדיקת תפקידים (Demo Switcher):</span>
-          </div>
-          <div class="demo-roles-group">
-            <button class="demo-role-btn ${currentRole === 'teacher' ? 'active' : ''}" onclick="Auth.switchDemoRole('teacher')">
-              👨‍🏫 מורה (ישראל ישראלי)
-            </button>
-            <button class="demo-role-btn ${currentRole === 'principal' ? 'active' : ''}" onclick="Auth.switchDemoRole('principal')">
-              🏫 מנהלת בי"ס (רונית שחר - קישור מאובטח)
-            </button>
-            <button class="demo-role-btn ${currentRole === 'supervisor' ? 'active' : ''}" onclick="Auth.switchDemoRole('supervisor')">
-              🔍 מנחה מחוזי (דוד לוי - מרכז)
-            </button>
-            <button class="demo-role-btn ${currentRole === 'admin' ? 'active' : ''}" onclick="Auth.switchDemoRole('admin')">
-              👑 ממונה ארצי (רונן - Super Admin)
-            </button>
-            <button class="demo-role-btn" onclick="Auth.switchDemoRole('verify')">
-              🔏 אימות חתימה
-            </button>
           </div>
         </div>
       </div>
@@ -221,12 +149,12 @@ const Auth = {
 
               ${user.role === 'teacher' ? `
                 <a href="profile.html" class="btn btn-secondary btn-sm" title="הגדרות פרופיל ומערכת שעות">
-                  ⚙️ פרופיל
+                  פרופיל אישי
                 </a>
               ` : ''}
 
-              <button class="btn btn-secondary btn-sm" onclick="Auth.logout()" title="התנתקות מהמערכת">
-                יציאה
+              <button class="btn btn-secondary btn-sm" onclick="Auth.logout()" title="יציאה מהמערכת">
+                התנתקות
               </button>
             ` : `
               <a href="index.html" class="btn btn-primary btn-sm">כניסה למערכת</a>
@@ -251,29 +179,28 @@ const Auth = {
             <div class="footer-brand">
               <h4>מערכת דיווח שעות של"ח וידיעת הארץ</h4>
               <p>מערכת ממשלתית מקוונת לניהול, דיווח, בקרה ואישור שעות פעילות, שעות נוספות וימי שדה למורי ומנחי של"ח במשרד החינוך.</p>
-              <p class="text-muted" style="color:#a0aec0; font-size:0.8125rem;">עומד בתקן הנגישות WCAG 2.1 AA ובתקני האבטחה הממשלתיים.</p>
+              <p class="text-muted" style="color:#a0aec0; font-size:0.8125rem;">עומד בתקן הנגישות WCAG 2.1 AA ובתקני אבטחת מידע ממשלתיים.</p>
             </div>
             <div class="footer-links">
-              <h5>קישורים שימושיים</h5>
+              <h5>קישורים מרכזיים</h5>
               <ul>
                 <li><a href="teacher.html">לוח בקרה מורה</a></li>
                 <li><a href="profile.html">הגדרת פרופיל ומערכת שעות</a></li>
                 <li><a href="supervisor.html">לוח בקרה מנחה מחוזי</a></li>
-                <li><a href="admin.html">פורטל ממונה ארצי (רונן)</a></li>
+                <li><a href="admin.html">פורטל ממונה ארצי</a></li>
               </ul>
             </div>
             <div class="footer-links">
               <h5>אבטחה ואימות</h5>
               <ul>
-                <li><a href="verify.html">אימות חתימה דיגיטלית (RSA-2048)</a></li>
-                <li><a href="javascript:void(0)" onclick="Auth.switchDemoRole('principal')">קישור ישיר למנהלי בתיה"ס</a></li>
-                <li><a href="javascript:void(0)" onclick="localStorage.clear(); location.reload();">איפוס נתוני הדגמה (Reset DB)</a></li>
+                <li><a href="verify.html">אימות חתימה דיגיטלית מאובטחת</a></li>
+                <li><a href="https://education.gov.il" target="_blank" rel="noopener">פורטל משרד החינוך</a></li>
               </ul>
             </div>
           </div>
           <div class="footer-bottom">
-            <span>© כל הזכויות שמורות למשרד החינוך – תחום של"ח וידיעת הארץ, מינהל חברה ונוער.</span>
-            <span>גרסה 2.1 מעודכנת (Civic Clarity Edition)</span>
+            <span>כל הזכויות שמורות למדינת ישראל • משרד החינוך – תחום של"ח וידיעת הארץ, מינהל חברה ונוער.</span>
+            <span>גרסה 2.1</span>
           </div>
         </div>
       </footer>

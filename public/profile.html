@@ -1,362 +1,362 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>הגדרת פרופיל ומערכת שעות קבועה – של"ח וידיעת הארץ</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/components.css">
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>הגדרת פרופיל ומערכת שעות קבועה – של"ח וידיעת הארץ</title>
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="css/style.css">
+ <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
 
-  <!-- Top Gov Header Mount -->
-  <div id="gov-header-mount"></div>
+ <!-- Top Gov Header Mount -->
+ <div id="gov-header-mount"></div>
 
-  <main class="container mb-4">
-    <!-- Page Header & Breadcrumb -->
-    <div class="page-header">
-      <div class="breadcrumb">
-        <a href="teacher.html">לוח בקרה מורה</a>
-        <span class="breadcrumb-sep">/</span>
-        <span>הגדרת פרופיל ומערכת שעות</span>
-      </div>
-      <div class="page-header-content">
-        <div>
-          <h1 class="page-title">פרופיל מורה ומערכת שעות קבועה</h1>
-          <p class="page-subtitle">הזנת פרטים אישיים, מוסדיים, שעות הוראה קבועות (א'-ו') וימי שדה שבועיים</p>
-        </div>
-        <div>
-          <span class="badge badge-approved" id="profile-status-badge">
-            <span class="badge-dot"></span>
-            פרופיל פעיל ומאושר
-          </span>
-        </div>
-      </div>
-    </div>
+ <main class="container mb-4">
+ <!-- Page Header & Breadcrumb -->
+ <div class="page-header">
+ <div class="breadcrumb">
+ <a href="teacher.html">לוח בקרה מורה</a>
+ <span class="breadcrumb-sep">/</span>
+ <span>הגדרת פרופיל ומערכת שעות</span>
+ </div>
+ <div class="page-header-content">
+ <div>
+ <h1 class="page-title">פרופיל מורה ומערכת שעות קבועה</h1>
+ <p class="page-subtitle">הזנת פרטים אישיים, מוסדיים, שעות הוראה קבועות (א'-ו') וימי שדה שבועיים</p>
+ </div>
+ <div>
+ <span class="badge badge-approved" id="profile-status-badge">
+ <span class="badge-dot"></span>
+ פרופיל פעיל ומאושר
+ </span>
+ </div>
+ </div>
+ </div>
 
-    <!-- Step indicator for onboarding -->
-    <div class="step-wizard">
-      <div class="step-item completed">
-        <div class="step-circle">✓</div>
-        <div class="step-label">הזדהות</div>
-      </div>
-      <div class="step-item active">
-        <div class="step-circle">2</div>
-        <div class="step-label">הגדרת פרופיל ושעות</div>
-      </div>
-      <div class="step-item">
-        <div class="step-circle">3</div>
-        <div class="step-label">מילוי דוח שעות חודשי</div>
-      </div>
-      <div class="step-item">
-        <div class="step-circle">4</div>
-        <div class="step-label">אישור מנהל ומנחה</div>
-      </div>
-    </div>
+ <!-- Step indicator for onboarding -->
+ <div class="step-wizard">
+ <div class="step-item completed">
+ <div class="step-circle"></div>
+ <div class="step-label">הזדהות</div>
+ </div>
+ <div class="step-item active">
+ <div class="step-circle">2</div>
+ <div class="step-label">הגדרת פרופיל ושעות</div>
+ </div>
+ <div class="step-item">
+ <div class="step-circle">3</div>
+ <div class="step-label">מילוי דוח שעות חודשי</div>
+ </div>
+ <div class="step-item">
+ <div class="step-circle">4</div>
+ <div class="step-label">אישור מנהל ומנחה</div>
+ </div>
+ </div>
 
-    <form id="profile-form">
-      <div class="grid grid-12">
-        <!-- 1. Personal & School Details Card -->
-        <div class="col-span-12">
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">
-                <span>📋</span>
-                <span>1. פרטים אישיים ופרטי בית הספר</span>
-              </h3>
-              <small class="text-muted">כל השדות המסומנים ב- <span class="text-danger">*</span> הינם שדות חובה</small>
-            </div>
-            <div class="card-body">
-              <div class="grid grid-3">
-                <div class="form-group">
-                  <label class="form-label" for="prof-name">
-                    <span>שם מלא של המורה</span>
-                    <span class="required">*</span>
-                  </label>
-                  <input type="text" id="prof-name" class="form-control" required placeholder="שם פרטי ומשפחה">
-                </div>
+ <form id="profile-form">
+ <div class="grid grid-12">
+ <!-- 1. Personal & School Details Card -->
+ <div class="col-span-12">
+ <div class="card">
+ <div class="card-header">
+ <h3 class="card-title">
+ <span></span>
+ <span>1. פרטים אישיים ופרטי בית הספר</span>
+ </h3>
+ <small class="text-muted">כל השדות המסומנים ב- <span class="text-danger">*</span> הינם שדות חובה</small>
+ </div>
+ <div class="card-body">
+ <div class="grid grid-3">
+ <div class="form-group">
+ <label class="form-label" for="prof-name">
+ <span>שם מלא של המורה</span>
+ <span class="required">*</span>
+ </label>
+ <input type="text" id="prof-name" class="form-control" required placeholder="שם פרטי ומשפחה">
+ </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="prof-id">
-                    <span>מספר תעודת זהות</span>
-                    <span class="required">*</span>
-                  </label>
-                  <input type="text" id="prof-id" class="form-control cell-readonly" readonly>
-                  <span class="form-text">מזוהה אוטומטית מנתוני ההזדהות</span>
-                </div>
+ <div class="form-group">
+ <label class="form-label" for="prof-id">
+ <span>מספר תעודת זהות</span>
+ <span class="required">*</span>
+ </label>
+ <input type="text" id="prof-id" class="form-control cell-readonly" readonly>
+ <span class="form-text">מזוהה אוטומטית מנתוני ההזדהות</span>
+ </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="prof-phone">
-                    <span>מספר טלפון נייד</span>
-                    <span class="required">*</span>
-                  </label>
-                  <input type="tel" id="prof-phone" class="form-control" required placeholder="050-0000000">
-                </div>
+ <div class="form-group">
+ <label class="form-label" for="prof-phone">
+ <span>מספר טלפון נייד</span>
+ <span class="required">*</span>
+ </label>
+ <input type="tel" id="prof-phone" class="form-control" required placeholder="050-0000000">
+ </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="prof-email">
-                    <span>כתובת דואר אלקטרוני</span>
-                    <span class="required">*</span>
-                  </label>
-                  <input type="email" id="prof-email" class="form-control" required placeholder="teacher@school.org.il">
-                </div>
+ <div class="form-group">
+ <label class="form-label" for="prof-email">
+ <span>כתובת דואר אלקטרוני</span>
+ <span class="required">*</span>
+ </label>
+ <input type="email" id="prof-email" class="form-control" required placeholder="teacher@school.org.il">
+ </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="prof-job-scope">
-                    <span>היקף משרה בשל"ח (%)</span>
-                    <span class="required">*</span>
-                  </label>
-                  <input type="number" id="prof-job-scope" class="form-control" min="10" max="150" step="5" required placeholder="100">
-                </div>
+ <div class="form-group">
+ <label class="form-label" for="prof-job-scope">
+ <span>היקף משרה בשל"ח (%)</span>
+ <span class="required">*</span>
+ </label>
+ <input type="number" id="prof-job-scope" class="form-control" min="10" max="150" step="5" required placeholder="100">
+ </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="prof-address">
-                    <span>כתובת מגורים</span>
-                    <span class="required">*</span>
-                  </label>
-                  <input type="text" id="prof-address" class="form-control" placeholder="עיר, רחוב ומספר בית" required>
-                </div>
+ <div class="form-group">
+ <label class="form-label" for="prof-address">
+ <span>כתובת מגורים</span>
+ <span class="required">*</span>
+ </label>
+ <input type="text" id="prof-address" class="form-control" placeholder="עיר, רחוב ומספר בית" required>
+ </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="prof-school-code">
-                    <span>סמל מוסד</span>
-                    <span class="required">*</span>
-                  </label>
-                  <input type="text" id="prof-school-code" class="form-control" required placeholder="סמל מוסד 6 ספרות">
-                </div>
+ <div class="form-group">
+ <label class="form-label" for="prof-school-code">
+ <span>סמל מוסד</span>
+ <span class="required">*</span>
+ </label>
+ <input type="text" id="prof-school-code" class="form-control" required placeholder="סמל מוסד 6 ספרות">
+ </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="prof-school-name">
-                    <span>שם בית הספר</span>
-                    <span class="required">*</span>
-                  </label>
-                  <input type="text" id="prof-school-name" class="form-control" required placeholder="לדוגמה: תיכון מקיף רבין">
-                </div>
+ <div class="form-group">
+ <label class="form-label" for="prof-school-name">
+ <span>שם בית הספר</span>
+ <span class="required">*</span>
+ </label>
+ <input type="text" id="prof-school-name" class="form-control" required placeholder="לדוגמה: תיכון מקיף רבין">
+ </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="prof-municipality">
-                    <span>רשות מקומית</span>
-                    <span class="required">*</span>
-                  </label>
-                  <input type="text" id="prof-municipality" class="form-control" required placeholder="לדוגמה: כפר סבא">
-                </div>
+ <div class="form-group">
+ <label class="form-label" for="prof-municipality">
+ <span>רשות מקומית</span>
+ <span class="required">*</span>
+ </label>
+ <input type="text" id="prof-municipality" class="form-control" required placeholder="לדוגמה: כפר סבא">
+ </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="prof-district">
-                    <span>מחוז משרד החינוך</span>
-                    <span class="required">*</span>
-                  </label>
-                  <select id="prof-district" class="form-select" required>
-                    <option value="">-- בחר מחוז --</option>
-                    <option value="מרכז">מחוז מרכז</option>
-                    <option value="תל אביב">מחוז תל אביב</option>
-                    <option value="צפון">מחוז צפון</option>
-                    <option value="דרום">מחוז דרום</option>
-                    <option value="ירושלים">מחוז ירושלים</option>
-                    <option value="חיפה">מחוז חיפה</option>
-                    <option value="התיישבותי">המינהל לחינוך התיישבותי</option>
-                  </select>
-                </div>
+ <div class="form-group">
+ <label class="form-label" for="prof-district">
+ <span>מחוז משרד החינוך</span>
+ <span class="required">*</span>
+ </label>
+ <select id="prof-district" class="form-select" required>
+ <option value="">-- בחר מחוז --</option>
+ <option value="מרכז">מחוז מרכז</option>
+ <option value="תל אביב">מחוז תל אביב</option>
+ <option value="צפון">מחוז צפון</option>
+ <option value="דרום">מחוז דרום</option>
+ <option value="ירושלים">מחוז ירושלים</option>
+ <option value="חיפה">מחוז חיפה</option>
+ <option value="התיישבותי">המינהל לחינוך התיישבותי</option>
+ </select>
+ </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="prof-supervisor">
-                    <span>מנחה מחוזי משויך</span>
-                    <span class="required">*</span>
-                  </label>
-                  <select id="prof-supervisor" class="form-select" required>
-                    <option value="דוד לוי">דוד לוי (מחוז מרכז)</option>
-                    <option value="ענת פרידמן">ענת פרידמן (מחוז צפון)</option>
-                    <option value="יוסי כהן">יוסי כהן (מחוז דרום)</option>
-                    <option value="מיכל אברהם">מיכל אברהם (מחוז ירושלים)</option>
-                  </select>
-                </div>
+ <div class="form-group">
+ <label class="form-label" for="prof-supervisor">
+ <span>מנחה מחוזי משויך</span>
+ <span class="required">*</span>
+ </label>
+ <select id="prof-supervisor" class="form-select" required>
+ <option value="דוד לוי">דוד לוי (מחוז מרכז)</option>
+ <option value="ענת פרידמן">ענת פרידמן (מחוז צפון)</option>
+ <option value="יוסי כהן">יוסי כהן (מחוז דרום)</option>
+ <option value="מיכל אברהם">מיכל אברהם (מחוז ירושלים)</option>
+ </select>
+ </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="prof-principal-name">
-                    <span>שם מנהל/ת בית הספר</span>
-                    <span class="required">*</span>
-                  </label>
-                  <input type="text" id="prof-principal-name" class="form-control" required placeholder="שם המנהל/ת">
-                </div>
+ <div class="form-group">
+ <label class="form-label" for="prof-principal-name">
+ <span>שם מנהל/ת בית הספר</span>
+ <span class="required">*</span>
+ </label>
+ <input type="text" id="prof-principal-name" class="form-control" required placeholder="שם המנהל/ת">
+ </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="prof-principal-email">
-                    <span>דוא"ל מנהל/ת (לקבלת קישור לאישור)</span>
-                    <span class="required">*</span>
-                  </label>
-                  <input type="email" id="prof-principal-email" class="form-control" required placeholder="principal@school.org.il">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+ <div class="form-group">
+ <label class="form-label" for="prof-principal-email">
+ <span>דוא"ל מנהל/ת (לקבלת קישור לאישור)</span>
+ <span class="required">*</span>
+ </label>
+ <input type="email" id="prof-principal-email" class="form-control" required placeholder="principal@school.org.il">
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-        <!-- 2. Weekly Fixed Schedule & Field Days -->
-        <div class="col-span-12">
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">
-                <span>📅</span>
-                <span>2. מערכת שעות הוראה קבועה וימי שדה (א' - ו')</span>
-              </h3>
-              <span class="text-muted" style="font-size:0.875rem;">שעות אלו יוטמעו אוטומטית כעמודת שעות קבועות בדוח החודשי</span>
-            </div>
-            <div class="card-body">
-              <p style="font-size:0.9375rem; color:var(--on-surface-variant); margin-bottom: 16px;">
-                הזן את מספר שעות ההוראה הקבועות לכל יום בשבוע, וסמן האם יום זה מהווה <strong>יום שדה קבוע</strong>.
-              </p>
+ <!-- 2. Weekly Fixed Schedule & Field Days -->
+ <div class="col-span-12">
+ <div class="card">
+ <div class="card-header">
+ <h3 class="card-title">
+ <span></span>
+ <span>2. מערכת שעות הוראה קבועה וימי שדה (א' - ו')</span>
+ </h3>
+ <span class="text-muted" style="font-size:0.875rem;">שעות אלו יוטמעו אוטומטית כעמודת שעות קבועות בדוח החודשי</span>
+ </div>
+ <div class="card-body">
+ <p style="font-size:0.9375rem; color:var(--on-surface-variant); margin-bottom: 16px;">
+ הזן את מספר שעות ההוראה הקבועות לכל יום בשבוע, וסמן האם יום זה מהווה <strong>יום שדה קבוע</strong>.
+ </p>
 
-              <div class="table-responsive">
-                <table class="gov-table">
-                  <thead>
-                    <tr>
-                      <th style="width:120px;">יום בשבוע</th>
-                      <th style="width:180px;">שעות הוראה קבועות</th>
-                      <th style="width:200px;">יום שדה קבוע בשבוע</th>
-                      <th>הערות / פירוט כיתות קבוע</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><strong>יום ראשון</strong></td>
-                      <td>
-                        <input type="number" id="sched-sun" class="form-control cell-input" min="0" max="12" step="0.5" value="6" required>
-                      </td>
-                      <td>
-                        <label class="form-check" style="margin:0; justify-content:center;">
-                          <input type="checkbox" id="field-sun" class="form-check-input">
-                          <span class="form-check-label" style="font-size:0.875rem;">יום שדה</span>
-                        </label>
-                      </td>
-                      <td><span class="text-muted" style="font-size:0.8125rem;">שעות הוראה בכיתה</span></td>
-                    </tr>
-                    <tr>
-                      <td><strong>יום שני</strong></td>
-                      <td>
-                        <input type="number" id="sched-mon" class="form-control cell-input" min="0" max="12" step="0.5" value="6" required>
-                      </td>
-                      <td>
-                        <label class="form-check" style="margin:0; justify-content:center;">
-                          <input type="checkbox" id="field-mon" class="form-check-input">
-                          <span class="form-check-label" style="font-size:0.875rem;">יום שדה</span>
-                        </label>
-                      </td>
-                      <td><span class="text-muted" style="font-size:0.8125rem;">שעות הוראה בכיתה</span></td>
-                    </tr>
-                    <tr>
-                      <td><strong>יום שלישי</strong></td>
-                      <td>
-                        <input type="number" id="sched-tue" class="form-control cell-input" min="0" max="12" step="0.5" value="8" required>
-                      </td>
-                      <td>
-                        <label class="form-check" style="margin:0; justify-content:center;">
-                          <input type="checkbox" id="field-tue" class="form-check-input" checked>
-                          <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;">🌲 יום שדה קבוע</span>
-                        </label>
-                      </td>
-                      <td><span class="text-muted" style="font-size:0.8125rem;">יציאה לסיורי שדה שכבת ט'</span></td>
-                    </tr>
-                    <tr>
-                      <td><strong>יום רביעי</strong></td>
-                      <td>
-                        <input type="number" id="sched-wed" class="form-control cell-input" min="0" max="12" step="0.5" value="6" required>
-                      </td>
-                      <td>
-                        <label class="form-check" style="margin:0; justify-content:center;">
-                          <input type="checkbox" id="field-wed" class="form-check-input">
-                          <span class="form-check-label" style="font-size:0.875rem;">יום שדה</span>
-                        </label>
-                      </td>
-                      <td><span class="text-muted" style="font-size:0.8125rem;">שעות הוראה בכיתה</span></td>
-                    </tr>
-                    <tr>
-                      <td><strong>יום חמישי</strong></td>
-                      <td>
-                        <input type="number" id="sched-thu" class="form-control cell-input" min="0" max="12" step="0.5" value="8" required>
-                      </td>
-                      <td>
-                        <label class="form-check" style="margin:0; justify-content:center;">
-                          <input type="checkbox" id="field-thu" class="form-check-input" checked>
-                          <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;">🌲 יום שדה קבוע</span>
-                        </label>
-                      </td>
-                      <td><span class="text-muted" style="font-size:0.8125rem;">יציאה לסיורי שדה שכבת י'</span></td>
-                    </tr>
-                    <tr>
-                      <td><strong>יום שישי</strong></td>
-                      <td>
-                        <input type="number" id="sched-fri" class="form-control cell-input" min="0" max="12" step="0.5" value="0" required>
-                      </td>
-                      <td>
-                        <label class="form-check" style="margin:0; justify-content:center;">
-                          <input type="checkbox" id="field-fri" class="form-check-input">
-                          <span class="form-check-label" style="font-size:0.875rem;">יום שדה</span>
-                        </label>
-                      </td>
-                      <td><span class="text-muted" style="font-size:0.8125rem;">יום חופשי / ללא הוראה</span></td>
-                    </tr>
-                  </tbody>
-                  <tfoot>
-                    <tr style="background-color: var(--surface-container-high); font-weight:600;">
-                      <td><strong>סה"כ שעות שבועיות:</strong></td>
-                      <td><span id="weekly-total-hours" style="color:var(--primary); font-size:1.1rem; font-weight:700;">34</span> שעות</td>
-                      <td colspan="2"><span id="field-days-summary" class="field-day-tag">2 ימי שדה קבועים בשבוע (שלישי, חמישי)</span></td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
+ <div class="table-responsive">
+ <table class="gov-table">
+ <thead>
+ <tr>
+ <th style="width:120px;">יום בשבוע</th>
+ <th style="width:180px;">שעות הוראה קבועות</th>
+ <th style="width:200px;">יום שדה קבוע בשבוע</th>
+ <th>הערות / פירוט כיתות קבוע</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr>
+ <td><strong>יום ראשון</strong></td>
+ <td>
+ <input type="number" id="sched-sun" class="form-control cell-input" min="0" max="12" step="0.5" value="6" required>
+ </td>
+ <td>
+ <label class="form-check" style="margin:0; justify-content:center;">
+ <input type="checkbox" id="field-sun" class="form-check-input">
+ <span class="form-check-label" style="font-size:0.875rem;">יום שדה</span>
+ </label>
+ </td>
+ <td><span class="text-muted" style="font-size:0.8125rem;">שעות הוראה בכיתה</span></td>
+ </tr>
+ <tr>
+ <td><strong>יום שני</strong></td>
+ <td>
+ <input type="number" id="sched-mon" class="form-control cell-input" min="0" max="12" step="0.5" value="6" required>
+ </td>
+ <td>
+ <label class="form-check" style="margin:0; justify-content:center;">
+ <input type="checkbox" id="field-mon" class="form-check-input">
+ <span class="form-check-label" style="font-size:0.875rem;">יום שדה</span>
+ </label>
+ </td>
+ <td><span class="text-muted" style="font-size:0.8125rem;">שעות הוראה בכיתה</span></td>
+ </tr>
+ <tr>
+ <td><strong>יום שלישי</strong></td>
+ <td>
+ <input type="number" id="sched-tue" class="form-control cell-input" min="0" max="12" step="0.5" value="8" required>
+ </td>
+ <td>
+ <label class="form-check" style="margin:0; justify-content:center;">
+ <input type="checkbox" id="field-tue" class="form-check-input" checked>
+ <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"> יום שדה קבוע</span>
+ </label>
+ </td>
+ <td><span class="text-muted" style="font-size:0.8125rem;">יציאה לסיורי שדה שכבת ט'</span></td>
+ </tr>
+ <tr>
+ <td><strong>יום רביעי</strong></td>
+ <td>
+ <input type="number" id="sched-wed" class="form-control cell-input" min="0" max="12" step="0.5" value="6" required>
+ </td>
+ <td>
+ <label class="form-check" style="margin:0; justify-content:center;">
+ <input type="checkbox" id="field-wed" class="form-check-input">
+ <span class="form-check-label" style="font-size:0.875rem;">יום שדה</span>
+ </label>
+ </td>
+ <td><span class="text-muted" style="font-size:0.8125rem;">שעות הוראה בכיתה</span></td>
+ </tr>
+ <tr>
+ <td><strong>יום חמישי</strong></td>
+ <td>
+ <input type="number" id="sched-thu" class="form-control cell-input" min="0" max="12" step="0.5" value="8" required>
+ </td>
+ <td>
+ <label class="form-check" style="margin:0; justify-content:center;">
+ <input type="checkbox" id="field-thu" class="form-check-input" checked>
+ <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"> יום שדה קבוע</span>
+ </label>
+ </td>
+ <td><span class="text-muted" style="font-size:0.8125rem;">יציאה לסיורי שדה שכבת י'</span></td>
+ </tr>
+ <tr>
+ <td><strong>יום שישי</strong></td>
+ <td>
+ <input type="number" id="sched-fri" class="form-control cell-input" min="0" max="12" step="0.5" value="0" required>
+ </td>
+ <td>
+ <label class="form-check" style="margin:0; justify-content:center;">
+ <input type="checkbox" id="field-fri" class="form-check-input">
+ <span class="form-check-label" style="font-size:0.875rem;">יום שדה</span>
+ </label>
+ </td>
+ <td><span class="text-muted" style="font-size:0.8125rem;">יום חופשי / ללא הוראה</span></td>
+ </tr>
+ </tbody>
+ <tfoot>
+ <tr style="background-color: var(--surface-container-high); font-weight:600;">
+ <td><strong>סה"כ שעות שבועיות:</strong></td>
+ <td><span id="weekly-total-hours" style="color:var(--primary); font-size:1.1rem; font-weight:700;">34</span> שעות</td>
+ <td colspan="2"><span id="field-days-summary" class="field-day-tag">2 ימי שדה קבועים בשבוע (שלישי, חמישי)</span></td>
+ </tr>
+ </tfoot>
+ </table>
+ </div>
+ </div>
+ </div>
+ </div>
 
-        <!-- 3. Mandatory Legal Online Consent Checkbox -->
-        <div class="col-span-12">
-          <div class="card" style="border-color: #b8daff; background-color: #f8fbff;">
-            <div class="card-header" style="background-color: #e8f4fd;">
-              <h3 class="card-title" style="color: #004085;">
-                <span>⚖️</span>
-                <span>3. הצהרה והסכמה לתהליך דיגיטלי מחייב</span>
-              </h3>
-            </div>
-            <div class="card-body">
-              <div class="banner-alert banner-info" style="margin-bottom: 16px;">
-                <div class="banner-alert-icon">ℹ️</div>
-                <div class="banner-alert-content">
-                  <strong>דרישה משפטית מחייבת:</strong> בהתאם לחוק חתימה אלקטרונית, התשס"א-2001 ולהנחיות משרד החינוך, מילוי הדוח והגשתו מהווים מסמך רשמי מחייב לכל דבר ועניין.
-                </div>
-              </div>
+ <!-- 3. Mandatory Legal Online Consent Checkbox -->
+ <div class="col-span-12">
+ <div class="card" style="border-color: #b8daff; background-color: #f8fbff;">
+ <div class="card-header" style="background-color: #e8f4fd;">
+ <h3 class="card-title" style="color: #004085;">
+ <span>️</span>
+ <span>3. הצהרה והסכמה לתהליך דיגיטלי מחייב</span>
+ </h3>
+ </div>
+ <div class="card-body">
+ <div class="banner-alert banner-info" style="margin-bottom: 16px;">
+ <div class="banner-alert-icon">ℹ️</div>
+ <div class="banner-alert-content">
+ <strong>דרישה משפטית מחייבת:</strong> בהתאם לחוק חתימה אלקטרונית, התשס"א-2001 ולהנחיות משרד החינוך, מילוי הדוח והגשתו מהווים מסמך רשמי מחייב לכל דבר ועניין.
+ </div>
+ </div>
 
-              <label class="form-check" style="background-color:#ffffff; padding:16px; border-radius:var(--rounded-md); border:2px solid var(--outline);">
-                <input type="checkbox" id="prof-consent-check" class="form-check-input" required checked>
-                <span class="form-check-label" style="font-size:0.9375rem; font-weight:600; line-height: 1.5;">
-                  אני מאשר/ת בזאת כי הפרטים שהוזנו לעיל הינם מלאים ומדויקים. ידוע לי כי שימוש במערכת זו ולחיצה על 'שלח' מהווים חתימה דיגיטלית מחייבת לכל דבר ועניין, לרבות דיווח שעות לצורך שכר ואישור מנהל/ת בית הספר והמנחה המחוזי.
-                </span>
-              </label>
-              <div id="consent-error" class="form-error" style="display:none;">
-                חובה לאשר את ההצהרה המשפטית כדי להמשיך למערכת הדיווח.
-              </div>
-            </div>
-            <div class="card-footer" style="justify-content: flex-end;">
-              <a href="teacher.html" class="btn btn-secondary">ביטול</a>
-              <button type="submit" id="save-profile-btn" class="btn btn-primary btn-lg">
-                <span>שמירת פרופיל ומערכת שעות</span>
-                <span>✓</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </form>
-  </main>
+ <label class="form-check" style="background-color:#ffffff; padding:16px; border-radius:var(--rounded-md); border:2px solid var(--outline);">
+ <input type="checkbox" id="prof-consent-check" class="form-check-input" required checked>
+ <span class="form-check-label" style="font-size:0.9375rem; font-weight:600; line-height: 1.5;">
+ אני מאשר/ת בזאת כי הפרטים שהוזנו לעיל הינם מלאים ומדויקים. ידוע לי כי שימוש במערכת זו ולחיצה על 'שלח' מהווים חתימה דיגיטלית מחייבת לכל דבר ועניין, לרבות דיווח שעות לצורך שכר ואישור מנהל/ת בית הספר והמנחה המחוזי.
+ </span>
+ </label>
+ <div id="consent-error" class="form-error" style="display:none;">
+ חובה לאשר את ההצהרה המשפטית כדי להמשיך למערכת הדיווח.
+ </div>
+ </div>
+ <div class="card-footer" style="justify-content: flex-end;">
+ <a href="teacher.html" class="btn btn-secondary">ביטול</a>
+ <button type="submit" id="save-profile-btn" class="btn btn-primary btn-lg">
+ <span>שמירת פרופיל ומערכת שעות</span>
+ <span></span>
+ </button>
+ </div>
+ </div>
+ </div>
+ </div>
+ </form>
+ </main>
 
-  <!-- Universal Footer Mount -->
-  <div id="gov-footer-mount"></div>
+ <!-- Universal Footer Mount -->
+ <div id="gov-footer-mount"></div>
 
-  <script src="js/api.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/profile.js"></script>
+ <script src="js/api.js"></script>
+ <script src="js/auth.js"></script>
+ <script src="js/profile.js"></script>
 </body>
 </html>
