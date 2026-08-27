@@ -256,24 +256,34 @@
  </table>
  </div>
 
- <!-- Admin Remarks / Instructions -->
- <div class="mt-3">
- <label class="form-label" for="admin-remarks-input">
- <span>הערות ממונה ארצי (במידה ונדרש):</span>
- </label>
- <textarea id="admin-remarks-input" class="form-control form-textarea" placeholder="הזן הערות ממונה או נימוק להחזרה..."></textarea>
- </div>
- </div>
+        <!-- Admin Graphic Signature Pad -->
+        <div class="sig-pad-wrapper mt-3" id="admin-sig-wrapper">
+          <div class="sig-pad-header">
+            <span>חתימת ממונה ארצי (חתימה גרפית):</span>
+            <button type="button" class="btn btn-secondary btn-sm" id="admin-clear-sig-btn">נקה חתימה</button>
+          </div>
+          <canvas id="admin-sig-canvas" class="sig-canvas"></canvas>
+          <div class="sig-pad-hint">חתום בעזרת העכבר או מגע לאישור סופי והעברה לתשלום</div>
+        </div>
 
- <div class="modal-footer">
- <button type="button" class="btn btn-secondary" onclick="closeModal('admin-review-modal')">סגירה</button>
- <button type="button" class="btn btn-outline-danger" onclick="openAdminReturnModal()">
- <span>↩️ החזר לעריכה</span>
- </button>
- <button type="button" id="admin-btn-approve-payment" class="btn btn-success btn-lg" onclick="handleAdminFinalApprove()">
- <span> אישור סופי לתשלום והנפקת חתימת RSA</span>
- </button>
- </div>
+        <!-- Admin Remarks / Instructions -->
+        <div class="mt-3">
+          <label class="form-label" for="admin-remarks-input">
+            <span>הערות ממונה ארצי (במידה ונדרש):</span>
+          </label>
+          <textarea id="admin-remarks-input" class="form-control form-textarea" placeholder="הזן הערות ממונה או נימוק להחזרה..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('admin-review-modal')">סגירה</button>
+        <button type="button" class="btn btn-outline-danger" onclick="openAdminReturnModal()">
+          <span>החזר לעריכה</span>
+        </button>
+        <button type="button" id="admin-btn-approve-payment" class="btn btn-success btn-lg" onclick="handleAdminFinalApprove()">
+          <span>אישור סופי לתשלום והטבעת חתימה</span>
+        </button>
+      </div>
  </div>
  </div>
 

@@ -170,30 +170,55 @@
  </div>
  </div>
 
+ <!-- Principal Graphic Signature Pad Card -->
+ <div class="card mb-4" id="p-sig-card">
+ <div class="card-header">
+ <h3 class="card-title">
+ <span>חתימה גרפית של מנהל/ת בית הספר</span>
+ </h3>
+ <span class="text-muted" style="font-size:0.8125rem;">חתום באמצעות העכבר או מגע לאישור הדוח</span>
+ </div>
+ <div class="card-body">
+ <div class="sig-pad-wrapper">
+ <div class="sig-pad-header">
+ <span>משטח חתימה דיגיטלית:</span>
+ <button type="button" class="btn btn-secondary btn-sm" id="p-clear-sig-btn">נקה חתימה</button>
+ </div>
+ <canvas id="p-sig-canvas" class="sig-canvas"></canvas>
+ <div class="sig-pad-hint">חתום בתוך המסגרת בעזרת העכבר או במסך מגע</div>
+ </div>
+ </div>
+ </div>
+
  <!-- Sticky 1-Click Digital Approval Bottom Bar -->
  <div class="principal-approval-bar" id="p-action-bar">
  <div>
  <div style="font-weight:700; font-size:1.1rem; color:var(--on-surface);">אישור מנהל/ת בית הספר</div>
  <div style="font-size:0.8125rem; color:var(--on-surface-variant);">
- לחיצה על 'אישור וחתימה דיגיטלית' מעבירה את הדוח לבדיקת המנחה המחוזי.
+ לחיצה על 'אישור וחתימה על הדוח' מעבירה את הדוח החתום לבדיקת המנחה המחוזי.
  </div>
  </div>
 
  <div class="flex items-center gap-sm">
  <button type="button" class="btn btn-outline-danger" onclick="openRejectModal()">
- <span>↩️ החזר למורה לתיקון</span>
+ <span>החזר למורה לתיקון</span>
  </button>
  <button type="button" id="p-btn-approve" class="btn btn-success btn-lg" onclick="handlePrincipalApproval()">
- <span> אישור וחתימה דיגיטלית</span>
+ <span>אישור וחתימה על הדוח</span>
  </button>
  </div>
  </div>
 
- <div id="p-approved-banner" style="display:none;" class="text-center my-4 animate-fade-in">
- <div class="approved-stamp">
- הדוח אושר ונחתם דיגיטלית ע"י מנהל/ת בי"ס
+ <!-- Approved Stamp Banner -->
+ <div id="p-approved-banner" style="display:none;" class="my-4 animate-fade-in">
+ <div class="signature-stamp-block">
+ <div class="signature-stamp-info">
+ <div class="signature-stamp-title">הדוח אושר ונחתם ע"י מנהל/ת בית הספר</div>
+ <div style="font-size:0.875rem; color:var(--on-surface);" id="p-stamp-details"></div>
+ <div style="font-size:0.8125rem; color:var(--on-surface-variant);">הדוח הועבר להמשך בדיקה ואישור המנחה המחוזי</div>
  </div>
- <p class="text-muted mt-2">הדוח הועבר להמשך בדיקה ואישור המנחה המחוזי (דוד לוי).</p>
+ <div id="p-stamp-img-box"></div>
+ </div>
  </div>
  </main>
 

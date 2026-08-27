@@ -784,11 +784,96 @@ function formatDateTime(d) {
 }
 
 function generateMockHash(report) {
- const str = `${report.id}-${report.totalPayableHours}-${Date.now()}`;
- let hash = 0;
- for (let i = 0; i < str.length; i++) {
- hash = ((hash << 5) - hash) + str.charCodeAt(i);
- hash |= 0;
- }
- return Math.abs(hash).toString(16).padStart(32, '0').slice(0, 32);
+  const str = `${report.id}-${report.totalPayableHours}-${Date.now()}`;
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(16).padStart(32, '0').slice(0, 32);
+}
+
+// ==========================================================================
+// 9. Reusable Graphic Signature Pad Component
+// ==========================================================================
+class GraphicSignaturePad {
+  constructor(canvasElement, clearBtnElement) {
+    this.canvas = canvasElement;
+    if (!this.canvas) return;
+    this.ctx = this.canvas.getContext('2d');
+    this.isDrawing = false;
+    this.hasDrawn = false;
+    this.clearBtn = clearBtnElement;
+
+    this.initCanvas();
+    this.initEvents();
+  }
+
+  initCanvas() {
+    const rect = this.canvas.getBoundingClientRect();
+    this.canvas.width = rect.width || 400;
+    this.canvas.height = rect.height || 140;
+
+    this.ctx.strokeStyle = '#0c3058';
+    this.ctx.lineWidth = 2.5;
+    this.ctx.lineCap = 'round';
+    this.ctx.lineJoin = 'round';
+  }
+
+  initEvents() {
+    const getPos = (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) * (this.canvas.width / (rect.width || 1)),
+        y: (clientY - rect.top) * (this.canvas.height / (rect.height || 1))
+      };
+    };
+
+    const start = (e) => {
+      e.preventDefault();
+      this.isDrawing = true;
+      const pos = getPos(e);
+      this.ctx.beginPath();
+      this.ctx.moveTo(pos.x, pos.y);
+    };
+
+    const draw = (e) => {
+      if (!this.isDrawing) return;
+      e.preventDefault();
+      const pos = getPos(e);
+      this.ctx.lineTo(pos.x, pos.y);
+      this.ctx.stroke();
+      this.hasDrawn = true;
+    };
+
+    const stop = () => {
+      this.isDrawing = false;
+    };
+
+    this.canvas.addEventListener('mousedown', start);
+    this.canvas.addEventListener('mousemove', draw);
+    window.addEventListener('mouseup', stop);
+
+    this.canvas.addEventListener('touchstart', start, { passive: false });
+    this.canvas.addEventListener('touchmove', draw, { passive: false });
+    window.addEventListener('touchend', stop);
+
+    if (this.clearBtn) {
+      this.clearBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.clear();
+      });
+    }
+  }
+
+  clear() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.hasDrawn = false;
+  }
+
+  toDataURL() {
+    return this.hasDrawn ? this.canvas.toDataURL('image/png') : null;
+  }
 }

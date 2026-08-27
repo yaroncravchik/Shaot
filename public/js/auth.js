@@ -185,9 +185,7 @@ const Auth = {
             <span>מדינת ישראל • משרד החינוך • מינהל חברה ונוער • תחום של"ח וידיעת הארץ</span>
           </div>
           <div class="gov-top-links">
-            <a href="verify.html" class="flex items-center gap-xs">
-              <span>אימות חתימות דיגיטליות</span>
-            </a>
+            <a href="https://education.gov.il" target="_blank" rel="noopener">פורטל משרד החינוך</a>
             <span>|</span>
             <a href="https://education.gov.il" target="_blank" rel="noopener">פורטל עובדי הוראה</a>
           </div>
@@ -213,9 +211,6 @@ const Auth = {
             </button>
             <button type="button" class="btn btn-sm ${currentRole === 'admin' ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('admin')">
               ממונה ארצי: רונן (Super Admin)
-            </button>
-            <button type="button" class="btn btn-sm ${window.location.pathname.includes('verify.html') ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('verify')">
-              אימות חתימה לדוח לדוגמה
             </button>
           </div>
         </div>
@@ -288,9 +283,9 @@ const Auth = {
               </ul>
             </div>
             <div class="footer-links">
-              <h5>אבטחה ואימות</h5>
+              <h5>קישורים שימושיים</h5>
               <ul>
-                <li><a href="verify.html">אימות חתימה דיגיטלית מאובטחת</a></li>
+                <li><a href="https://education.gov.il" target="_blank" rel="noopener">פורטל עובדי הוראה</a></li>
                 <li><a href="https://education.gov.il" target="_blank" rel="noopener">פורטל משרד החינוך</a></li>
               </ul>
             </div>

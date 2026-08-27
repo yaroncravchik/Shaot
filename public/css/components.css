@@ -1062,3 +1062,80 @@
   font-family: monospace;
   font-weight: 600;
 }
+
+/* ==========================================================================
+   Graphic Signature Pad Component
+   ========================================================================== */
+.sig-pad-wrapper {
+  background: #ffffff;
+  border: 2px dashed #b8daff;
+  border-radius: var(--rounded-md);
+  padding: 16px;
+  margin: 12px 0;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.sig-pad-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.sig-canvas {
+  width: 100%;
+  max-width: 500px;
+  height: 140px;
+  background: #fdfdfd;
+  border: 1px solid #dee2e6;
+  border-radius: var(--rounded-sm);
+  cursor: crosshair;
+  touch-action: none;
+  display: block;
+  margin: 0 auto;
+}
+
+.sig-pad-hint {
+  font-size: 0.75rem;
+  color: var(--on-surface-variant);
+  margin-top: 6px;
+}
+
+.signature-stamp-block {
+  background: #f8fbff;
+  border: 2px solid #28a745;
+  border-radius: var(--rounded-md);
+  padding: 16px;
+  margin: 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.signature-stamp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.signature-stamp-title {
+  font-weight: 700;
+  color: #28a745;
+  font-size: 1.05rem;
+}
+
+.signature-preview-img {
+  max-height: 70px;
+  max-width: 180px;
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 4px;
+}
+

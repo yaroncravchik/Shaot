@@ -157,14 +157,14 @@ function renderHistoryTable(reports) {
  remarksHtml = `<span style="color:#004085;" title="${r.principalRemarks}"> מנהלת: ${r.principalRemarks.slice(0, 30)}...</span>`;
  }
 
- let sigHtml = '<span class="text-muted">טרם נחתם</span>';
- if (r.signatureId) {
- sigHtml = `
- <a href="verify.html?sig=${r.signatureId}" class="rsa-badge" title="לחץ לאימות חתימה RSA-2048">
- <span> ${r.signatureId}</span>
- </a>
- `;
- }
+    let sigHtml = '<span class="text-muted">טרם נחתם</span>';
+    if (r.signatureId || r.status === 'approved_paid') {
+      sigHtml = `
+        <span class="rsa-badge" style="background:#e8f5e9; color:#2e7d32; border-color:#c8e6c9;">
+          נחתם ומאושר
+        </span>
+      `;
+    }
 
  tr.innerHTML = `
  <td><strong>${HEBREW_MONTHS_NAME[r.month - 1] || r.month} ${r.year}</strong></td>

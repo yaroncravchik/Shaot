@@ -335,6 +335,17 @@
  אני מאשר/ת בזאת כי הפרטים שהוזנו לעיל הינם מלאים ומדויקים. ידוע לי כי שימוש במערכת זו ולחיצה על 'שלח' מהווים חתימה דיגיטלית מחייבת לכל דבר ועניין, לרבות דיווח שעות לצורך שכר ואישור מנהל/ת בית הספר והמנחה המחוזי.
  </span>
  </label>
+
+ <!-- Teacher Graphic Signature Pad -->
+ <div class="sig-pad-wrapper mt-3">
+ <div class="sig-pad-header">
+ <span>חתימת המורה (חתימה גרפית בעכבר או מגע):</span>
+ <button type="button" class="btn btn-secondary btn-sm" id="teacher-clear-sig-btn">נקה חתימה</button>
+ </div>
+ <canvas id="teacher-sig-canvas" class="sig-canvas"></canvas>
+ <div class="sig-pad-hint">חתום בתוך המסגרת בעזרת העכבר או במסך מגע לשמירת החתימה בפרופיל</div>
+ </div>
+
  <div id="consent-error" class="form-error" style="display:none;">
  חובה לאשר את ההצהרה המשפטית כדי להמשיך למערכת הדיווח.
  </div>
@@ -342,7 +353,7 @@
  <div class="card-footer" style="justify-content: flex-end;">
  <a href="teacher.html" class="btn btn-secondary">ביטול</a>
  <button type="submit" id="save-profile-btn" class="btn btn-primary btn-lg">
- <span>שמירת פרופיל ומערכת שעות</span>
+ <span>שמירת פרופיל, מערכת שעות וחתימה</span>
  <span></span>
  </button>
  </div>

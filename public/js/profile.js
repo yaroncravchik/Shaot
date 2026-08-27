@@ -1,7 +1,9 @@
 /**
  * Shalah Monthly Activity Hours Reporting System (מערכת דיווח שעות של"ח)
- * Profile Setup & Weekly Schedule Controller
+ * Profile Setup & Weekly Schedule Controller with Graphic Signature Pad
  */
+
+let teacherSigPad = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   const user = Auth.requireAuth(['teacher']);
@@ -9,6 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Auth.renderHeader('profile');
   Auth.renderFooter();
+
+  // Initialize Graphic Signature Pad
+  const sigCanvas = document.getElementById('teacher-sig-canvas');
+  const clearBtn = document.getElementById('teacher-clear-sig-btn');
+  if (sigCanvas) {
+    teacherSigPad = new GraphicSignaturePad(sigCanvas, clearBtn);
+  }
 
   loadProfileData(user);
   setupEventListeners(user);
@@ -26,9 +35,9 @@ function loadProfileData(user) {
   document.getElementById('prof-school-name').value = user.schoolName || 'תיכון יצחק רבין כפר סבא';
   document.getElementById('prof-municipality').value = user.municipality || 'כפר סבא';
   document.getElementById('prof-district').value = user.district || 'מרכז';
-  document.getElementById('prof-supervisor').value = user.supervisorName || 'דוד לוי';
-  document.getElementById('prof-principal-name').value = user.principalName || 'רונית שחר';
-  document.getElementById('prof-principal-email').value = user.principalEmail || 'ronit.s@rabin-kfs.org.il';
+  document.getElementById('prof-supervisor').value = user.supervisorName || 'אברהם מנחה';
+  document.getElementById('prof-principal-name').value = user.principalName || 'שרה כהן';
+  document.getElementById('prof-principal-email').value = user.principalEmail || 'principal@rabin-kfs.org.il';
 
   // Schedule
   const sched = user.weeklySchedule || { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 };
@@ -82,7 +91,7 @@ function setupEventListeners(currentUser) {
 
     const saveBtn = document.getElementById('save-profile-btn');
     saveBtn.disabled = true;
-    saveBtn.innerHTML = '<div class="spinner"></div><span>שומר נתונים...</span>';
+    saveBtn.innerHTML = '<div class="spinner"></div><span>שומר נתונים וחתימה...</span>';
 
     const updatedWeeklySchedule = {
       0: parseFloat(document.getElementById('sched-sun').value) || 0,
@@ -101,6 +110,8 @@ function setupEventListeners(currentUser) {
     if (document.getElementById('field-thu').checked) updatedFieldDays.push(4);
     if (document.getElementById('field-fri').checked) updatedFieldDays.push(5);
 
+    const teacherSigImg = teacherSigPad ? teacherSigPad.toDataURL() : null;
+
     const updatedUser = {
       ...currentUser,
       name: document.getElementById('prof-name').value.trim(),
@@ -117,6 +128,7 @@ function setupEventListeners(currentUser) {
       principalEmail: document.getElementById('prof-principal-email').value.trim(),
       weeklySchedule: updatedWeeklySchedule,
       fieldDays: updatedFieldDays,
+      teacherSignatureImg: teacherSigImg || currentUser.teacherSignatureImg,
       consentSigned: true,
       consentDate: new Date().toISOString()
     };
@@ -124,12 +136,12 @@ function setupEventListeners(currentUser) {
     setTimeout(() => {
       API.saveUser(updatedUser);
       Auth.setCurrentUser(updatedUser);
-      showToast('פרופיל המורה ומערכת השעות עודכנו בהצלחה!', 'success');
+      showToast('פרופיל המורה, מערכת השעות והחתימה נשמרו בהצלחה!', 'success');
 
       setTimeout(() => {
         window.location.href = 'teacher.html';
-      }, 700);
-    }, 600);
+      }, 500);
+    }, 400);
   });
 }
 

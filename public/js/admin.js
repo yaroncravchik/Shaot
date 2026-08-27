@@ -91,14 +91,14 @@ function renderMasterReportsTable(reports) {
  const st = REPORT_STATUSES[r.status] || { label: r.status, badgeClass: 'badge-draft' };
  const tr = document.createElement('tr');
 
- let sigHtml = '<span class="text-muted">ממתין לחתימה</span>';
- if (r.signatureId) {
- sigHtml = `
- <a href="verify.html?sig=${r.signatureId}" class="rsa-badge" title="לחץ לבדיקת אמינות חתימה">
- <span> ${r.signatureId}</span>
- </a>
- `;
- }
+    let sigHtml = '<span class="text-muted">ממתין לחתימה</span>';
+    if (r.signatureId || r.status === 'approved_paid') {
+      sigHtml = `
+        <span class="rsa-badge" style="background:#d4edda; color:#155724; border-color:#c3e6cb;">
+          אושר ונחתם לתשלום
+        </span>
+      `;
+    }
 
  tr.innerHTML = `
  <td><span style="font-family:monospace; font-size:0.8125rem;">${r.id}</span></td>
@@ -134,20 +134,32 @@ function openAdminReviewModal(reportId) {
  document.getElementById('admin-m-hours-breakdown').textContent = 
  `שעות קבועות: ${activeAdminReviewReport.totalFixedHours || 0} | נוספות: ${activeAdminReviewReport.totalOvertimeHours || 0} | היעדרות: ${activeAdminReviewReport.totalAbsenceHours || 0}`;
 
- const sigStatusBox = document.getElementById('admin-m-sig-status');
- const btnApprove = document.getElementById('admin-btn-approve-payment');
+  const sigStatusBox = document.getElementById('admin-m-sig-status');
+  const btnApprove = document.getElementById('admin-btn-approve-payment');
+  const sigWrapper = document.getElementById('admin-sig-wrapper');
 
- if (activeAdminReviewReport.signatureId) {
- sigStatusBox.innerHTML = `
- <a href="verify.html?sig=${activeAdminReviewReport.signatureId}" class="rsa-badge" style="background:#d4edda; color:#155724; border-color:#c3e6cb;">
- חתום דיגיטלית: ${activeAdminReviewReport.signatureId}
- </a>
- `;
- btnApprove.style.display = 'none';
- } else {
- sigStatusBox.innerHTML = `<span class="badge badge-pending-supervisor">טרם הונפקה חתימה דיגיטלית סופית</span>`;
- btnApprove.style.display = 'inline-flex';
- }
+  if (activeAdminReviewReport.signatureId) {
+    sigStatusBox.innerHTML = `
+      <span class="rsa-badge" style="background:#d4edda; color:#155724; border-color:#c3e6cb;">
+        אושר ונחתם דיגיטלית לתשלום
+      </span>
+    `;
+    btnApprove.style.display = 'none';
+    if (sigWrapper) sigWrapper.style.display = 'none';
+  } else {
+    sigStatusBox.innerHTML = `<span class="badge badge-pending-supervisor">ממתין לאישור ממונה לתשלום</span>`;
+    btnApprove.style.display = 'inline-flex';
+    if (sigWrapper) {
+      sigWrapper.style.display = 'block';
+      setTimeout(() => {
+        const canvas = document.getElementById('admin-sig-canvas');
+        const clearBtn = document.getElementById('admin-clear-sig-btn');
+        if (canvas) {
+          adminSigPad = new GraphicSignaturePad(canvas, clearBtn);
+        }
+      }, 100);
+    }
+  }
 
  // Audit Timeline
  const timelineContainer = document.getElementById('admin-m-timeline');
