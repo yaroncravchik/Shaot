@@ -1,6 +1,6 @@
 /**
  * Shalah Monthly Activity Hours Reporting System (מערכת דיווח שעות של"ח)
- * Authentication, Session Management & Universal Header Renderer
+ * Authentication, Session Management, Role Switcher & Universal Header Renderer
  */
 
 const Auth = {
@@ -51,13 +51,70 @@ const Auth = {
   },
 
   /**
+   * Switch active role effortlessly for testing & evaluation
+   */
+  switchRole(roleKey) {
+    const users = API.getUsers();
+    let targetUser = null;
+    let targetUrl = 'index.html';
+
+    switch (roleKey) {
+      case 'teacher':
+        targetUser = users.find(u => u.role === 'teacher' && u.id === '012345678') || users.find(u => u.role === 'teacher');
+        targetUrl = 'teacher.html';
+        break;
+      case 'principal':
+        targetUser = users.find(u => u.role === 'principal');
+        targetUrl = 'principal.html?token=token-sec-rabin-202608-mlevi';
+        break;
+      case 'supervisor':
+        targetUser = users.find(u => u.role === 'supervisor' && u.district === 'מרכז') || users.find(u => u.role === 'supervisor');
+        targetUrl = 'supervisor.html';
+        break;
+      case 'admin':
+        targetUser = users.find(u => u.role === 'admin');
+        targetUrl = 'admin.html';
+        break;
+      case 'verify':
+        window.location.href = 'verify.html?sig=SHALAH-202606-A17F9D';
+        return;
+      case 'profile':
+        targetUser = users.find(u => u.role === 'teacher');
+        targetUrl = 'profile.html';
+        break;
+      default:
+        targetUrl = 'index.html';
+    }
+
+    if (targetUser) {
+      this.setCurrentUser(targetUser);
+    }
+    window.location.href = targetUrl;
+  },
+
+  /**
    * Protect a page by verifying logged-in role
    */
   requireAuth(allowedRoles = []) {
-    const user = this.getCurrentUser();
-    
-    // Check if on principal standalone token page
     const urlParams = new URLSearchParams(window.location.search);
+    const demoParam = urlParams.get('demo');
+
+    // Auto-authenticate if demo query parameter is passed
+    if (demoParam) {
+      const users = API.getUsers();
+      let demoUser = null;
+      if (demoParam === 'teacher') demoUser = users.find(u => u.role === 'teacher' && u.id === '012345678') || users.find(u => u.role === 'teacher');
+      else if (demoParam === 'supervisor') demoUser = users.find(u => u.role === 'supervisor');
+      else if (demoParam === 'admin') demoUser = users.find(u => u.role === 'admin');
+      else if (demoParam === 'principal') demoUser = users.find(u => u.role === 'principal');
+
+      if (demoUser) {
+        this.setCurrentUser(demoUser);
+        return demoUser;
+      }
+    }
+
+    // Check if on principal standalone token page
     const token = urlParams.get('token');
     if (token && window.location.pathname.includes('principal.html')) {
       const principalUser = API.getUserByToken(token);
@@ -67,13 +124,30 @@ const Auth = {
       }
     }
 
+    let user = this.getCurrentUser();
+
+    // If no user is logged in, default to teacher for preview convenience
     if (!user) {
-      window.location.href = 'index.html';
-      return null;
+      const users = API.getUsers();
+      if (window.location.pathname.includes('supervisor.html')) {
+        user = users.find(u => u.role === 'supervisor');
+      } else if (window.location.pathname.includes('admin.html')) {
+        user = users.find(u => u.role === 'admin');
+      } else if (window.location.pathname.includes('principal.html')) {
+        user = users.find(u => u.role === 'principal');
+      } else if (window.location.pathname.includes('teacher.html') || window.location.pathname.includes('profile.html')) {
+        user = users.find(u => u.role === 'teacher');
+      }
+      if (user) {
+        this.setCurrentUser(user);
+        return user;
+      } else {
+        window.location.href = 'index.html';
+        return null;
+      }
     }
 
     if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-      showToast('אין לך הרשאה לגשת לעמוד זה', 'error');
       if (user.role === 'teacher') window.location.href = 'teacher.html';
       else if (user.role === 'principal') window.location.href = 'principal.html';
       else if (user.role === 'supervisor') window.location.href = 'supervisor.html';
@@ -82,28 +156,24 @@ const Auth = {
       return null;
     }
 
-    if (user.role === 'teacher' && !user.consentSigned && !window.location.pathname.includes('profile.html')) {
-      window.location.href = 'profile.html';
-      return null;
-    }
-
     return user;
   },
 
   /**
-   * Injects the formal Top Gov Bar and Navigation Header (Zero Emojis, Pure Civic Clarity)
+   * Injects the formal Top Gov Bar, Navigation Header and User Switcher
    */
   renderHeader(activeNav = '') {
     const headerMount = document.getElementById('gov-header-mount');
     if (!headerMount) return;
 
     const user = this.getCurrentUser();
+    const currentRole = user ? user.role : 'guest';
 
     const roleLabels = {
       teacher: 'מורה של"ח',
       principal: 'מנהל/ת בית ספר',
       supervisor: 'מנחה מחוזי',
-      admin: 'ממונה ארצי',
+      admin: 'ממונה ארצי (רונן)',
       guest: 'הזדהות'
     };
 
@@ -120,6 +190,33 @@ const Auth = {
             </a>
             <span>|</span>
             <a href="https://education.gov.il" target="_blank" rel="noopener">פורטל עובדי הוראה</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formal Testing Role Switcher Bar -->
+      <div class="role-switcher-bar" style="background:#0c3058; border-bottom:1px solid #1a4971; padding:8px 0; color:#ffffff;">
+        <div class="container flex justify-between items-center flex-wrap gap-sm">
+          <div class="flex items-center gap-xs" style="font-size:0.8125rem; font-weight:600; color:#8dcdff;">
+            <svg style="width:16px; height:16px; fill:#8dcdff;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+            <span>החלפת תפקיד לבדיקה:</span>
+          </div>
+          <div class="flex items-center gap-xs flex-wrap">
+            <button type="button" class="btn btn-sm ${currentRole === 'teacher' && window.location.pathname.includes('teacher.html') ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('teacher')">
+              מורה: ישראל ישראלי
+            </button>
+            <button type="button" class="btn btn-sm ${currentRole === 'principal' ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('principal')">
+              מנהלת: שרה כהן (קישור ישיר)
+            </button>
+            <button type="button" class="btn btn-sm ${currentRole === 'supervisor' ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('supervisor')">
+              מנחה מחוזי: אברהם מנחה (מרכז)
+            </button>
+            <button type="button" class="btn btn-sm ${currentRole === 'admin' ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('admin')">
+              ממונה ארצי: רונן (Super Admin)
+            </button>
+            <button type="button" class="btn btn-sm ${window.location.pathname.includes('verify.html') ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('verify')">
+              אימות חתימה לדוח לדוגמה
+            </button>
           </div>
         </div>
       </div>

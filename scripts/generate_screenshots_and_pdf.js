@@ -9,15 +9,15 @@ if (!fs.existsSync(screenshotsDir)) {
   fs.mkdirSync(screenshotsDir, { recursive: true });
 }
 
-console.log('=== Step 1: Capturing High-Res Screenshots ===');
+console.log('=== Step 1: Capturing High-Res Screenshots for Each Unique Screen ===');
 
 const pages = [
   { name: '01_login.png', url: 'http://localhost:5000/index.html', width: 1280, height: 850 },
-  { name: '02_profile.png', url: 'http://localhost:5000/profile.html', width: 1280, height: 1000 },
-  { name: '03_teacher.png', url: 'http://localhost:5000/teacher.html', width: 1280, height: 1100 },
+  { name: '02_profile.png', url: 'http://localhost:5000/profile.html?demo=teacher', width: 1280, height: 1000 },
+  { name: '03_teacher.png', url: 'http://localhost:5000/teacher.html?demo=teacher', width: 1280, height: 1100 },
   { name: '04_principal.png', url: 'http://localhost:5000/principal.html?token=token-sec-rabin-202608-mlevi', width: 1280, height: 1100 },
-  { name: '05_supervisor.png', url: 'http://localhost:5000/supervisor.html', width: 1280, height: 1100 },
-  { name: '06_admin.png', url: 'http://localhost:5000/admin.html', width: 1280, height: 1100 },
+  { name: '05_supervisor.png', url: 'http://localhost:5000/supervisor.html?demo=supervisor', width: 1280, height: 1100 },
+  { name: '06_admin.png', url: 'http://localhost:5000/admin.html?demo=admin', width: 1280, height: 1100 },
   { name: '07_verify.png', url: 'http://localhost:5000/verify.html?sig=SHALAH-202606-A17F9D', width: 1280, height: 950 }
 ];
 
@@ -26,13 +26,14 @@ for (const p of pages) {
   console.log(`Capturing ${p.name} from ${p.url}...`);
   try {
     execSync(`"${edgePath}" --headless --disable-gpu --window-size=${p.width},${p.height} --screenshot="${outPath}" "${p.url}"`, { stdio: 'ignore' });
-    console.log(`✓ Saved ${p.name}`);
+    const stat = fs.statSync(outPath);
+    console.log(`✓ Saved ${p.name} (${stat.size} bytes)`);
   } catch (err) {
     console.error(`Failed to capture ${p.name}:`, err.message);
   }
 }
 
-console.log('\n=== Step 2: Creating HTML Guide for Non-Technical Testers ===');
+console.log('\n=== Step 2: Creating HTML Guide for Testers & Reviewers ===');
 
 function base64Image(filename) {
   const filePath = path.join(screenshotsDir, filename);
@@ -54,7 +55,7 @@ const htmlContent = `<!DOCTYPE html>
   <style>
     @page {
       size: A4 portrait;
-      margin: 15mm 15mm 15mm 15mm;
+      margin: 14mm 14mm 14mm 14mm;
     }
     * {
       box-sizing: border-box;
@@ -78,38 +79,38 @@ const htmlContent = `<!DOCTYPE html>
     .cover-header {
       background: linear-gradient(135deg, #007bff 0%, #004085 100%);
       color: #ffffff;
-      padding: 40px 30px;
+      padding: 35px 25px;
       border-radius: 12px;
-      margin-bottom: 25px;
+      margin-bottom: 20px;
       text-align: center;
     }
     .cover-title {
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 800;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .cover-subtitle {
-      font-size: 16px;
+      font-size: 15px;
       opacity: 0.95;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
     }
     .cover-badge {
       display: inline-block;
       background: rgba(255, 255, 255, 0.2);
-      padding: 6px 16px;
+      padding: 5px 14px;
       border-radius: 20px;
       font-size: 12px;
       font-weight: 600;
       border: 1px solid rgba(255, 255, 255, 0.4);
     }
     .section-title {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 700;
       color: #007bff;
       border-bottom: 2px solid #dee2e6;
-      padding-bottom: 6px;
-      margin-top: 25px;
-      margin-bottom: 12px;
+      padding-bottom: 5px;
+      margin-top: 20px;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -118,35 +119,35 @@ const htmlContent = `<!DOCTYPE html>
       background: #f8f9fa;
       border: 1px solid #dee2e6;
       border-radius: 8px;
-      padding: 14px;
-      margin-bottom: 14px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
     }
     .card-title {
       font-weight: 700;
-      font-size: 14px;
+      font-size: 13.5px;
       color: #0c3058;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     .role-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-bottom: 15px;
+      gap: 10px;
+      margin-bottom: 12px;
     }
     .role-box {
       border: 1px solid #8dcdff;
       background: #f0f9fa;
-      padding: 12px;
+      padding: 10px 12px;
       border-radius: 8px;
     }
     .role-name {
       font-weight: 700;
       color: #004085;
       font-size: 13px;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
     .screenshot-container {
-      margin: 12px 0;
+      margin: 10px 0;
       border: 1px solid #dee2e6;
       border-radius: 8px;
       overflow: hidden;
@@ -163,16 +164,16 @@ const htmlContent = `<!DOCTYPE html>
       background: #f4f4f4;
       padding: 6px 12px;
       font-size: 11px;
-      color: #6c757d;
+      color: #495057;
       border-top: 1px solid #dee2e6;
-      font-weight: 500;
+      font-weight: 600;
     }
     .steps-list {
-      padding-right: 20px;
-      margin-bottom: 12px;
+      padding-right: 18px;
+      margin-bottom: 10px;
     }
     .steps-list li {
-      margin-bottom: 6px;
+      margin-bottom: 5px;
     }
     .badge-pill {
       display: inline-block;
@@ -188,20 +189,20 @@ const htmlContent = `<!DOCTYPE html>
     .info-callout {
       background: #e8f4fd;
       border-right: 4px solid #007bff;
-      padding: 10px 14px;
-      border-radius: 0 8px 8px 0;
-      margin: 12px 0;
+      padding: 8px 12px;
+      border-radius: 0 6px 6px 0;
+      margin: 10px 0;
       font-size: 12px;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 12px 0;
-      font-size: 12px;
+      margin: 10px 0;
+      font-size: 11.5px;
     }
     th, td {
       border: 1px solid #dee2e6;
-      padding: 6px 10px;
+      padding: 5px 8px;
       text-align: right;
     }
     th {
@@ -213,9 +214,9 @@ const htmlContent = `<!DOCTYPE html>
       text-align: center;
       font-size: 10px;
       color: #6c757d;
-      margin-top: 20px;
+      margin-top: 15px;
       border-top: 1px solid #eaeaea;
-      padding-top: 8px;
+      padding-top: 6px;
     }
   </style>
 </head>
@@ -225,19 +226,19 @@ const htmlContent = `<!DOCTYPE html>
   <div class="page">
     <div class="cover-header">
       <div class="cover-title">מערכת דיווח שעות פעילות חודשית של"ח</div>
-      <div class="cover-subtitle">מדריך מפורט ואינטראקטיבי לבודק (Reviewer & Tester Manual)</div>
-      <div class="cover-badge">גרסה 2.1 מעודכנת • שפת עיצוב Civic Clarity • משרד החינוך</div>
+      <div class="cover-subtitle">מדריך שימוש והדרכה מפורטת לבודק (User & Tester Manual)</div>
+      <div class="cover-badge">גרסה 2.1 מעודכנת • שפת עיצוב ממלכתית Civic Clarity • משרד החינוך</div>
     </div>
 
     <div class="card">
-      <div class="card-title">📖 על המערכת – במילים פשוטות</div>
+      <div class="card-title">אודות המערכת – במילים פשוטות</div>
       <p>
         מערכת דיווח שעות של"ח (שדה, לאום, חברה) היא מערכת מקוונת המאפשרת למורי של"ח לדווח על שעות הפעילות שלהם מדי חודש (שעות הוראה קבועות, ימי שדה, שעות נוספות והיעדרויות).
         המערכת מייצרת תהליך אישור מובנה ומוסדר העובר דרך <strong>מנהל/ת בית הספר</strong>, לאחר מכן דרך <strong>המנחה המחוזי</strong> (שיכול לתקן שעות ישירות), ולבסוף מגיע ל<strong>ממונה הארצי (רונן)</strong> לאישור סופי לתשלום והנפקת חתימה דיגיטלית מאובטחת.
       </p>
     </div>
 
-    <div class="section-title">👥 ארבעת בעלי התפקידים במערכת</div>
+    <div class="section-title">ארבעת בעלי התפקידים במערכת</div>
     <div class="role-grid">
       <div class="role-box">
         <div class="role-name">1. מורה של"ח (Teacher)</div>
@@ -245,7 +246,7 @@ const htmlContent = `<!DOCTYPE html>
       </div>
       <div class="role-box">
         <div class="role-name">2. מנהל/ת בית ספר (Principal)</div>
-        <p>מקבל קישור מאובטח ישיר למייל (ללא צורך בלוגין), בודק את הדוח וחותם עליו בלחיצה אחת או מחזיר עם הערות.</p>
+        <p>מקבל קישור ישיר ומאובטח במייל (ללא צורך בלוגין), בודק את הדוח וחותם עליו בלחיצה אחת או מחזיר עם הערות.</p>
       </div>
       <div class="role-box">
         <div class="role-name">3. מנחה מחוזי (Supervisor)</div>
@@ -258,8 +259,8 @@ const htmlContent = `<!DOCTYPE html>
     </div>
 
     <div class="info-callout">
-      <strong>💡 כלי בדיקה מהיר מובנה (Quick Demo Switcher):</strong>
-      בראש כל עמוד באתר מופיע סרגל עליון כחול המאפשר לבודק לעבור באופן מיידי בלחיצה אחת בין כל 5 התפקידים, ללא צורך בהתנתקות או זכירת סיסמאות!
+      <strong>סרגל מעבר מהיר לבדיקה (Role Switcher):</strong>
+      בראש כל עמוד באתר מוטמע סרגל כחול ייעודי המאפשר לבודק לעבור באופן מיידי בלחיצה אחת בין כל התפקידים (מורה, מנהלת, מנחה מחוזי, ממונה ארצי ואימות חתימה), ללא צורך בהתנתקות או זכירת סיסמאות!
     </div>
 
     <div class="footer-note">מערכת דיווח שעות של"ח – מדריך לבודק • עמוד 1 מתוך 6</div>
@@ -267,22 +268,22 @@ const htmlContent = `<!DOCTYPE html>
 
   <!-- עמוד 2: מסך התחברות ופרופיל מורה -->
   <div class="page">
-    <div class="section-title">🔑 1. מסך התחברות והזדהות (Login)</div>
+    <div class="section-title">1. מסך התחברות והזדהות (Login)</div>
     <p>
-      הכניסה למערכת מבוצעת באמצעות הזנת מספר <strong>תעודת זהות (9 ספרות)</strong> ומספר <strong>טלפון נייד</strong>. המערכת מוודאת את הפרטים מול רשימת מורשים קבועה מראש.
+      הכניסה למערכת מבוצעת באמצעות הזנת מספר <strong>תעודת זהות (9 ספרות)</strong> ומספר <strong>טלפון נייד</strong>. המערכת מוודאת את הפרטים מול רשימת המורשים ומנתבת ישירות למסך התפקיד המתאים.
     </p>
     <div class="screenshot-container">
       <img class="screenshot-img" src="${base64Image('01_login.png')}" alt="מסך התחברות">
-      <div class="screenshot-caption">תמונה 1: מסך התחברות עם סרגל כניסה מהירה לבודקים (Demo Switcher)</div>
+      <div class="screenshot-caption">תמונה 1: מסך התחברות נקי והזדהות מאובטחת</div>
     </div>
 
-    <div class="section-title">📋 2. הגדרת פרופיל ומערכת שעות שבועית (Profile Setup)</div>
+    <div class="section-title">2. הגדרת פרופיל ומערכת שעות שבועית (Profile Setup)</div>
     <p>
       במסך זה המורה מגדיר את הפרטים המוסדיים (סמל מוסד, מחוז, רשות מקומית), מזין את שעות ההוראה הקבועות שלו לימים א'-ו', מסמן את ימי השדה הקבועים שלו, ומאשר את <strong>ההסכמה הדיגיטלית המחייבת</strong>.
     </p>
     <div class="screenshot-container">
       <img class="screenshot-img" src="${base64Image('02_profile.png')}" alt="מסך פרופיל">
-      <div class="screenshot-caption">תמונה 2: הגדרת פרופיל אישי, מערכת שעות שבועית והסכמה דיגיטלית</div>
+      <div class="screenshot-caption">תמונה 2: מסך הגדרת פרופיל אישי, מערכת שעות קבועה א'-ו' וסימון ימי שדה</div>
     </div>
 
     <div class="footer-note">מערכת דיווח שעות של"ח – מדריך לבודק • עמוד 2 מתוך 6</div>
@@ -290,13 +291,13 @@ const htmlContent = `<!DOCTYPE html>
 
   <!-- עמוד 3: לוח בקרת מורה ומילוי דוח חודשי -->
   <div class="page">
-    <div class="section-title">📝 3. לוח בקרת מורה ומילוי דוח שעות חודשי</div>
+    <div class="section-title">3. לוח בקרת מורה ומילוי דוח שעות חודשי</div>
     <p>
-      לוח הבקרה של המורה מרכז את כל הדוחות של המורה ומאפשר פתיחת דוח חדש מתוך <strong>חלון דיווח גמיש של 4 חודשים</strong> (חודשיים אחורה, חודש נוכחי וחודש קדימה).
+      לוח הבקרה של המורה מרכז את כל הדוחות ומאפשר פתיחת דוח חדש מתוך <strong>חלון דיווח גמיש של 4 חודשים</strong> (חודשיים אחורה, חודש נוכחי וחודש קדימה).
     </p>
     
     <div class="card">
-      <div class="card-title">✨ תכונות מפתח בטופס הדיווח:</div>
+      <div class="card-title">תכונות מפתח בטופס הדיווח:</div>
       <ul class="steps-list">
         <li><strong>לוח שנה אוטומטי:</strong> מציג ימי ראשון עד שישי בלבד (שבתות מסוננות לחלוטין).</li>
         <li><strong>הדגשת חגים וימי שדה:</strong> חגים וחופשות משה"ח מסומנים בצבע ייעודי עם שם החג.</li>
@@ -309,7 +310,7 @@ const htmlContent = `<!DOCTYPE html>
 
     <div class="screenshot-container">
       <img class="screenshot-img" src="${base64Image('03_teacher.png')}" alt="לוח בקרה מורה">
-      <div class="screenshot-caption">תמונה 3: לוח בקרת מורה, היסטוריית דוחות וטבלת מילוי שעות יומית</div>
+      <div class="screenshot-caption">תמונה 3: לוח בקרת מורה, היסטוריית דוחות, בורר 4 חודשים וטבלת מילוי שעות</div>
     </div>
 
     <div class="footer-note">מערכת דיווח שעות של"ח – מדריך לבודק • עמוד 3 מתוך 6</div>
@@ -317,16 +318,16 @@ const htmlContent = `<!DOCTYPE html>
 
   <!-- עמוד 4: אישור מנהל ועריכת מנחה מחוזי -->
   <div class="page">
-    <div class="section-title">🏫 4. מסך אישור מנהל/ת (קישור מאובטח בלחיצה אחת)</div>
+    <div class="section-title">4. מסך אישור מנהל/ת (קישור מאובטח בלחיצה אחת)</div>
     <p>
-      המנהל/ת מקבל קישור ייעודי מאובטח ישירות לדוח. המסך מאפשר צפייה בשעות ובנספחים, וביצוע <strong>אישור וחתימה דיגיטלית בלחיצה אחת</strong> או החזרה למורה בצירוף הערות.
+      המנהל/ת מקבל קישור ישיר לדוח. המסך מאפשר צפייה בשעות ובנספחים, וביצוע <strong>אישור וחתימה דיגיטלית בלחיצה אחת</strong> או החזרה למורה בצירוף הערות.
     </p>
     <div class="screenshot-container">
       <img class="screenshot-img" src="${base64Image('04_principal.png')}" alt="מסך מנהלת">
-      <div class="screenshot-caption">תמונה 4: מסך אישור מנהלת ללא צורך בהתחברות מוקדמת</div>
+      <div class="screenshot-caption">תמונה 4: מסך אישור מנהלת בית ספר ללא צורך בהתחברות מוקדמת</div>
     </div>
 
-    <div class="section-title">🧭 5. לוח בקרת מנחה מחוזי – עריכת שעות ישירה וייצוא</div>
+    <div class="section-title">5. לוח בקרת מנחה מחוזי – עריכת שעות ישירה וייצוא לאקסל</div>
     <p>
       המנחה צופה בכל דוחות מורי המחוז שלו. ביכולתו לפתוח דוח ולשנות שעות ישירות בטבלה. <strong>כל שדה שנערך נצבע מיד באדום מודגש</strong> עם פירוט הערך המקורי לצורכי בקרה והגינות. כמו כן, ניתן לייצא את כל נתוני המחוז לקובץ אקסל מעוצב.
     </p>
@@ -340,7 +341,7 @@ const htmlContent = `<!DOCTYPE html>
 
   <!-- עמוד 5: מסך ממונה רונן ואימות חתימות -->
   <div class="page">
-    <div class="section-title">👔 6. מסך ממונה ארצי (רונן - Super Admin)</div>
+    <div class="section-title">6. מסך ממונה ארצי (רונן - Super Admin)</div>
     <p>
       הממונה הארצי צופה בכלל הדוחות בארץ, יכול לסנן לפי מחוז, מנחה וסטטוס. בלחיצה על "אישור סופי לתשלום", המערכת מנפיקה <strong>חתימה דיגיטלית מאובטחת RSA 2048-bit</strong> המבטיחה כי הדוח לא ישונה.
     </p>
@@ -349,7 +350,7 @@ const htmlContent = `<!DOCTYPE html>
       <div class="screenshot-caption">תמונה 6: מסך ממונה ארצי, יומן ביקורת, אישור סופי וייצוא מאסטר</div>
     </div>
 
-    <div class="section-title">🛡️ 7. עמוד אימות חתימות דיגיטליות ציבורי</div>
+    <div class="section-title">7. עמוד אימות חתימות דיגיטליות ציבורי</div>
     <p>
       כל אדם המחזיק במזהה חתימה של דוח מאושר (למשל: <code>SHALAH-202606-A17F9D</code>) יכול להזין אותו בעמוד האימות ולקבל תעודת אימות ממלכתית עם חותמת ירוקה המאשרת את מקוריות הדוח, פרטי החותם ותמצית השעות.
     </p>
@@ -363,7 +364,7 @@ const htmlContent = `<!DOCTYPE html>
 
   <!-- עמוד 6: תרחיש בדיקה מומלץ צעד-אחר-צעד -->
   <div class="page">
-    <div class="section-title">🎯 תרחיש בדיקה מומלץ למשתמש (Step-by-Step Test Walkthrough)</div>
+    <div class="section-title">תרחיש בדיקה מומלץ למשתמש (Step-by-Step Test Walkthrough)</div>
     <p>כדי לבדוק את המערכת מקצה לקצה בצורה המהירה ביותר, בצעו את הצעדים הבאים:</p>
 
     <table>
@@ -409,8 +410,8 @@ const htmlContent = `<!DOCTYPE html>
       </tbody>
     </table>
 
-    <div class="card" style="margin-top: 20px;">
-      <div class="card-title">📞 תמיכה ועזרה בבדיקות</div>
+    <div class="card" style="margin-top: 15px;">
+      <div class="card-title">תמיכה ועזרה בבדיקות</div>
       <p>
         בכל שאלה או בירור לגבי המערכת, תרחישי הדיווח או הסטאק הטכנולוגי (PostgreSQL, Vanilla Client, RSA 2048-bit), ניתן לפנות לצוות הפיתוח של המערכת.
       </p>
@@ -432,7 +433,8 @@ const pdfOutputPath = path.join(__dirname, '../מדריך_לבודק_מערכת_
 
 try {
   execSync(`"${edgePath}" --headless --disable-gpu --no-pdf-header-footer --print-to-pdf="${pdfOutputPath}" "http://localhost:5000/user_guide.html"`, { stdio: 'ignore' });
-  console.log(`✓ PDF successfully generated at: ${pdfOutputPath}`);
+  const stat = fs.statSync(pdfOutputPath);
+  console.log(`✓ PDF successfully generated at: ${pdfOutputPath} (${stat.size} bytes)`);
 } catch (err) {
   console.error('Failed to generate PDF:', err.message);
 }
