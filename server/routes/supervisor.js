@@ -202,13 +202,13 @@ router.post('/reports/:id/approve', (req, res) => {
       id,
       supervisor_user_id || null,
       supervisor_name || 'מנחה מחוזי',
-      `אישור מנחה מחוזי והעברה לבדיקת ממונה ארצי${notes ? ': ' + notes : ''}`,
+      `אישור מנחה מחוזי והעברה לבדיקת ממונה מחוז מרכז${notes ? ': ' + notes : ''}`,
       now
     );
 
     return res.json({
       success: true,
-      message: 'הדוח אושר בהצלחה והועבר לבדיקת הממונה הארצי.'
+      message: 'הדוח אושר בהצלחה והועבר לבדיקת ממונה מחוז מרכז.'
     });
   } catch (err) {
     console.error('Supervisor approve error:', err);

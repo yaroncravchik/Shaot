@@ -19,63 +19,56 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function loadMasterAdminData() {
- allReportsList = API.getReports();
- renderMasterReportsTable(allReportsList);
- updateMasterKpis(allReportsList);
+  allReportsList = API.getReports().filter(r => !r.district || r.district === 'מרכז');
+  renderMasterReportsTable(allReportsList);
+  updateMasterKpis(allReportsList);
 }
 
 function updateMasterKpis(reports) {
- const totalCount = reports.length;
- const pendingAdminCount = reports.filter(r => r.status === 'pending_admin' || r.status === 'supervisor_edited' || r.status === 'pending_supervisor').length;
- const signedCount = reports.filter(r => r.status === 'approved_paid').length;
- 
- let totalApprovedHours = 0;
- reports.filter(r => r.status === 'approved_paid').forEach(r => {
- totalApprovedHours += parseFloat(r.totalPayableHours || 0);
- });
+  const totalCount = reports.length;
+  const pendingAdminCount = reports.filter(r => r.status === 'pending_admin' || r.status === 'supervisor_edited' || r.status === 'pending_supervisor').length;
+  const signedCount = reports.filter(r => r.status === 'approved_paid').length;
+  
+  let totalApprovedHours = 0;
+  reports.filter(r => r.status === 'approved_paid').forEach(r => {
+    totalApprovedHours += parseFloat(r.totalPayableHours || 0);
+  });
 
- document.getElementById('admin-stat-total-reports').textContent = totalCount;
- document.getElementById('admin-stat-pending-admin').textContent = pendingAdminCount;
- document.getElementById('admin-stat-signed').textContent = signedCount;
- document.getElementById('admin-stat-total-hours').textContent = totalApprovedHours;
+  document.getElementById('admin-stat-total-reports').textContent = totalCount;
+  document.getElementById('admin-stat-pending-admin').textContent = pendingAdminCount;
+  document.getElementById('admin-stat-signed').textContent = signedCount;
+  document.getElementById('admin-stat-total-hours').textContent = totalApprovedHours;
 }
 
 function setupAdminFilters() {
- const searchInput = document.getElementById('admin-search');
- const districtFilter = document.getElementById('admin-district-filter');
- const statusFilter = document.getElementById('admin-status-filter');
+  const searchInput = document.getElementById('admin-search');
+  const statusFilter = document.getElementById('admin-status-filter');
 
- function applyMasterFilters() {
- const q = searchInput.value.trim().toLowerCase();
- const dist = districtFilter.value;
- const st = statusFilter.value;
+  function applyMasterFilters() {
+    const q = searchInput.value.trim().toLowerCase();
+    const st = statusFilter.value;
 
- let filtered = allReportsList;
+    let filtered = allReportsList;
 
- if (dist !== 'all') {
- filtered = filtered.filter(r => r.district === dist);
- }
+    if (st !== 'all') {
+      filtered = filtered.filter(r => r.status === st);
+    }
 
- if (st !== 'all') {
- filtered = filtered.filter(r => r.status === st);
- }
+    if (q) {
+      filtered = filtered.filter(r =>
+        (r.teacherName && r.teacherName.toLowerCase().includes(q)) ||
+        (r.teacherId && r.teacherId.includes(q)) ||
+        (r.schoolName && r.schoolName.toLowerCase().includes(q)) ||
+        (r.supervisorName && r.supervisorName.toLowerCase().includes(q)) ||
+        (r.id && r.id.toLowerCase().includes(q))
+      );
+    }
 
- if (q) {
- filtered = filtered.filter(r =>
- (r.teacherName && r.teacherName.toLowerCase().includes(q)) ||
- (r.teacherId && r.teacherId.includes(q)) ||
- (r.schoolName && r.schoolName.toLowerCase().includes(q)) ||
- (r.supervisorName && r.supervisorName.toLowerCase().includes(q)) ||
- (r.id && r.id.toLowerCase().includes(q))
- );
- }
+    renderMasterReportsTable(filtered);
+  }
 
- renderMasterReportsTable(filtered);
- }
-
- searchInput.addEventListener('input', applyMasterFilters);
- districtFilter.addEventListener('change', applyMasterFilters);
- statusFilter.addEventListener('change', applyMasterFilters);
+  searchInput.addEventListener('input', applyMasterFilters);
+  statusFilter.addEventListener('change', applyMasterFilters);
 }
 
 function renderMasterReportsTable(reports) {

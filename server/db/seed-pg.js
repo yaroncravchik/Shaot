@@ -36,7 +36,7 @@ async function seedPostgres() {
  ['usr-principal-02', 'principal', '045678912', '0539876543', 'יורם פרידמן (מנהל)', 'principal@ironi-a.org.il', '654321', 'עירוני א\'', 'תל אביב', 'תל אביב-יפו', 100, 1, '2026-08-01 07:00:00+03', null, null, null, null],
  ['usr-supervisor-01', 'supervisor', '045678901', '0545678901', 'אברהם מנחה (מחוז מרכז)', 'avraham.sup@education.gov.il', null, null, 'מרכז', null, 100, 1, '2026-08-01 07:00:00+03', null, null, null, null],
  ['usr-supervisor-02', 'supervisor', '056789012', '0547654321', 'רחל שלום (מחוז תל אביב)', 'rachel.sup@education.gov.il', null, null, 'תל אביב', null, 100, 1, '2026-08-01 07:00:00+03', null, null, null, null],
- ['usr-admin-01', 'admin', '099999999', '0549999999', 'רונן ממונה ארצי', 'ronen.manager@education.gov.il', null, null, 'ארצי', null, 100, 1, '2026-08-01 06:00:00+03', null, null, null, null]
+ ['usr-admin-01', 'admin', '099999999', '0549999999', 'רונן ממונה מחוז מרכז', 'ronen.manager@education.gov.il', null, null, 'מרכז', null, 100, 1, '2026-08-01 06:00:00+03', null, null, null, null]
  ];
 
  for (const u of users) {

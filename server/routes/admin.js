@@ -187,7 +187,7 @@ router.post('/reports/:id/approve-payment', (req, res) => {
       `aud_${crypto.randomUUID()}`,
       id,
       admin_user_id || null,
-      admin_name || 'רונן - ממונה ארצי',
+      admin_name || 'רונן - ממונה מחוז מרכז',
       `אישור סופי לתשלום שכר וחתימה דיגיטלית RSA (מזהה: ${signResult.signatureId})`,
       now
     );
@@ -252,7 +252,7 @@ router.post('/reports/:id/return', (req, res) => {
       `aud_${crypto.randomUUID()}`,
       id,
       admin_user_id || null,
-      admin_name || 'רונן - ממונה ארצי',
+      admin_name || 'רונן - ממונה מחוז מרכז',
       `החזרת דוח ל${targetHebrew}: ${notes.trim()}`,
       now
     );

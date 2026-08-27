@@ -173,7 +173,7 @@ const Auth = {
       teacher: 'מורה של"ח',
       principal: 'מנהל/ת בית ספר',
       supervisor: 'מנחה מחוזי',
-      admin: 'ממונה ארצי (רונן)',
+      admin: 'ממונה מחוזי (רונן - מרכז)',
       guest: 'הזדהות'
     };
 
@@ -210,7 +210,7 @@ const Auth = {
               מנחה מחוזי: אברהם מנחה (מרכז)
             </button>
             <button type="button" class="btn btn-sm ${currentRole === 'admin' ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('admin')">
-              ממונה ארצי: רונן (Super Admin)
+              ממונה מחוזי: רונן (מרכז)
             </button>
           </div>
         </div>
@@ -279,7 +279,7 @@ const Auth = {
                 <li><a href="teacher.html">לוח בקרה מורה</a></li>
                 <li><a href="profile.html">הגדרת פרופיל ומערכת שעות</a></li>
                 <li><a href="supervisor.html">לוח בקרה מנחה מחוזי</a></li>
-                <li><a href="admin.html">פורטל ממונה ארצי</a></li>
+                <li><a href="admin.html">לוח בקרה ממונה מחוזי (מרכז)</a></li>
               </ul>
             </div>
             <div class="footer-links">

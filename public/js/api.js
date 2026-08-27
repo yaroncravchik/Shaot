@@ -170,14 +170,15 @@ function getInitialSeedUsers() {
  email: 'anat.f@education.gov.il',
  district: 'צפון'
  },
- {
- id: '000000001',
- phone: '0500000000',
- name: 'רונן - ממונה ארצי',
- role: 'admin',
- email: 'ronen.shalah@education.gov.il'
- }
- ];
+    {
+      id: '099999999',
+      phone: '0549999999',
+      name: 'רונן - ממונה מחוז מרכז',
+      role: 'admin',
+      email: 'ronen.shalah@education.gov.il',
+      district: 'מרכז'
+    }
+  ];
 }
 
 function getInitialSeedReports() {

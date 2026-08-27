@@ -266,11 +266,11 @@ function handleSupervisorApprove() {
  setTimeout(() => {
  API.supervisorApprove(activeReviewReport.id, currentSupervisor, remarks, activeReviewReport.daysData);
  closeModal('supervisor-review-modal');
- showToast('הדוח נבדק ואושר בהצלחה והועבר לבדיקת הממונה הארצי (רונן)', 'success');
+ showToast('הדוח נבדק ואושר בהצלחה והועבר לבדיקת ממונה מחוז מרכז (רונן)', 'success');
  loadSupervisorData();
  btnApprove.disabled = false;
- btnApprove.innerHTML = '<span> אישור והעברה לממונה (רונן)</span>';
- }, 700);
+ btnApprove.innerHTML = '<span>אישור והעברה לממונה מחוז מרכז</span>';
+ }, 500);
 }
 
 function handleSupervisorReturn() {

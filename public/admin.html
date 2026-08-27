@@ -3,7 +3,7 @@
 <head>
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>פורטל ממונה ארצי (רונן) – מערכת דיווח שעות של"ח</title>
+ <title>לוח בקרה ממונה מחוזי (רונן) – מחוז מרכז – מערכת דיווח שעות של"ח</title>
  <link rel="preconnect" href="https://fonts.googleapis.com">
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -58,23 +58,23 @@
  <div id="gov-header-mount"></div>
 
  <main class="container mb-4">
- <!-- Master Admin Header Banner -->
+ <!-- District Admin Header Banner -->
  <div class="page-header">
  <div class="page-header-content">
  <div>
  <div class="breadcrumb">
  <span>משרד החינוך</span>
  <span class="breadcrumb-sep">/</span>
- <span>מינהל חברה ונוער</span>
+ <span>מחוז מרכז</span>
  <span class="breadcrumb-sep">/</span>
- <span>הנהלת תחום של"ח וידיעת הארץ</span>
+ <span>תחום של"ח וידיעת הארץ</span>
  </div>
- <h1 class="page-title">לוח בקרה ממונה ארצי – רונן (Super Admin)</h1>
- <p class="page-subtitle">צפייה מרוכזת בכלל דוחות השעות הארציים, אישור סופי לתשלום והנפקת חתימות דיגיטליות</p>
+ <h1 class="page-title">לוח בקרה ממונה מחוזי – רונן (מחוז מרכז)</h1>
+ <p class="page-subtitle">צפייה מרוכזת בדוחות השעות של מחוז מרכז, אישור סופי לתשלום והטבעת חתימה</p>
  </div>
  <div class="flex gap-sm">
  <button type="button" class="btn btn-secondary" onclick="exportMasterReports()">
- <span> ייצוא מאסטר לאקסל (Excel)</span>
+ <span>ייצוא דוחות מחוז מרכז לאקסל</span>
  </button>
  </div>
  </div>
@@ -85,18 +85,18 @@
  <div class="stat-card stat-info">
  <div class="stat-icon"></div>
  <div class="stat-details">
- <span class="stat-label">סך דוחות פעילים</span>
+ <span class="stat-label">סך דוחות במחוז</span>
  <span class="stat-value" id="admin-stat-total-reports">4</span>
- <span class="stat-desc">בכלל המחוזות</span>
+ <span class="stat-desc">מחוז מרכז</span>
  </div>
  </div>
 
  <div class="stat-card stat-warning">
  <div class="stat-icon"></div>
  <div class="stat-details">
- <span class="stat-label">ממתינים לאישור סופי לתשלום</span>
+ <span class="stat-label">ממתינים לאישור ממונה</span>
  <span class="stat-value" id="admin-stat-pending-admin">2</span>
- <span class="stat-desc">נבדקו ע"י מנחה מחוזי</span>
+ <span class="stat-desc">נבדקו ע"י מנחי המחוז</span>
  </div>
  </div>
 
@@ -105,7 +105,7 @@
  <div class="stat-details">
  <span class="stat-label">דוחות מאושרים וחתומים</span>
  <span class="stat-value" id="admin-stat-signed">1</span>
- <span class="stat-desc">חתימת RSA-2048 הונפקה</span>
+ <span class="stat-desc">הועברו לתשלום שכר</span>
  </div>
  </div>
 
@@ -123,24 +123,12 @@
  <div class="card mb-4">
  <div class="card-header">
  <h3 class="card-title">
- <span></span>
- <span>מאגר הדוחות הארצי</span>
+ <span>מאגר דוחות שעות – מחוז מרכז</span>
  </h3>
  <div class="flex items-center gap-sm flex-wrap">
- <input type="text" id="admin-search" class="form-control" placeholder="חיפוש לפי מורה, ת&quot;ז, בי&quot;ס או מנחה..." style="width: 260px; height: 38px;">
+ <input type="text" id="admin-search" class="form-control" placeholder="חיפוש לפי מורה, תעודת זהות, בי&quot;ס או מנחה..." style="width: 300px; height: 38px;">
  
- <select id="admin-district-filter" class="form-select" style="width: 170px; height: 38px;">
- <option value="all">כל המחוזות</option>
- <option value="מרכז">מחוז מרכז</option>
- <option value="תל אביב">מחוז תל אביב</option>
- <option value="צפון">מחוז צפון</option>
- <option value="דרום">מחוז דרום</option>
- <option value="ירושלים">מחוז ירושלים</option>
- <option value="חיפה">מחוז חיפה</option>
- <option value="התיישבותי">התיישבותי</option>
- </select>
-
- <select id="admin-status-filter" class="form-select" style="width: 200px; height: 38px;">
+ <select id="admin-status-filter" class="form-select" style="width: 220px; height: 38px;">
  <option value="all">כל הסטטוסים</option>
  <option value="pending_admin">ממתין לאישור ממונה (רונן)</option>
  <option value="supervisor_edited">עודכן ע"י מנחה</option>
@@ -181,24 +169,24 @@
  <!-- ==========================================================================
  SUPER ADMIN MASTER REVIEW & RSA PAYMENT APPROVAL MODAL
  ========================================================================== -->
- <div class="modal-backdrop" id="admin-review-modal">
- <div class="modal-container modal-xl">
- <div class="modal-header">
- <div>
- <h2 class="modal-title" id="admin-modal-title">בדיקת ממונה ואישור סופי לתשלום</h2>
- <span class="text-muted" style="font-size:0.8125rem;">אישור סופי מנפיק חתימה דיגיטלית מאובטחת RSA-2048 ומעביר את הדוח לתשלום שכר</span>
- </div>
- <button type="button" class="modal-close-btn" onclick="closeModal('admin-review-modal')">&times;</button>
- </div>
+  <div class="modal-backdrop" id="admin-review-modal">
+    <div class="modal-container modal-xl">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title" id="admin-modal-title">בדיקת ממונה מחוזי ואישור סופי לתשלום – מחוז מרכז</h2>
+          <span class="text-muted" style="font-size:0.8125rem;">אישור סופי לתשלום שכר והטבעת חתימה דיגיטלית מאובטחת</span>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeModal('admin-review-modal')">&times;</button>
+      </div>
 
- <div class="modal-body">
- <div class="grid grid-3 mb-3">
- <div class="card" style="padding:16px;">
- <span class="text-muted" style="font-size:0.8125rem;">פרטי מורה ומוסד:</span>
- <div style="font-weight:700; font-size:1.05rem;" id="admin-m-teacher">ישראל ישראלי</div>
- <div style="font-size:0.875rem;" id="admin-m-school">תיכון יצחק רבין כפר סבא (440123)</div>
- <div style="font-size:0.8125rem; color:var(--primary);" id="admin-m-district">מחוז מרכז • מנחה: דוד לוי</div>
- </div>
+      <div class="modal-body">
+        <div class="grid grid-3 mb-3">
+          <div class="card" style="padding:16px;">
+            <span class="text-muted" style="font-size:0.8125rem;">פרטי מורה ומוסד:</span>
+            <div style="font-weight:700; font-size:1.05rem;" id="admin-m-teacher">ישראל ישראלי</div>
+            <div style="font-size:0.875rem;" id="admin-m-school">תיכון יצחק רבין כפר סבא (440123)</div>
+            <div style="font-size:0.8125rem; color:var(--primary);" id="admin-m-district">מחוז מרכז • מנחה: אברהם מנחה</div>
+          </div>
 
  <div class="card" style="padding:16px;">
  <span class="text-muted" style="font-size:0.8125rem;">סיכום שעות לתשלום:</span>
