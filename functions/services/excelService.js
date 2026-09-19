@@ -68,7 +68,7 @@ async function generateSingleReportExcel(report) {
 
  const metaRow1 = [
  'שם המורה:', report.teacher_name || report.full_name || '',
- 'תעודת זהות:', report.id_number || '',
+ 'שם משתמש:', report.id_number || report.username || report.id || '',
  'מוסד חינוכי:', `${report.school_name || ''} (${report.school_code || ''})`,
  'מחוז:', report.district || '',
  'היקף משרה:', `${report.job_percentage || 100}%`,
@@ -296,7 +296,7 @@ async function generateReportsSummaryExcel(reports, title = 'ריכוז דוחו
  const headers = [
  '#',
  'שם המורה',
- 'תעודת זהות',
+ 'שם משתמש',
  'טלפון',
  'מוסד חינוכי',
  'מחוז',

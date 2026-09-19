@@ -98,7 +98,7 @@ function verifySignature(sigId) {
  <div class="cert-grid">
  <div>
  <div class="cert-field-label">שם המורה המדווח:</div>
- <div class="cert-field-value">${report.teacherName} (ת"ז: ${report.teacherId})</div>
+ <div class="cert-field-value">${report.teacherName} (שם משתמש: ${report.teacherId})</div>
  </div>
  <div>
  <div class="cert-field-label">מוסד חינוכי:</div>

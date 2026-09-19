@@ -270,7 +270,7 @@ const htmlContent = `<!DOCTYPE html>
   <div class="page">
     <div class="section-title">1. מסך התחברות והזדהות (Login)</div>
     <p>
-      הכניסה למערכת מבוצעת באמצעות הזנת מספר <strong>תעודת זהות (9 ספרות)</strong> ומספר <strong>טלפון נייד</strong>. המערכת מזהה את המשתמש ומנתבת אותו ישירות למסך הרלוונטי.
+      הכניסה למערכת מבוצעת באמצעות הזנת <strong>שם משתמש</strong> ו<strong>סיסמה</strong>. המערכת מזהה את המשתמש ומנתבת אותו ישירות למסך הרלוונטי.
     </p>
     <div class="screenshot-container">
       <img class="screenshot-img" src="${base64Image('01_login.png')}" alt="מסך התחברות">

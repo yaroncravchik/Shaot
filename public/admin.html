@@ -132,7 +132,7 @@
           <span>מאגר דוחות שעות – מחוז מרכז</span>
         </h3>
         <div class="flex items-center gap-sm flex-wrap">
-          <input type="text" id="admin-search" class="form-control" placeholder="חיפוש לפי מורה, תעודת זהות, בי&quot;ס או מנחה..." style="width: 300px; height: 38px;">
+          <input type="text" id="admin-search" class="form-control" placeholder="חיפוש לפי מורה, שם משתמש, בי&quot;ס או מנחה..." style="width: 300px; height: 38px;">
           
           <select id="admin-status-filter" class="form-select" style="width: 220px; height: 38px;">
             <option value="all">כל הסטטוסים</option>
@@ -197,7 +197,7 @@
               <tr>
                 <th>שם מלא</th>
                 <th>תפקיד</th>
-                <th>שם משתמש / ת"ז</th>
+                <th>שם משתמש</th>
                 <th>שיוך למנחה מחוזי</th>
                 <th>מוסד לימודים</th>
                 <th>מחוז</th>
@@ -370,17 +370,17 @@
           <div class="grid grid-2 gap-sm mb-2">
             <div class="form-group">
               <label class="form-label" for="teacher-username">
-                <span>שם משתמש (ת"ז):</span>
+                <span>שם משתמש:</span>
                 <span class="required">*</span>
               </label>
-              <input type="text" id="teacher-username" class="form-control" required placeholder="לדוגמה: 012345678" maxlength="15">
+              <input type="text" id="teacher-username" class="form-control" required placeholder="לדוגמה: israel_i" maxlength="25">
             </div>
             <div class="form-group">
               <label class="form-label" for="teacher-password">
-                <span>סיסמה (או נייד):</span>
+                <span>סיסמה:</span>
                 <span class="required">*</span>
               </label>
-              <input type="text" id="teacher-password" class="form-control" required placeholder="לדוגמה: 0501234567">
+              <input type="text" id="teacher-password" class="form-control" required placeholder="לדוגמה: pass123">
             </div>
           </div>
 
@@ -447,17 +447,17 @@
           <div class="grid grid-2 gap-sm mb-2">
             <div class="form-group">
               <label class="form-label" for="supervisor-username">
-                <span>שם משתמש (ת"ז):</span>
+                <span>שם משתמש:</span>
                 <span class="required">*</span>
               </label>
-              <input type="text" id="supervisor-username" class="form-control" required placeholder="לדוגמה: 045678901" maxlength="15">
+              <input type="text" id="supervisor-username" class="form-control" required placeholder="לדוגמה: david_l" maxlength="25">
             </div>
             <div class="form-group">
               <label class="form-label" for="supervisor-password">
-                <span>סיסמה (או נייד):</span>
+                <span>סיסמה:</span>
                 <span class="required">*</span>
               </label>
-              <input type="text" id="supervisor-password" class="form-control" required placeholder="לדוגמה: 0545678901">
+              <input type="text" id="supervisor-password" class="form-control" required placeholder="לדוגמה: pass123">
             </div>
           </div>
 

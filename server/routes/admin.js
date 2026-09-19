@@ -408,7 +408,7 @@ router.post('/create-user', (req, res) => {
     }
 
     if (!username || !username.trim()) {
-      return res.status(400).json({ success: false, error: 'חובה להזין שם משתמש / מספר ת"ז.' });
+      return res.status(400).json({ success: false, error: 'חובה להזין שם משתמש.' });
     }
 
     if (!password || !password.trim()) {

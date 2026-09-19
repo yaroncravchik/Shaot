@@ -71,36 +71,34 @@
         <form id="login-form">
           <div class="form-group">
             <label class="form-label" for="login-id">
-              <span>מספר תעודת זהות (9 ספרות)</span>
+              <span>שם משתמש</span>
               <span class="required">*</span>
             </label>
             <input 
               type="text" 
               id="login-id" 
               class="form-control" 
-              placeholder="הזן מספר תעודת זהות" 
-              maxlength="9" 
-              pattern="[0-9]{9}" 
+              placeholder="הזן שם משתמש" 
               required
               autocomplete="username"
             >
-            <span class="form-text">הזן 9 ספרות כולל ספרת ביקורת</span>
+            <span class="form-text">שם המשתמש שהוגדר במערכת</span>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="login-phone">
-              <span>מספר טלפון נייד</span>
+              <span>סיסמה</span>
               <span class="required">*</span>
             </label>
             <input 
-              type="tel" 
+              type="password" 
               id="login-phone" 
               class="form-control" 
-              placeholder="הזן מספר טלפון נייד" 
+              placeholder="הזן סיסמה" 
               required
-              autocomplete="tel"
+              autocomplete="current-password"
             >
-            <span class="form-text">מספר הנייד המעודכן במאגר משרד החינוך</span>
+            <span class="form-text">הזן סיסמה לכניסה למערכת</span>
           </div>
 
           <div id="login-error" class="form-error mb-2" style="display:none;"></div>

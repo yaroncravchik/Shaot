@@ -14,7 +14,7 @@ router.post('/login', (req, res) => {
     if (!loginId || !loginSecret) {
       return res.status(400).json({
         success: false,
-        error: 'נא להזין שם משתמש / ת"ז וסיסמה / טלפון נייד.'
+        error: 'נא להזין שם משתמש וסיסמה.'
       });
     }
 

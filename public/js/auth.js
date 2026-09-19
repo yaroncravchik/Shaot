@@ -22,23 +22,23 @@ const Auth = {
     }
   },
 
-  login(idNumber, phoneNumber) {
-    const cleanId = String(idNumber || '').trim();
-    const cleanPhone = String(phoneNumber || '').trim().replace(/[-\s]/g, '');
+  login(username, password) {
+    const cleanUsername = String(username || '').trim();
+    const cleanPassword = String(password || '').trim();
 
-    if (!cleanId || !cleanPhone) {
-      throw new Error('נא להזין מספר תעודת זהות ומספר טלפון נייד');
+    if (!cleanUsername || !cleanPassword) {
+      throw new Error('נא להזין שם משתמש וסיסמה');
     }
 
     const users = API.getUsers();
     // Find matching authorized user
     const found = users.find(u => 
-      u.id === cleanId && 
-      u.phone.replace(/[-\s]/g, '') === cleanPhone
+      u.id === cleanUsername && 
+      (u.phone === cleanPassword || u.phone.replace(/[-\s]/g, '') === cleanPassword.replace(/[-\s]/g, ''))
     );
 
     if (!found) {
-      throw new Error('פרטי ההזדהות אינם מופיעים ברשימת המורשים. נא לפנות למנחה המחוזי.');
+      throw new Error('שם המשתמש או הסיסמה שגויים. נא לפנות למנחה המחוזי.');
     }
 
     this.setCurrentUser(found);

@@ -650,7 +650,7 @@ const API = {
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
     if (users.some(u => u.id === cleanUsername)) {
-      throw new Error('משתמש עם שם משתמש (ת"ז) זה כבר קיים במערכת');
+      throw new Error('משתמש עם שם משתמש זה כבר קיים במערכת');
     }
 
     const supervisor = users.find(u => u.id === supervisorId) || { name: 'אברהם מנחה' };
@@ -688,7 +688,7 @@ const API = {
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
     if (users.some(u => u.id === cleanUsername)) {
-      throw new Error('משתמש עם שם משתמש (ת"ז) זה כבר קיים במערכת');
+      throw new Error('משתמש עם שם משתמש זה כבר קיים במערכת');
     }
 
     const newSupervisor = {
@@ -822,7 +822,7 @@ function exportReportsToExcel(reports, filename = 'shalah_hours_report.csv') {
  'מזהה דוח',
  'חודש/שנה',
  'שם מורה',
- 'תעודת זהות',
+ 'שם משתמש',
  'שם בית ספר',
  'סמל מוסד',
  'מחוז',
