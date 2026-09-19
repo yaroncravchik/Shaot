@@ -220,92 +220,90 @@
  </tr>
  </thead>
  <tbody>
- <tr>
- <td><strong>יום ראשון</strong></td>
- <td>
- <input type="number" id="sched-sun" class="form-control cell-input" min="0" max="12" step="0.5" value="6" required>
- </td>
- <td>
- <label class="form-check" style="margin:0; justify-content:center;">
- <input type="checkbox" id="field-sun" class="form-check-input">
- <span class="form-check-label" style="font-size:0.875rem;">יום שדה</span>
- </label>
- </td>
- <td><span class="text-muted" style="font-size:0.8125rem;">שעות הוראה בכיתה</span></td>
- </tr>
- <tr>
- <td><strong>יום שני</strong></td>
- <td>
- <input type="number" id="sched-mon" class="form-control cell-input" min="0" max="12" step="0.5" value="6" required>
- </td>
- <td>
- <label class="form-check" style="margin:0; justify-content:center;">
- <input type="checkbox" id="field-mon" class="form-check-input">
- <span class="form-check-label" style="font-size:0.875rem;">יום שדה</span>
- </label>
- </td>
- <td><span class="text-muted" style="font-size:0.8125rem;">שעות הוראה בכיתה</span></td>
- </tr>
- <tr>
- <td><strong>יום שלישי</strong></td>
- <td>
- <input type="number" id="sched-tue" class="form-control cell-input" min="0" max="12" step="0.5" value="8" required>
- </td>
- <td>
- <label class="form-check" style="margin:0; justify-content:center;">
- <input type="checkbox" id="field-tue" class="form-check-input" checked>
- <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"> יום שדה קבוע</span>
- </label>
- </td>
- <td><span class="text-muted" style="font-size:0.8125rem;">יציאה לסיורי שדה שכבת ט'</span></td>
- </tr>
- <tr>
- <td><strong>יום רביעי</strong></td>
- <td>
- <input type="number" id="sched-wed" class="form-control cell-input" min="0" max="12" step="0.5" value="6" required>
- </td>
- <td>
- <label class="form-check" style="margin:0; justify-content:center;">
- <input type="checkbox" id="field-wed" class="form-check-input">
- <span class="form-check-label" style="font-size:0.875rem;">יום שדה</span>
- </label>
- </td>
- <td><span class="text-muted" style="font-size:0.8125rem;">שעות הוראה בכיתה</span></td>
- </tr>
- <tr>
- <td><strong>יום חמישי</strong></td>
- <td>
- <input type="number" id="sched-thu" class="form-control cell-input" min="0" max="12" step="0.5" value="8" required>
- </td>
- <td>
- <label class="form-check" style="margin:0; justify-content:center;">
- <input type="checkbox" id="field-thu" class="form-check-input" checked>
- <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"> יום שדה קבוע</span>
- </label>
- </td>
- <td><span class="text-muted" style="font-size:0.8125rem;">יציאה לסיורי שדה שכבת י'</span></td>
- </tr>
- <tr>
- <td><strong>יום שישי</strong></td>
- <td>
- <input type="number" id="sched-fri" class="form-control cell-input" min="0" max="12" step="0.5" value="0" required>
- </td>
- <td>
- <label class="form-check" style="margin:0; justify-content:center;">
- <input type="checkbox" id="field-fri" class="form-check-input">
- <span class="form-check-label" style="font-size:0.875rem;">יום שדה</span>
- </label>
- </td>
- <td><span class="text-muted" style="font-size:0.8125rem;">יום חופשי / ללא הוראה</span></td>
- </tr>
- </tbody>
- <tfoot>
- <tr style="background-color: var(--surface-container-high); font-weight:600;">
- <td><strong>סה"כ שעות שבועיות:</strong></td>
- <td><span id="weekly-total-hours" style="color:var(--primary); font-size:1.1rem; font-weight:700;">34</span> שעות</td>
- <td colspan="2"><span id="field-days-summary" class="field-day-tag">2 ימי שדה קבועים בשבוע (שלישי, חמישי)</span></td>
- </tr>
- </tfoot>
+                  <tr>
+                    <td><strong>יום ראשון</strong></td>
+                    <td>
+                      <input type="number" id="sched-sun" class="form-control cell-input" min="0" max="12" step="0.5" value="6" required>
+                    </td>
+                    <td>
+                      <label class="form-check" style="margin:0; justify-content:center;">
+                        <input type="checkbox" id="field-sun" class="form-check-input">
+                        <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"></span>
+                      </label>
+                    </td>
+                    <td><span class="text-muted" style="font-size:0.8125rem;">שעות הוראה בכיתה</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>יום שני</strong></td>
+                    <td>
+                      <input type="number" id="sched-mon" class="form-control cell-input" min="0" max="12" step="0.5" value="6" required>
+                    </td>
+                    <td>
+                      <label class="form-check" style="margin:0; justify-content:center;">
+                        <input type="checkbox" id="field-mon" class="form-check-input">
+                        <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"></span>
+                      </label>
+                    </td>
+                    <td><span class="text-muted" style="font-size:0.8125rem;">שעות הוראה בכיתה</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>יום שלישי</strong></td>
+                    <td>
+                      <input type="number" id="sched-tue" class="form-control cell-input" min="0" max="12" step="0.5" value="8" required>
+                    </td>
+                    <td>
+                      <label class="form-check" style="margin:0; justify-content:center;">
+                        <input type="checkbox" id="field-tue" class="form-check-input" checked>
+                        <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"> יום שדה קבוע</span>
+                      </label>
+                    </td>
+                    <td><span class="text-muted" style="font-size:0.8125rem;">יציאה לסיורי שדה שכבת ט'</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>יום רביעי</strong></td>
+                    <td>
+                      <input type="number" id="sched-wed" class="form-control cell-input" min="0" max="12" step="0.5" value="6" required>
+                    </td>
+                    <td>
+                      <label class="form-check" style="margin:0; justify-content:center;">
+                        <input type="checkbox" id="field-wed" class="form-check-input">
+                        <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"></span>
+                      </label>
+                    </td>
+                    <td><span class="text-muted" style="font-size:0.8125rem;">שעות הוראה בכיתה</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>יום חמישי</strong></td>
+                    <td>
+                      <input type="number" id="sched-thu" class="form-control cell-input" min="0" max="12" step="0.5" value="8" required>
+                    </td>
+                    <td>
+                      <label class="form-check" style="margin:0; justify-content:center;">
+                        <input type="checkbox" id="field-thu" class="form-check-input" checked>
+                        <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"> יום שדה קבוע</span>
+                      </label>
+                    </td>
+                    <td><span class="text-muted" style="font-size:0.8125rem;">יציאה לסיורי שדה שכבת י'</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>יום שישי</strong></td>
+                    <td>
+                      <input type="number" id="sched-fri" class="form-control cell-input" min="0" max="12" step="0.5" value="0" required>
+                    </td>
+                    <td>
+                      <label class="form-check" style="margin:0; justify-content:center;">
+                        <input type="checkbox" id="field-fri" class="form-check-input">
+                        <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"></span>
+                      </label>
+                    </td>
+                    <td><span class="text-muted" style="font-size:0.8125rem;">יום חופשי / ללא הוראה</span></td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr style="background-color: var(--surface-container-high); font-weight:600;">
+                    <td colspan="4" style="text-align:center; padding:12px;"><span id="field-days-summary" class="field-day-tag">2 ימי שדה קבועים בשבוע (שלישי, חמישי)</span></td>
+                  </tr>
+                </tfoot>
  </table>
  </div>
  </div>
@@ -366,8 +364,8 @@
  <!-- Universal Footer Mount -->
  <div id="gov-footer-mount"></div>
 
- <script src="js/api.js?v=202609191305"></script>
- <script src="js/auth.js?v=202609191305"></script>
- <script src="js/profile.js?v=202609191305"></script>
+  <script src="js/api.js?v=202609191340"></script>
+  <script src="js/auth.js?v=202609191340"></script>
+  <script src="js/profile.js?v=202609191340"></script>
 </body>
 </html>

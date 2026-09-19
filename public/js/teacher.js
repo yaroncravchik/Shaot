@@ -68,121 +68,125 @@ function loadTeacherDashboardData() {
 }
 
 function renderActiveMonthStatus(reports) {
- const currentMonthReport = reports.find(r => r.year === selectedYear && r.month === selectedMonth);
- const pillContainer = document.getElementById('current-month-status-pill');
- const btnOpen = document.getElementById('btn-open-report-form');
+  const currentMonthReport = reports.find(r => r.year === selectedYear && r.month === selectedMonth);
+  const pillContainer = document.getElementById('current-month-status-pill');
+  const btnOpen = document.getElementById('btn-open-report-form');
 
- if (currentMonthReport) {
- const st = REPORT_STATUSES[currentMonthReport.status] || { label: currentMonthReport.status, badgeClass: 'badge-draft' };
- pillContainer.innerHTML = `<span class="badge ${st.badgeClass}"><span class="badge-dot"></span> סטטוס לחודש זה: ${st.label}</span>`;
- btnOpen.innerHTML = currentMonthReport.status === 'draft' || currentMonthReport.status === 'returned'
- ? '<span>️ המשך עריכת דוח שעות</span>'
- : '<span>️ צפייה בדוח שעות שהוגש</span>';
+  const activeReportsEl = document.getElementById('stat-active-reports');
+  if (activeReportsEl) {
+    activeReportsEl.textContent = reports.length;
+  }
 
- // Stats
- document.getElementById('stat-fixed-hours').textContent = currentMonthReport.totalFixedHours || 0;
- document.getElementById('stat-overtime-hours').textContent = currentMonthReport.totalOvertimeHours || 0;
- document.getElementById('stat-absence-hours').textContent = currentMonthReport.totalAbsenceHours || 0;
- document.getElementById('stat-payable-hours').textContent = currentMonthReport.totalPayableHours || 0;
- } else {
- pillContainer.innerHTML = `<span class="badge badge-draft"><span class="badge-dot"></span> טרם נפתח דיווח לחודש זה</span>`;
- btnOpen.innerHTML = '<span> פתיחת דוח שעות חדש</span>';
+  if (currentMonthReport) {
+    const st = REPORT_STATUSES[currentMonthReport.status] || { label: currentMonthReport.status, badgeClass: 'badge-draft' };
+    pillContainer.innerHTML = `<span class="badge ${st.badgeClass}"><span class="badge-dot"></span> סטטוס לחודש זה: ${st.label}</span>`;
+    btnOpen.innerHTML = currentMonthReport.status === 'draft' || currentMonthReport.status === 'returned'
+      ? '<span>✏️ המשך עריכת דוח שעות</span>'
+      : '<span>👁️ צפייה בדוח שעות שהוגש</span>';
 
- document.getElementById('stat-fixed-hours').textContent = '-';
- document.getElementById('stat-overtime-hours').textContent = '-';
- document.getElementById('stat-absence-hours').textContent = '-';
- document.getElementById('stat-payable-hours').textContent = '-';
- }
+    // Stats
+    const otEl = document.getElementById('stat-overtime-hours');
+    const abEl = document.getElementById('stat-absence-hours');
+    if (otEl) otEl.textContent = currentMonthReport.totalOvertimeHours || 0;
+    if (abEl) abEl.textContent = currentMonthReport.totalAbsenceHours || 0;
+  } else {
+    pillContainer.innerHTML = `<span class="badge badge-draft"><span class="badge-dot"></span> טרם נפתח דיווח לחודש זה</span>`;
+    btnOpen.innerHTML = '<span>➕ פתיחת דוח שעות חדש</span>';
+
+    const otEl = document.getElementById('stat-overtime-hours');
+    const abEl = document.getElementById('stat-absence-hours');
+    if (otEl) otEl.textContent = '-';
+    if (abEl) abEl.textContent = '-';
+  }
 }
 
 function renderFeedbackBanner(reports) {
- const feedbackContainer = document.getElementById('teacher-feedback-container');
- feedbackContainer.innerHTML = '';
+  const feedbackContainer = document.getElementById('teacher-feedback-container');
+  feedbackContainer.innerHTML = '';
 
- // Check if any report is returned or supervisor edited
- const returnedReport = reports.find(r => r.status === 'returned');
- const editedReport = reports.find(r => r.status === 'supervisor_edited');
+  // Check if any report is returned or supervisor edited
+  const returnedReport = reports.find(r => r.status === 'returned');
+  const editedReport = reports.find(r => r.status === 'supervisor_edited');
 
- if (returnedReport) {
- const remark = returnedReport.supervisorRemarks || returnedReport.principalRemarks || 'נא לבדוק את פירוט השעות ולתקן בהתאם.';
- feedbackContainer.innerHTML += `
- <div class="banner-alert banner-danger animate-fade-in">
- <div class="banner-alert-icon">️</div>
- <div class="banner-alert-content">
- <div class="banner-alert-title">דוח חודש ${returnedReport.month}/${returnedReport.year} הוחזר לתיקונך:</div>
- <div><strong>הערות הבודק:</strong> "${remark}"</div>
- <button class="btn btn-danger btn-sm mt-1" onclick="openReportModal(${returnedReport.year}, ${returnedReport.month})">
- פתח דוח לתיקון מיידי 
- </button>
- </div>
- </div>
- `;
- }
+  if (returnedReport) {
+    const remark = returnedReport.supervisorRemarks || returnedReport.principalRemarks || 'נא לבדוק את פירוט השעות ולתקן בהתאם.';
+    feedbackContainer.innerHTML += `
+      <div class="banner-alert banner-danger animate-fade-in">
+        <div class="banner-alert-icon">⚠️</div>
+        <div class="banner-alert-content">
+          <div class="banner-alert-title">דוח חודש ${returnedReport.month}/${returnedReport.year} הוחזר לתיקונך:</div>
+          <div><strong>הערות הבודק:</strong> "${remark}"</div>
+          <button class="btn btn-danger btn-sm mt-1" onclick="openReportModal(${returnedReport.year}, ${returnedReport.month})">
+            פתח דוח לתיקון מיידי ↩️
+          </button>
+        </div>
+      </div>
+    `;
+  }
 
- if (editedReport) {
- feedbackContainer.innerHTML += `
- <div class="banner-alert banner-warning animate-fade-in">
- <div class="banner-alert-icon">ℹ️</div>
- <div class="banner-alert-content">
- <div class="banner-alert-title">שים לב: המנחה המחוזי ביצע שינויים ישירים בדוח חודש ${editedReport.month}/${editedReport.year}:</div>
- <div><strong>הערת מנחה:</strong> ${editedReport.supervisorRemarks || 'עודכנו שעות שדה בהתאם לתקן.'}</div>
- <div class="mt-1">
- <button class="btn btn-secondary btn-sm" onclick="openReportModal(${editedReport.year}, ${editedReport.month})">
- צפה בשינויים המסומנים באדום 
- </button>
- </div>
- </div>
- </div>
- `;
- }
+  if (editedReport) {
+    feedbackContainer.innerHTML += `
+      <div class="banner-alert banner-warning animate-fade-in">
+        <div class="banner-alert-icon">ℹ️</div>
+        <div class="banner-alert-content">
+          <div class="banner-alert-title">שים לב: המנחה המחוזי ביצע שינויים ישירים בדוח חודש ${editedReport.month}/${editedReport.year}:</div>
+          <div><strong>הערת מנחה:</strong> ${editedReport.supervisorRemarks || 'עודכנו שעות שדה בהתאם לתקן.'}</div>
+          <div class="mt-1">
+            <button class="btn btn-secondary btn-sm" onclick="openReportModal(${editedReport.year}, ${editedReport.month})">
+              צפה בשינויים המסומנים באדום 🔍
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 }
 
 function renderHistoryTable(reports) {
- const tbody = document.getElementById('history-reports-tbody');
- tbody.innerHTML = '';
+  const tbody = document.getElementById('history-reports-tbody');
+  tbody.innerHTML = '';
 
- if (reports.length === 0) {
- tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted p-3">טרם נוצרו דוחות שעות במערכת</td></tr>`;
- return;
- }
+  if (reports.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted p-3">טרם נוצרו דוחות שעות במערכת</td></tr>`;
+    return;
+  }
 
- reports.forEach(r => {
- const st = REPORT_STATUSES[r.status] || { label: r.status, badgeClass: 'badge-draft' };
- const tr = document.createElement('tr');
+  reports.forEach(r => {
+    const st = REPORT_STATUSES[r.status] || { label: r.status, badgeClass: 'badge-draft' };
+    const tr = document.createElement('tr');
 
- let remarksHtml = '<span class="text-muted">-</span>';
- if (r.supervisorRemarks) {
- remarksHtml = `<span style="color:#721c24; font-weight:600;" title="${r.supervisorRemarks}"> מנחה: ${r.supervisorRemarks.slice(0, 30)}...</span>`;
- } else if (r.principalRemarks) {
- remarksHtml = `<span style="color:#004085;" title="${r.principalRemarks}"> מנהלת: ${r.principalRemarks.slice(0, 30)}...</span>`;
- }
+    let remarksHtml = '<span class="text-muted">-</span>';
+    if (r.supervisorRemarks) {
+      remarksHtml = `<span style="color:#721c24; font-weight:600;" title="${r.supervisorRemarks}">💬 מנחה: ${r.supervisorRemarks.slice(0, 30)}...</span>`;
+    } else if (r.principalRemarks) {
+      remarksHtml = `<span style="color:#004085;" title="${r.principalRemarks}">💬 מנהלת: ${r.principalRemarks.slice(0, 30)}...</span>`;
+    }
 
     let sigHtml = '<span class="text-muted">טרם נחתם</span>';
     if (r.signatureId || r.status === 'approved_paid') {
       sigHtml = `
         <span class="rsa-badge" style="background:#e8f5e9; color:#2e7d32; border-color:#c8e6c9;">
-          נחתם ומאושר
+          🛡️ נחתם ומאושר
         </span>
       `;
     }
 
- tr.innerHTML = `
- <td><strong>${HEBREW_MONTHS_NAME[r.month - 1] || r.month} ${r.year}</strong></td>
- <td><span class="badge ${st.badgeClass}"><span class="badge-dot"></span> ${st.label}</span></td>
- <td>${r.submittedAt ? r.submittedAt.slice(0, 10) : '<span class="text-muted">טיוטה</span>'}</td>
- <td>${r.totalFixedHours || 0}</td>
- <td><strong>${r.totalOvertimeHours || 0}</strong></td>
- <td style="font-weight:700; color:var(--primary);">${r.totalPayableHours || 0}</td>
- <td>${sigHtml}</td>
- <td style="max-width:200px;">${remarksHtml}</td>
- <td style="text-align: center;">
- <button class="btn btn-secondary btn-sm" onclick="openReportModal(${r.year}, ${r.month})">
- ${r.status === 'draft' || r.status === 'returned' ? '️ עריכה' : '️ צפייה'}
- </button>
- </td>
- `;
- tbody.appendChild(tr);
- });
+    tr.innerHTML = `
+      <td><strong>${HEBREW_MONTHS_NAME[r.month - 1] || r.month} ${r.year}</strong></td>
+      <td><span class="badge ${st.badgeClass}"><span class="badge-dot"></span> ${st.label}</span></td>
+      <td>${r.submittedAt ? r.submittedAt.slice(0, 10) : '<span class="text-muted">טיוטה</span>'}</td>
+      <td><strong style="color:var(--primary); font-size:1.05rem;">${r.totalOvertimeHours || 0} שעות</strong></td>
+      <td>${r.totalAbsenceHours || 0}</td>
+      <td>${sigHtml}</td>
+      <td style="max-width:200px;">${remarksHtml}</td>
+      <td style="text-align: center;">
+        <button class="btn btn-secondary btn-sm" onclick="openReportModal(${r.year}, ${r.month})">
+          ${r.status === 'draft' || r.status === 'returned' ? '✏️ עריכה' : '👁️ צפייה'}
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 // ==========================================================================
@@ -425,24 +429,20 @@ function renderReportGrid(report, isReadOnly) {
 }
 
 function calculateGridTotals() {
- let totalFixed = 0;
- let totalAbsence = 0;
- let totalOvertime = 0;
+  let totalAbsence = 0;
+  let totalOvertime = 0;
 
- if (currentActiveReport && currentActiveReport.daysData) {
- currentActiveReport.daysData.forEach(d => {
- totalFixed += parseFloat(d.fixedHours || 0);
- totalAbsence += parseFloat(d.absenceHours || 0);
- totalOvertime += parseFloat(d.overtimeHours || 0);
- });
- }
+  if (currentActiveReport && currentActiveReport.daysData) {
+    currentActiveReport.daysData.forEach(d => {
+      totalAbsence += parseFloat(d.absenceHours || 0);
+      totalOvertime += parseFloat(d.overtimeHours || 0);
+    });
+  }
 
- const netPayable = Math.max(0, totalFixed - totalAbsence + totalOvertime);
-
- document.getElementById('grid-total-fixed').textContent = totalFixed.toFixed(1).replace('.0', '');
- document.getElementById('grid-total-absence').textContent = totalAbsence.toFixed(1).replace('.0', '');
- document.getElementById('grid-total-overtime').textContent = totalOvertime.toFixed(1).replace('.0', '');
- document.getElementById('grid-total-payable').textContent = netPayable.toFixed(1).replace('.0', '');
+  const abEl = document.getElementById('grid-total-absence');
+  const otEl = document.getElementById('grid-total-overtime');
+  if (abEl) abEl.textContent = totalAbsence.toFixed(1).replace('.0', '');
+  if (otEl) otEl.textContent = totalOvertime.toFixed(1).replace('.0', '');
 }
 
 function handleFileUpload(files) {

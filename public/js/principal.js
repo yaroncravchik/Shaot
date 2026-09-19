@@ -121,11 +121,11 @@ function renderReportDetails(report) {
     tbody.appendChild(tr);
   });
 
-  // Totals
-  document.getElementById('p-total-fixed').textContent = report.totalFixedHours || 0;
-  document.getElementById('p-total-absence').textContent = report.totalAbsenceHours || 0;
-  document.getElementById('p-total-overtime').textContent = report.totalOvertimeHours || 0;
-  document.getElementById('p-total-payable').textContent = report.totalPayableHours || 0;
+    // Totals
+    const abEl = document.getElementById('p-total-absence');
+    const otEl = document.getElementById('p-total-overtime');
+    if (abEl) abEl.textContent = report.totalAbsenceHours || 0;
+    if (otEl) otEl.textContent = report.totalOvertimeHours || 0;
 
   // Attachments
   const attList = document.getElementById('p-attachments-list');

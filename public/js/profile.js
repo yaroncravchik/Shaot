@@ -57,6 +57,8 @@ function loadProfileData(user) {
   document.getElementById('field-thu').checked = fDays.includes(4);
   document.getElementById('field-fri').checked = fDays.includes(5);
 
+  updateFieldDayLabels();
+
   // Consent
   document.getElementById('prof-consent-check').checked = !!user.consentSigned;
 }
@@ -71,8 +73,14 @@ function setupEventListeners(currentUser) {
   scheduleInputs.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
-      el.addEventListener('input', calculateWeeklyTotals);
-      el.addEventListener('change', calculateWeeklyTotals);
+      el.addEventListener('input', () => {
+        updateFieldDayLabels();
+        calculateWeeklyTotals();
+      });
+      el.addEventListener('change', () => {
+        updateFieldDayLabels();
+        calculateWeeklyTotals();
+      });
     }
   });
 
@@ -145,17 +153,24 @@ function setupEventListeners(currentUser) {
   });
 }
 
+function updateFieldDayLabels() {
+  const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri'];
+  days.forEach(d => {
+    const chk = document.getElementById(`field-${d}`);
+    if (chk) {
+      const span = chk.parentElement.querySelector('.form-check-label');
+      if (span) {
+        if (chk.checked) {
+          span.textContent = ' יום שדה קבוע';
+        } else {
+          span.textContent = '';
+        }
+      }
+    }
+  });
+}
+
 function calculateWeeklyTotals() {
-  const sun = parseFloat(document.getElementById('sched-sun').value) || 0;
-  const mon = parseFloat(document.getElementById('sched-mon').value) || 0;
-  const tue = parseFloat(document.getElementById('sched-tue').value) || 0;
-  const wed = parseFloat(document.getElementById('sched-wed').value) || 0;
-  const thu = parseFloat(document.getElementById('sched-thu').value) || 0;
-  const fri = parseFloat(document.getElementById('sched-fri').value) || 0;
-
-  const total = sun + mon + tue + wed + thu + fri;
-  document.getElementById('weekly-total-hours').textContent = total.toFixed(1).replace('.0', '');
-
   const fieldDaysNames = [];
   if (document.getElementById('field-sun').checked) fieldDaysNames.push('ראשון');
   if (document.getElementById('field-mon').checked) fieldDaysNames.push('שני');
@@ -165,11 +180,13 @@ function calculateWeeklyTotals() {
   if (document.getElementById('field-fri').checked) fieldDaysNames.push('שישי');
 
   const summaryEl = document.getElementById('field-days-summary');
-  if (fieldDaysNames.length > 0) {
-    summaryEl.textContent = `${fieldDaysNames.length} ימי שדה קבועים בשבוע (${fieldDaysNames.join(', ')})`;
-    summaryEl.className = 'field-day-tag';
-  } else {
-    summaryEl.textContent = 'לא הוגדרו ימי שדה קבועים';
-    summaryEl.className = 'text-muted';
+  if (summaryEl) {
+    if (fieldDaysNames.length > 0) {
+      summaryEl.textContent = `${fieldDaysNames.length} ימי שדה קבועים בשבוע (${fieldDaysNames.join(', ')})`;
+      summaryEl.className = 'field-day-tag';
+    } else {
+      summaryEl.textContent = 'לא הוגדרו ימי שדה קבועים';
+      summaryEl.className = 'text-muted';
+    }
   }
 }

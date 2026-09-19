@@ -82,32 +82,30 @@ function renderReportsList(reports) {
  const st = REPORT_STATUSES[r.status] || { label: r.status, badgeClass: 'badge-draft' };
  const tr = document.createElement('tr');
 
- let editsSummary = '<span class="text-muted">-</span>';
- if (r.status === 'supervisor_edited') {
- editsSummary = `<span style="color:#721c24; font-weight:700;">️ שעות עודכנו ע"י מנחה</span>`;
- } else if (r.supervisorRemarks) {
- editsSummary = `<span title="${r.supervisorRemarks}">${r.supervisorRemarks.slice(0, 25)}...</span>`;
- }
+    let editsSummary = '<span class="text-muted">-</span>';
+    if (r.status === 'supervisor_edited') {
+      editsSummary = `<span style="color:#721c24; font-weight:700;">✏️ שעות עודכנו ע"י מנחה</span>`;
+    } else if (r.supervisorRemarks) {
+      editsSummary = `<span title="${r.supervisorRemarks}">${r.supervisorRemarks.slice(0, 25)}...</span>`;
+    }
 
- tr.innerHTML = `
- <td><strong>${r.teacherName || 'מורה'}</strong></td>
- <td>${r.teacherId || ''}</td>
- <td>${r.schoolName || ''}</td>
- <td>${r.municipality || ''}</td>
- <td>${HEBREW_MONTHS_NAME[r.month - 1] || r.month} ${r.year}</td>
- <td><span class="badge ${st.badgeClass}"><span class="badge-dot"></span> ${st.label}</span></td>
- <td>${r.totalFixedHours || 0}</td>
- <td><strong>${r.totalOvertimeHours || 0}</strong></td>
- <td style="font-weight:700; color:var(--primary);">${r.totalPayableHours || 0}</td>
- <td>${editsSummary}</td>
- <td style="text-align:center;">
- <button class="btn btn-primary btn-sm" onclick="openSupervisorReviewModal('${r.id}')">
- ${r.status === 'pending_supervisor' ? ' בדוק וערוך שעות' : '️ צפה בדוח'}
- </button>
- </td>
- `;
- tbody.appendChild(tr);
- });
+    tr.innerHTML = `
+      <td><strong>${r.teacherName || 'מורה'}</strong></td>
+      <td>${r.teacherId || ''}</td>
+      <td>${r.schoolName || ''}</td>
+      <td>${r.municipality || ''}</td>
+      <td>${HEBREW_MONTHS_NAME[r.month - 1] || r.month} ${r.year}</td>
+      <td><span class="badge ${st.badgeClass}"><span class="badge-dot"></span> ${st.label}</span></td>
+      <td><strong style="color:var(--primary); font-size:1.05rem;">${r.totalOvertimeHours || 0} שעות</strong></td>
+      <td>${editsSummary}</td>
+      <td style="text-align:center;">
+        <button class="btn btn-primary btn-sm" onclick="openSupervisorReviewModal('${r.id}')">
+          ${r.status === 'pending_supervisor' ? '🔍 בדוק וערוך שעות' : '👁️ צפה בדוח'}
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 function openSupervisorReviewModal(reportId) {
@@ -206,24 +204,20 @@ function renderSupervisorGrid(report) {
 }
 
 function calculateSupervisorTotals() {
- let totalFixed = 0;
- let totalAbsence = 0;
- let totalOvertime = 0;
+  let totalAbsence = 0;
+  let totalOvertime = 0;
 
- if (activeReviewReport && activeReviewReport.daysData) {
- activeReviewReport.daysData.forEach(d => {
- totalFixed += parseFloat(d.fixedHours || 0);
- totalAbsence += parseFloat(d.absenceHours || 0);
- totalOvertime += parseFloat(d.overtimeHours || 0);
- });
- }
+  if (activeReviewReport && activeReviewReport.daysData) {
+    activeReviewReport.daysData.forEach(d => {
+      totalAbsence += parseFloat(d.absenceHours || 0);
+      totalOvertime += parseFloat(d.overtimeHours || 0);
+    });
+  }
 
- const netPayable = Math.max(0, totalFixed - totalAbsence + totalOvertime);
-
- document.getElementById('sup-total-fixed').textContent = totalFixed;
- document.getElementById('sup-total-absence').textContent = totalAbsence;
- document.getElementById('sup-total-overtime').textContent = totalOvertime;
- document.getElementById('sup-total-payable').textContent = netPayable;
+  const abEl = document.getElementById('sup-total-absence');
+  const otEl = document.getElementById('sup-total-overtime');
+  if (abEl) abEl.textContent = totalAbsence;
+  if (otEl) otEl.textContent = totalOvertime;
 }
 
 function renderSupervisorAttachments(report) {

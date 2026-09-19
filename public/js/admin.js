@@ -73,15 +73,15 @@ function updateMasterKpis(reports) {
   const pendingAdminCount = reports.filter(r => r.status === 'pending_admin' || r.status === 'supervisor_edited' || r.status === 'pending_supervisor').length;
   const signedCount = reports.filter(r => r.status === 'approved_paid').length;
   
-  let totalApprovedHours = 0;
+  let totalApprovedOvertimeHours = 0;
   reports.filter(r => r.status === 'approved_paid').forEach(r => {
-    totalApprovedHours += parseFloat(r.totalPayableHours || 0);
+    totalApprovedOvertimeHours += parseFloat(r.totalOvertimeHours || 0);
   });
 
   document.getElementById('admin-stat-total-reports').textContent = totalCount;
   document.getElementById('admin-stat-pending-admin').textContent = pendingAdminCount;
   document.getElementById('admin-stat-signed').textContent = signedCount;
-  document.getElementById('admin-stat-total-hours').textContent = totalApprovedHours;
+  document.getElementById('admin-stat-total-hours').textContent = totalApprovedOvertimeHours;
 }
 
 function setupAdminFilters() {
@@ -145,7 +145,7 @@ function renderMasterReportsTable(reports) {
       <td>${r.supervisorName || 'אברהם מנחה'}</td>
       <td>${formatMonthYear(r.year, r.month)}</td>
       <td><span class="badge ${st.badgeClass}">${st.label}</span></td>
-      <td><strong>${r.totalPayableHours || 0} שעות</strong></td>
+      <td><strong style="color:var(--primary); font-size:1.05rem;">${r.totalOvertimeHours || 0} שעות</strong></td>
       <td>${sigHtml}</td>
       <td style="text-align:center;">
         <button type="button" class="btn btn-sm btn-primary" onclick="openAdminReviewModal('${r.id}')">
@@ -342,8 +342,8 @@ function openAdminReviewModal(reportId) {
   document.getElementById('admin-m-school').textContent = `${report.schoolName || ''} (${report.schoolCode || ''})`;
   document.getElementById('admin-m-district').textContent = `מחוז מרכז • מנחה: ${report.supervisorName || 'אברהם מנחה'}`;
 
-  document.getElementById('admin-m-payable').textContent = report.totalPayableHours || 0;
-  document.getElementById('admin-m-hours-breakdown').textContent = `קבועות: ${report.totalFixedHours || 0} | נוספות: ${report.totalOvertimeHours || 0} | היעדרות: ${report.totalAbsenceHours || 0}`;
+  document.getElementById('admin-m-payable').textContent = report.totalOvertimeHours || 0;
+  document.getElementById('admin-m-hours-breakdown').textContent = `נוספות: ${report.totalOvertimeHours || 0} | היעדרות: ${report.totalAbsenceHours || 0}`;
 
   const badgesMount = document.getElementById('admin-m-approval-badges');
   badgesMount.innerHTML = `

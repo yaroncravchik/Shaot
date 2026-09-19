@@ -818,43 +818,39 @@ function exportReportsToExcel(reports, filename = 'shalah_hours_report.csv') {
  return;
  }
 
- const headers = [
- 'מזהה דוח',
- 'חודש/שנה',
- 'שם מורה',
- 'שם משתמש',
- 'שם בית ספר',
- 'סמל מוסד',
- 'מחוז',
- 'רשות מקומית',
- 'מנחה מחוזי',
- 'סטטוס',
- 'שעות קבועות',
- 'שעות היעדרות',
- 'שעות נוספות',
- 'סך שעות לתשלום',
- 'מזהה חתימה דיגיטלית',
- 'תאריך הגשה'
- ];
+  const headers = [
+    'מזהה דוח',
+    'חודש/שנה',
+    'שם מורה',
+    'שם משתמש',
+    'שם בית ספר',
+    'סמל מוסד',
+    'מחוז',
+    'רשות מקומית',
+    'מנחה מחוזי',
+    'סטטוס',
+    'שעות נוספות',
+    'שעות היעדרות',
+    'מזהה חתימה דיגיטלית',
+    'תאריך הגשה'
+  ];
 
- const rows = reports.map(r => [
- `"${r.id || ''}"`,
- `"${r.month}/${r.year}"`,
- `"${r.teacherName || ''}"`,
- `"${r.teacherId || ''}"`,
- `"${r.schoolName || ''}"`,
- `"${r.schoolCode || ''}"`,
- `"${r.district || ''}"`,
- `"${r.municipality || ''}"`,
- `"${r.supervisorName || ''}"`,
- `"${(REPORT_STATUSES[r.status] && REPORT_STATUSES[r.status].label) || r.status}"`,
- r.totalFixedHours || 0,
- r.totalAbsenceHours || 0,
- r.totalOvertimeHours || 0,
- r.totalPayableHours || 0,
- `"${r.signatureId || 'טרם נחתם'}"`,
- `"${r.submittedAt ? r.submittedAt.slice(0, 10) : ''}"`
- ]);
+  const rows = reports.map(r => [
+    `"${r.id || ''}"`,
+    `"${r.month}/${r.year}"`,
+    `"${r.teacherName || ''}"`,
+    `"${r.teacherId || ''}"`,
+    `"${r.schoolName || ''}"`,
+    `"${r.schoolCode || ''}"`,
+    `"${r.district || ''}"`,
+    `"${r.municipality || ''}"`,
+    `"${r.supervisorName || ''}"`,
+    `"${(REPORT_STATUSES[r.status] && REPORT_STATUSES[r.status].label) || r.status}"`,
+    r.totalOvertimeHours || 0,
+    r.totalAbsenceHours || 0,
+    `"${r.signatureId || 'טרם נחתם'}"`,
+    `"${r.submittedAt ? r.submittedAt.slice(0, 10) : ''}"`
+  ]);
 
  const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

@@ -113,15 +113,15 @@ function verifySignature(sigId) {
  <div class="cert-field-value">${report.district || 'מרכז'} • ${report.municipality || ''}</div>
  </div>
  <div>
- <div class="cert-field-label">סך שעות מאושרות לתשלום:</div>
+ <div class="cert-field-label">סך שעות נוספות מאושרות:</div>
  <div class="cert-field-value" style="color:var(--primary); font-size:1.15rem; font-weight:700;">
- ${report.totalPayableHours} שעות
+ ${report.totalOvertimeHours || 0} שעות נוספות
  </div>
  </div>
  <div>
  <div class="cert-field-label">פירוט שעות:</div>
  <div class="cert-field-value" style="font-size:0.875rem;">
- קבועות: ${report.totalFixedHours} | נוספות: ${report.totalOvertimeHours} | היעדרות: ${report.totalAbsenceHours}
+ שעות נוספות: ${report.totalOvertimeHours || 0} | היעדרות: ${report.totalAbsenceHours || 0}
  </div>
  </div>
  <div>
