@@ -1,7 +1,12 @@
 node_modules/
+functions/node_modules/
 data/shalah.db*
 .env
 .DS_Store
 screenshots/
 dist/
 *.log
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+ui-debug.log

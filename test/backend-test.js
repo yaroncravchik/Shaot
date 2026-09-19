@@ -73,7 +73,7 @@ async function runTests() {
 
     const admin = db.prepare('SELECT * FROM users WHERE id_number = ?').get('099999999');
     assert.strictEqual(admin.role, 'admin');
-    assert.strictEqual(admin.full_name, 'רונן ממונה ארצי');
+    assert.strictEqual(admin.full_name, 'רונן ממונה מחוז מרכז');
   });
 
   // 3. Calendar & Holiday Service
