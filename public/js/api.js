@@ -616,18 +616,91 @@ const API = {
  const report = this.getReportById(reportId);
  if (!report) throw new Error('דוח לא נמצא');
 
- report.status = targetRole === 'supervisor' ? 'pending_supervisor' : 'returned';
- report.adminRemarks = remarks;
- report.signatureId = null;
- report.auditHistory = report.auditHistory || [];
- report.auditHistory.push({
- date: formatDateTime(new Date()),
- user: `${adminUser.name} (ממונה ארצי)`,
- action: `החזרה ל${targetRole === 'supervisor' ? 'מנחה' : 'מורה'}: "${remarks}"`
- });
+    report.status = targetRole === 'supervisor' ? 'pending_supervisor' : 'returned';
+    report.adminRemarks = remarks;
+    report.signatureId = null;
+    report.auditHistory = report.auditHistory || [];
+    report.auditHistory.push({
+      date: formatDateTime(new Date()),
+      user: `${adminUser.name || 'רונן'} (ממונה מחוז מרכז)`,
+      action: `החזרה ל${targetRole === 'supervisor' ? 'מנחה' : 'מורה'}: "${remarks}"`
+    });
 
- return this.saveReport(report);
- }
+    return this.saveReport(report);
+  },
+
+  getSupervisors() {
+    const users = this.getUsers();
+    return users.filter(u => u.role === 'supervisor');
+  },
+
+  getAdminUsers() {
+    const users = this.getUsers();
+    return users.filter(u => u.role === 'teacher' || u.role === 'supervisor');
+  },
+
+  adminCreateTeacher({ firstName, lastName, supervisorId, username, password, schoolName, schoolCode }) {
+    const users = this.getUsers();
+    const cleanUsername = String(username).trim();
+    const cleanPassword = String(password).trim();
+    const fullName = `${firstName.trim()} ${lastName.trim()}`;
+
+    if (users.some(u => u.id === cleanUsername || u.phone === cleanPassword)) {
+      throw new Error('משתמש עם שם משתמש זה כבר קיים במערכת');
+    }
+
+    const supervisor = users.find(u => u.id === supervisorId) || { name: 'אברהם מנחה' };
+
+    const newTeacher = {
+      id: cleanUsername,
+      phone: cleanPassword,
+      name: fullName,
+      role: 'teacher',
+      email: `${cleanUsername}@education.gov.il`,
+      schoolName: schoolName ? schoolName.trim() : 'תיכון מחוזי מרכז',
+      schoolCode: schoolCode ? schoolCode.trim() : '123456',
+      district: 'מרכז',
+      municipality: 'מרכז',
+      supervisorName: supervisor.name,
+      supervisorId: supervisorId,
+      principalName: 'שרה כהן',
+      principalEmail: 'principal@school.gov.il',
+      jobScope: 100,
+      consentSigned: true,
+      weeklySchedule: { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 },
+      fieldDays: [2, 4]
+    };
+
+    users.push(newTeacher);
+    this.saveUsers(users);
+
+    return newTeacher;
+  },
+
+  adminCreateSupervisor({ firstName, lastName, username, password, district = 'מרכז' }) {
+    const users = this.getUsers();
+    const cleanUsername = String(username).trim();
+    const cleanPassword = String(password).trim();
+    const fullName = `${firstName.trim()} ${lastName.trim()}`;
+
+    if (users.some(u => u.id === cleanUsername || u.phone === cleanPassword)) {
+      throw new Error('משתמש עם שם משתמש זה כבר קיים במערכת');
+    }
+
+    const newSupervisor = {
+      id: cleanUsername,
+      phone: cleanPassword,
+      name: fullName,
+      role: 'supervisor',
+      email: `${cleanUsername}@education.gov.il`,
+      district: district || 'מרכז'
+    };
+
+    users.push(newSupervisor);
+    this.saveUsers(users);
+
+    return newSupervisor;
+  }
 };
 
 // ==========================================================================

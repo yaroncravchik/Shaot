@@ -6,17 +6,28 @@
 let currentAdmin = null;
 let allReportsList = [];
 let activeAdminReviewReport = null;
+let adminSigPad = null;
 
 document.addEventListener('DOMContentLoaded', () => {
- currentAdmin = Auth.requireAuth(['admin']);
- if (!currentAdmin) return;
+  currentAdmin = Auth.requireAuth(['admin']);
+  if (!currentAdmin) return;
 
- Auth.renderHeader('admin');
- Auth.renderFooter();
+  Auth.renderHeader('admin');
+  Auth.renderFooter();
 
- loadMasterAdminData();
- setupAdminFilters();
+  loadMasterAdminData();
+  loadRosterUsers();
+  setupAdminFilters();
+  initAdminSigPad();
 });
+
+function initAdminSigPad() {
+  const canvas = document.getElementById('admin-sig-canvas');
+  const clearBtn = document.getElementById('admin-clear-sig-btn');
+  if (canvas && typeof GraphicSignaturePad !== 'undefined') {
+    adminSigPad = new GraphicSignaturePad(canvas, clearBtn);
+  }
+}
 
 function loadMasterAdminData() {
   allReportsList = API.getReports().filter(r => !r.district || r.district === 'מרכז');
@@ -72,17 +83,17 @@ function setupAdminFilters() {
 }
 
 function renderMasterReportsTable(reports) {
- const tbody = document.getElementById('admin-reports-tbody');
- tbody.innerHTML = '';
+  const tbody = document.getElementById('admin-reports-tbody');
+  tbody.innerHTML = '';
 
- if (reports.length === 0) {
- tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted p-3">לא נמצאו דוחות התואמים את תנאי החיפוש והסינון</td></tr>`;
- return;
- }
+  if (reports.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted p-3">לא נמצאו דוחות התואמים את תנאי החיפוש והסינון</td></tr>`;
+    return;
+  }
 
- reports.forEach(r => {
- const st = REPORT_STATUSES[r.status] || { label: r.status, badgeClass: 'badge-draft' };
- const tr = document.createElement('tr');
+  reports.forEach(r => {
+    const st = REPORT_STATUSES[r.status] || { label: r.status, badgeClass: 'badge-draft' };
+    const tr = document.createElement('tr');
 
     let sigHtml = '<span class="text-muted">ממתין לחתימה</span>';
     if (r.signatureId || r.status === 'approved_paid') {
@@ -93,171 +104,329 @@ function renderMasterReportsTable(reports) {
       `;
     }
 
- tr.innerHTML = `
- <td><span style="font-family:monospace; font-size:0.8125rem;">${r.id}</span></td>
- <td><strong>${r.teacherName || ''}</strong></td>
- <td><span class="badge" style="background:#eef2f7; color:#0c3058;">${r.district || 'מרכז'}</span></td>
- <td>${r.schoolName || ''}</td>
- <td>${r.supervisorName || ''}</td>
- <td>${HEBREW_MONTHS_NAME[r.month - 1] || r.month} ${r.year}</td>
- <td><span class="badge ${st.badgeClass}"><span class="badge-dot"></span> ${st.label}</span></td>
- <td style="font-weight:700; color:var(--primary); font-size:1rem;">${r.totalPayableHours || 0}</td>
- <td>${sigHtml}</td>
- <td style="text-align:center;">
- <button class="btn btn-primary btn-sm" onclick="openAdminReviewModal('${r.id}')">
- ${r.status === 'approved_paid' ? '️ צפה בדוח' : ' בדיקת ממונה ואישור'}
- </button>
- </td>
- `;
- tbody.appendChild(tr);
- });
+    tr.innerHTML = `
+      <td><span style="font-family:monospace; font-size:0.8125rem;">${r.id}</span></td>
+      <td><strong>${r.teacherName || ''}</strong></td>
+      <td><span class="badge" style="background:#eef2f7; color:#0c3058;">${r.district || 'מרכז'}</span></td>
+      <td>${r.schoolName || ''}</td>
+      <td>${r.supervisorName || 'אברהם מנחה'}</td>
+      <td>${formatMonthYear(r.year, r.month)}</td>
+      <td><span class="badge ${st.badgeClass}">${st.label}</span></td>
+      <td><strong>${r.totalPayableHours || 0} שעות</strong></td>
+      <td>${sigHtml}</td>
+      <td style="text-align:center;">
+        <button type="button" class="btn btn-sm btn-primary" onclick="openAdminReviewModal('${r.id}')">
+          <span>בדוק ואשר</span>
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
-function openAdminReviewModal(reportId) {
- const report = API.getReportById(reportId);
- if (!report) return;
+/**
+ * ==========================================================================
+ * ROSTER & USER MANAGEMENT (הוספת מורים ומנחים)
+ * ==========================================================================
+ */
+function loadRosterUsers() {
+  const tbody = document.getElementById('admin-users-tbody');
+  if (!tbody) return;
 
- activeAdminReviewReport = JSON.parse(JSON.stringify(report));
+  const users = API.getAdminUsers();
+  tbody.innerHTML = '';
 
- document.getElementById('admin-m-teacher').textContent = `${activeAdminReviewReport.teacherName} (ת"ז: ${activeAdminReviewReport.teacherId})`;
- document.getElementById('admin-m-school').textContent = `${activeAdminReviewReport.schoolName} (${activeAdminReviewReport.schoolCode})`;
- document.getElementById('admin-m-district').textContent = `מחוז ${activeAdminReviewReport.district || 'מרכז'} • מנחה: ${activeAdminReviewReport.supervisorName}`;
-
- document.getElementById('admin-m-payable').textContent = activeAdminReviewReport.totalPayableHours || 0;
- document.getElementById('admin-m-hours-breakdown').textContent = 
- `שעות קבועות: ${activeAdminReviewReport.totalFixedHours || 0} | נוספות: ${activeAdminReviewReport.totalOvertimeHours || 0} | היעדרות: ${activeAdminReviewReport.totalAbsenceHours || 0}`;
-
-  const sigStatusBox = document.getElementById('admin-m-sig-status');
-  const btnApprove = document.getElementById('admin-btn-approve-payment');
-  const sigWrapper = document.getElementById('admin-sig-wrapper');
-
-  if (activeAdminReviewReport.signatureId) {
-    sigStatusBox.innerHTML = `
-      <span class="rsa-badge" style="background:#d4edda; color:#155724; border-color:#c3e6cb;">
-        אושר ונחתם דיגיטלית לתשלום
-      </span>
-    `;
-    btnApprove.style.display = 'none';
-    if (sigWrapper) sigWrapper.style.display = 'none';
-  } else {
-    sigStatusBox.innerHTML = `<span class="badge badge-pending-supervisor">ממתין לאישור ממונה לתשלום</span>`;
-    btnApprove.style.display = 'inline-flex';
-    if (sigWrapper) {
-      sigWrapper.style.display = 'block';
-      setTimeout(() => {
-        const canvas = document.getElementById('admin-sig-canvas');
-        const clearBtn = document.getElementById('admin-clear-sig-btn');
-        if (canvas) {
-          adminSigPad = new GraphicSignaturePad(canvas, clearBtn);
-        }
-      }, 100);
-    }
+  if (!users || users.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted p-3">אין משתמשים רשומים במחוז</td></tr>`;
+    return;
   }
 
- // Audit Timeline
- const timelineContainer = document.getElementById('admin-m-timeline');
- timelineContainer.innerHTML = '';
- const logs = activeAdminReviewReport.auditHistory || [];
+  users.forEach(u => {
+    const isTeacher = u.role === 'teacher';
+    const roleBadge = isTeacher
+      ? '<span class="badge" style="background:#e3f2fd; color:#0d47a1; font-weight:600;">מורה של"ח</span>'
+      : '<span class="badge" style="background:#ede7f6; color:#4a148c; font-weight:600;">מנחה מחוזי</span>';
 
- if (logs.length === 0) {
- timelineContainer.innerHTML = `<span class="text-muted">אין רישומי ביקורת קודמים</span>`;
- } else {
- logs.forEach(log => {
- const item = document.createElement('div');
- item.className = 'timeline-item';
- item.innerHTML = `
- <div class="timeline-date">${log.date} • ${log.user}</div>
- <div class="timeline-action">${log.action}</div>
- `;
- timelineContainer.appendChild(item);
- });
- }
-
- // Days Grid
- renderAdminDaysGrid(activeAdminReviewReport);
-
- document.getElementById('admin-remarks-input').value = activeAdminReviewReport.adminRemarks || '';
-
- openModal('admin-review-modal');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${u.name || u.full_name || ''}</strong></td>
+      <td>${roleBadge}</td>
+      <td><span style="font-family:monospace; font-size:0.875rem;">${u.id || u.id_number || ''}</span></td>
+      <td>${isTeacher ? (u.supervisorName || 'אברהם מנחה') : '<span class="text-muted">— (מנחה)</span>'}</td>
+      <td>${u.schoolName || u.school_name || (isTeacher ? 'תיכון מחוזי מרכז' : 'פיקוח מחוז מרכז')}</td>
+      <td><span class="badge" style="background:#f1f3f5; color:#0c3058;">${u.district || 'מרכז'}</span></td>
+      <td><span class="badge badge-success">פעיל במערכת</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
-function renderAdminDaysGrid(report) {
- const tbody = document.getElementById('admin-m-grid-tbody');
- tbody.innerHTML = '';
+function loadSupervisorsList() {
+  const select = document.getElementById('teacher-supervisor-select');
+  if (!select) return;
 
- (report.daysData || []).forEach(day => {
- const tr = document.createElement('tr');
- if (day.isHoliday) tr.classList.add('row-holiday');
- if (day.isFieldDay) tr.classList.add('row-field-day');
+  const supervisors = API.getSupervisors();
+  select.innerHTML = '<option value="">-- בחר מנחה מחוזי מתוך הרשימה --</option>';
 
- let dayTags = '';
- if (day.isHoliday) dayTags += `<span class="holiday-tag"> ${day.holidayName || 'חג'}</span>`;
- if (day.isFieldDay) dayTags += `<span class="field-day-tag"> יום שדה</span>`;
+  supervisors.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = `${s.name || s.full_name} (${s.district || 'מרכז'})`;
+    select.appendChild(opt);
+  });
 
- let overtimeCellHtml = day.overtimeHours ? `<strong>${day.overtimeHours}</strong>` : '-';
- if (day.supervisorEdited) {
- overtimeCellHtml = `
- <span class="supervisor-edited-cell" style="padding:2px 6px; border-radius:4px;" title="${day.editNote}">
- ${day.overtimeHours} (תוקן)
- </span>
- `;
- }
+  // Default to first supervisor if available
+  if (supervisors.length > 0) {
+    select.selectedIndex = 1;
+  }
+}
 
- tr.innerHTML = `
- <td style="text-align:center; font-weight:700;">${day.dayOfMonth}</td>
- <td>
- <div style="font-weight:600;">${day.dayName}</div>
- <div>${dayTags}</div>
- </td>
- <td style="text-align:center;" class="cell-readonly">${day.fixedHours || 0}</td>
- <td style="text-align:center;">${day.absenceHours ? `<strong>${day.absenceHours}</strong>` : '-'}</td>
- <td>${day.absenceReason || '-'}</td>
- <td style="text-align:center;">${overtimeCellHtml}</td>
- <td>${day.overtimeReason || '-'}</td>
- <td>${day.gradeClass || '-'}</td>
- <td>${day.description || '-'}</td>
- `;
- tbody.appendChild(tr);
- });
+function openAddTeacherModal() {
+  document.getElementById('form-add-teacher').reset();
+  loadSupervisorsList();
+  openModal('admin-add-teacher-modal');
+}
+
+function openAddSupervisorModal() {
+  document.getElementById('form-add-supervisor').reset();
+  openModal('admin-add-supervisor-modal');
+}
+
+function handleAddTeacherSubmit(e) {
+  e.preventDefault();
+
+  const firstName = document.getElementById('teacher-first-name').value.trim();
+  const lastName = document.getElementById('teacher-last-name').value.trim();
+  const supervisorId = document.getElementById('teacher-supervisor-select').value;
+  const username = document.getElementById('teacher-username').value.trim();
+  const password = document.getElementById('teacher-password').value.trim();
+  const schoolName = document.getElementById('teacher-school-name').value.trim();
+  const schoolCode = document.getElementById('teacher-school-code').value.trim();
+
+  if (!firstName || !lastName || !supervisorId || !username || !password) {
+    showToast('נא למלא את כל שדות החובה המסומנים בכוכבית', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-teacher');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div><span>שומר מורה...</span>';
+
+  setTimeout(() => {
+    try {
+      const newTeacher = API.adminCreateTeacher({
+        firstName,
+        lastName,
+        supervisorId,
+        username,
+        password,
+        schoolName,
+        schoolCode
+      });
+
+      closeModal('admin-add-teacher-modal');
+      showToast(`המורה ${newTeacher.name} נוסף בהצלחה למערכת ושויך למנחה!`, 'success', 'מורה נוסף בהצלחה');
+      loadRosterUsers();
+      loadMasterAdminData();
+    } catch (err) {
+      showToast(err.message || 'שגיאה בהוספת מורה', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span>שמור והוסף מורה</span>';
+    }
+  }, 400);
+}
+
+function handleAddSupervisorSubmit(e) {
+  e.preventDefault();
+
+  const firstName = document.getElementById('supervisor-first-name').value.trim();
+  const lastName = document.getElementById('supervisor-last-name').value.trim();
+  const username = document.getElementById('supervisor-username').value.trim();
+  const password = document.getElementById('supervisor-password').value.trim();
+
+  if (!firstName || !lastName || !username || !password) {
+    showToast('נא למלא את כל שדות החובה המסומנים בכוכבית', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-supervisor');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div><span>שומר מנחה...</span>';
+
+  setTimeout(() => {
+    try {
+      const newSup = API.adminCreateSupervisor({
+        firstName,
+        lastName,
+        username,
+        password,
+        district: 'מרכז'
+      });
+
+      closeModal('admin-add-supervisor-modal');
+      showToast(`המנחה ${newSup.name} נוסף בהצלחה למחוז מרכז!`, 'success', 'מנחה נוסף בהצלחה');
+      loadRosterUsers();
+    } catch (err) {
+      showToast(err.message || 'שגיאה בהוספת מנחה', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span>שמור והוסף מנחה</span>';
+    }
+  }, 400);
+}
+
+/**
+ * ==========================================================================
+ * REPORT INSPECTION & APPROVAL
+ * ==========================================================================
+ */
+function openAdminReviewModal(reportId) {
+  const report = API.getReportById(reportId);
+  if (!report) return;
+
+  activeAdminReviewReport = report;
+
+  document.getElementById('admin-modal-title').textContent = `בדיקת ממונה מחוזי ואישור סופי לתשלום – דוח ${formatMonthYear(report.year, report.month)}`;
+  document.getElementById('admin-m-teacher').textContent = `${report.teacherName || ''} (${report.teacherId || ''})`;
+  document.getElementById('admin-m-school').textContent = `${report.schoolName || ''} (${report.schoolCode || ''})`;
+  document.getElementById('admin-m-district').textContent = `מחוז מרכז • מנחה: ${report.supervisorName || 'אברהם מנחה'}`;
+
+  document.getElementById('admin-m-payable').textContent = report.totalPayableHours || 0;
+  document.getElementById('admin-m-hours-breakdown').textContent = `קבועות: ${report.totalFixedHours || 0} | נוספות: ${report.totalOvertimeHours || 0} | היעדרות: ${report.totalAbsenceHours || 0}`;
+
+  const badgesMount = document.getElementById('admin-m-approval-badges');
+  badgesMount.innerHTML = `
+    <div class="flex items-center gap-xs">
+      <span class="badge ${report.principalApprovedAt ? 'badge-success' : 'badge-warning'}">
+        ${report.principalApprovedAt ? `מנהלת אישרה ב-${formatDateTime(report.principalApprovedAt)}` : 'טרם אושר ע"י מנהלת'}
+      </span>
+    </div>
+    <div class="flex items-center gap-xs">
+      <span class="badge ${report.supervisorApprovedAt ? 'badge-success' : 'badge-warning'}">
+        ${report.supervisorApprovedAt ? `מנחה אישר ב-${formatDateTime(report.supervisorApprovedAt)}` : 'טרם אושר ע"י מנחה'}
+      </span>
+    </div>
+  `;
+
+  renderAdminDaysTable(report.daysData || []);
+
+  const timelineMount = document.getElementById('admin-m-audit-timeline');
+  timelineMount.innerHTML = '';
+  (report.auditHistory || []).forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'timeline-item';
+    div.innerHTML = `
+      <div class="timeline-date">${item.date || ''} • <strong>${item.user || ''}</strong></div>
+      <div class="timeline-action">${item.action || ''}</div>
+    `;
+    timelineMount.appendChild(div);
+  });
+
+  const attachmentsMount = document.getElementById('admin-m-attachments-list');
+  attachmentsMount.innerHTML = '';
+  if (!report.attachments || report.attachments.length === 0) {
+    attachmentsMount.innerHTML = '<span class="text-muted" style="font-size:0.8125rem;">לא צורפו נספחים לדוח זה</span>';
+  } else {
+    report.attachments.forEach(att => {
+      const a = document.createElement('div');
+      a.className = 'flex items-center gap-xs';
+      a.style.fontSize = '0.8125rem';
+      a.innerHTML = `
+        <svg style="width:14px; height:14px; fill:var(--primary);" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+        <a href="#" onclick="alert('פתיחת נספח: ${att.name}'); return false;">${att.name}</a>
+        <span class="text-muted">(${att.size})</span>
+      `;
+      attachmentsMount.appendChild(a);
+    });
+  }
+
+  if (adminSigPad) {
+    adminSigPad.clear();
+  }
+
+  openModal('admin-review-modal');
+}
+
+function renderAdminDaysTable(days) {
+  const tbody = document.getElementById('admin-m-days-tbody');
+  tbody.innerHTML = '';
+
+  days.forEach(day => {
+    const tr = document.createElement('tr');
+    let dayTags = '';
+    if (day.isFieldDay) dayTags += '<span class="badge badge-warning" style="margin-right:4px;">יום שדה</span>';
+    if (day.isHoliday) dayTags += `<span class="badge" style="background:#e2e3e5; margin-right:4px;">${day.holidayName || 'חג/חופשה'}</span>`;
+
+    let overtimeCellHtml = day.overtimeHours ? `<strong>${day.overtimeHours}</strong>` : '-';
+    if (day.supervisorEdited) {
+      overtimeCellHtml = `
+        <span class="supervisor-edited-cell" style="padding:2px 6px; border-radius:4px;" title="${day.editNote}">
+          ${day.overtimeHours} (תוקן)
+        </span>
+      `;
+    }
+
+    tr.innerHTML = `
+      <td style="text-align:center; font-weight:700;">${day.dayOfMonth}</td>
+      <td>
+        <div style="font-weight:600;">${day.dayName}</div>
+        <div>${dayTags}</div>
+      </td>
+      <td style="text-align:center;" class="cell-readonly">${day.fixedHours || 0}</td>
+      <td style="text-align:center;">${day.absenceHours ? `<strong>${day.absenceHours}</strong>` : '-'}</td>
+      <td>${day.absenceReason || '-'}</td>
+      <td style="text-align:center;">${overtimeCellHtml}</td>
+      <td>${day.overtimeReason || '-'}</td>
+      <td>${day.gradeClass || '-'}</td>
+      <td>${day.description || '-'}</td>
+      <td>${day.supervisorEdited ? '<span class="badge badge-warning">עודכן ע"י מנחה</span>' : '<span class="text-muted">—</span>'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 function handleAdminFinalApprove() {
- if (!activeAdminReviewReport) return;
+  if (!activeAdminReviewReport) return;
 
- const btnApprove = document.getElementById('admin-btn-approve-payment');
- btnApprove.disabled = true;
- btnApprove.innerHTML = '<div class="spinner"></div><span>מנפיק חתימת RSA-2048 ומאשר לתשלום...</span>';
+  const btnApprove = document.getElementById('admin-btn-approve-payment');
+  btnApprove.disabled = true;
+  btnApprove.innerHTML = '<div class="spinner"></div><span>מאשר לתשלום וחותם...</span>';
 
- setTimeout(() => {
- const approvedReport = API.adminFinalApprove(activeAdminReviewReport.id, currentAdmin);
- closeModal('admin-review-modal');
- showToast(`הדוח אושר סופית לתשלום שכר! הונפקה חתימה: ${approvedReport.signatureId}`, 'success', 'אושר ונחתם דיגיטלית');
+  const sigImg = adminSigPad ? adminSigPad.toDataURL() : null;
 
- loadMasterAdminData();
- }, 800);
+  setTimeout(() => {
+    const approvedReport = API.adminFinalApprove(activeAdminReviewReport.id, currentAdmin, sigImg);
+    closeModal('admin-review-modal');
+    showToast(`הדוח אושר סופית לתשלום שכר! הונפקה חתימה מאובטחת: ${approvedReport.signatureId}`, 'success', 'אושר ונחתם דיגיטלית');
+
+    loadMasterAdminData();
+    btnApprove.disabled = false;
+    btnApprove.innerHTML = '<span>אישור סופי לתשלום והטבעת חתימה</span>';
+  }, 600);
 }
 
 function openAdminReturnModal() {
- document.getElementById('admin-return-remarks').value = '';
- openModal('admin-return-modal');
+  document.getElementById('admin-return-remarks').value = '';
+  openModal('admin-return-modal');
 }
 
 function handleAdminReturnConfirm() {
- const target = document.getElementById('admin-return-target').value;
- const remarks = document.getElementById('admin-return-remarks').value.trim();
+  const target = document.getElementById('admin-return-target').value;
+  const remarks = document.getElementById('admin-return-remarks').value.trim();
 
- if (!remarks) {
- showToast('חובה להזין את פירוט הסיבה והנחיות להחזרה', 'warning');
- return;
- }
+  if (!remarks) {
+    showToast('חובה להזין את פירוט הסיבה והנחיות להחזרה', 'warning');
+    return;
+  }
 
- API.adminReturnForEdits(activeAdminReviewReport.id, currentAdmin, target, remarks);
- closeModal('admin-return-modal');
- closeModal('admin-review-modal');
- showToast(`הדוח הוחזר בהצלחה ל${target === 'supervisor' ? 'מנחה' : 'מורה'} לביצוע תיקונים`, 'info');
- loadMasterAdminData();
+  API.adminReturnForEdits(activeAdminReviewReport.id, currentAdmin, target, remarks);
+  closeModal('admin-return-modal');
+  closeModal('admin-review-modal');
+  showToast(`הדוח הוחזר בהצלחה ל${target === 'supervisor' ? 'מנחה' : 'מורה'} לביצוע תיקונים`, 'info');
+  loadMasterAdminData();
 }
 
 function exportMasterReports() {
- exportReportsToExcel(allReportsList, 'shalah_master_national_reports_2026.csv');
+  exportReportsToExcel(allReportsList, 'shalah_master_center_district_reports_2026.csv');
 }

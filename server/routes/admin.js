@@ -327,4 +327,190 @@ router.get('/reports/export', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/admin/supervisors
+ * List all district supervisors
+ */
+router.get('/supervisors', (req, res) => {
+  try {
+    const supervisors = db.prepare(`
+      SELECT id, full_name, id_number, phone, email, district
+      FROM users
+      WHERE role = 'supervisor'
+      ORDER BY full_name ASC
+    `).all();
+
+    return res.json({ success: true, supervisors });
+  } catch (err) {
+    console.error('Get supervisors error:', err);
+    return res.status(500).json({ success: false, error: 'שגיאה בשליפת רשימת מנחים.' });
+  }
+});
+
+/**
+ * GET /api/admin/users
+ * List all teachers and supervisors in the district
+ */
+router.get('/users', (req, res) => {
+  try {
+    const users = db.prepare(`
+      SELECT
+        u.id, u.role, u.id_number, u.phone, u.full_name, u.email,
+        u.school_code, u.school_name, u.district, u.municipality,
+        u.job_percentage, u.consent_signed, u.supervisor_id,
+        (SELECT full_name FROM users WHERE id = u.supervisor_id) as supervisor_name,
+        u.created_at
+      FROM users u
+      WHERE u.role IN ('teacher', 'supervisor')
+      ORDER BY
+        CASE u.role WHEN 'supervisor' THEN 1 ELSE 2 END,
+        u.full_name ASC
+    `).all();
+
+    return res.json({ success: true, users });
+  } catch (err) {
+    console.error('Get admin users error:', err);
+    return res.status(500).json({ success: false, error: 'שגיאה בשליפת רשימת משתמשים.' });
+  }
+});
+
+/**
+ * POST /api/admin/create-user
+ * Create a new teacher or supervisor in the system
+ */
+router.post('/create-user', (req, res) => {
+  try {
+    const {
+      role,
+      first_name,
+      last_name,
+      username,
+      password,
+      supervisor_id,
+      school_name,
+      school_code,
+      district = 'מרכז',
+      municipality,
+      email,
+      job_percentage = 100
+    } = req.body || {};
+
+    if (!role || !['teacher', 'supervisor'].includes(role)) {
+      return res.status(400).json({ success: false, error: 'חובה לבחור תפקיד תקין (מורה או מנחה).' });
+    }
+
+    if (!first_name || !first_name.trim()) {
+      return res.status(400).json({ success: false, error: 'חובה להזין שם פרטי.' });
+    }
+
+    if (!last_name || !last_name.trim()) {
+      return res.status(400).json({ success: false, error: 'חובה להזין שם משפחה.' });
+    }
+
+    if (!username || !username.trim()) {
+      return res.status(400).json({ success: false, error: 'חובה להזין שם משתמש / מספר ת"ז.' });
+    }
+
+    if (!password || !password.trim()) {
+      return res.status(400).json({ success: false, error: 'חובה להזין סיסמה.' });
+    }
+
+    if (role === 'teacher' && !supervisor_id) {
+      return res.status(400).json({ success: false, error: 'עבור מורה חובה לבחור שיוך למנחה מחוזי מתוך הרשימה.' });
+    }
+
+    const cleanUsername = username.trim();
+    const cleanPassword = password.trim();
+    const fullName = `${first_name.trim()} ${last_name.trim()}`;
+
+    // Check if user with this username already exists
+    const existing = db.prepare('SELECT id FROM users WHERE id_number = ? OR phone = ?').get(cleanUsername, cleanPassword);
+    if (existing) {
+      return res.status(400).json({ success: false, error: 'קיים כבר משתמש עם שם משתמש או פרטי הזדהות אלו במערכת.' });
+    }
+
+    const newUserId = `usr_${role}_${Date.now()}_${crypto.randomUUID().substring(0, 6)}`;
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const userEmail = email ? email.trim() : `${cleanUsername}@education.gov.il`;
+
+    // Fetch supervisor name if teacher
+    let supervisorName = null;
+    if (supervisor_id) {
+      const sup = db.prepare('SELECT full_name FROM users WHERE id = ?').get(supervisor_id);
+      supervisorName = sup ? sup.full_name : null;
+    }
+
+    db.prepare(`
+      INSERT INTO users (
+        id, role, id_number, phone, full_name, email,
+        school_code, school_name, district, municipality,
+        job_percentage, consent_signed, consent_timestamp,
+        principal_id, principal_name, principal_email, supervisor_id, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, NULL, NULL, NULL, ?, ?)
+    `).run(
+      newUserId,
+      role,
+      cleanUsername,
+      cleanPassword,
+      fullName,
+      userEmail,
+      school_code ? school_code.trim() : null,
+      school_name ? school_name.trim() : (role === 'teacher' ? 'תיכון מחוזי מרכז' : null),
+      district || 'מרכז',
+      municipality ? municipality.trim() : 'מרכז',
+      Number(job_percentage) || 100,
+      now,
+      supervisor_id || null,
+      now
+    );
+
+    // If teacher, initialize default weekly schedule
+    if (role === 'teacher') {
+      const days = [
+        { dow: 0, hours: 6, field: 0 },
+        { dow: 1, hours: 6, field: 0 },
+        { dow: 2, hours: 8, field: 1 },
+        { dow: 3, hours: 6, field: 0 },
+        { dow: 4, hours: 8, field: 1 },
+        { dow: 5, hours: 0, field: 0 }
+      ];
+
+      for (const d of days) {
+        db.prepare(`
+          INSERT INTO teacher_schedules (id, user_id, day_of_week, regular_hours, is_field_day)
+          VALUES (?, ?, ?, ?, ?)
+        `).run(`sch_${newUserId}_${d.dow}`, newUserId, d.dow, d.hours, d.field);
+      }
+    }
+
+    // Audit log
+    db.prepare(`
+      INSERT INTO audit_logs (id, report_id, action, performed_by_user_id, performed_by_name, details, timestamp)
+      VALUES (?, NULL, 'admin_created_user', 'usr_admin_1', 'רונן - ממונה מחוז מרכז', ?, ?)
+    `).run(
+      `aud_${crypto.randomUUID()}`,
+      `יצירת ${role === 'teacher' ? 'מורה חדש' : 'מנחה מחוזי חדש'}: ${fullName} (${cleanUsername})`,
+      now
+    );
+
+    return res.json({
+      success: true,
+      message: `${role === 'teacher' ? 'המורה' : 'המנחה'} ${fullName} נוסף בהצלחה למערכת!`,
+      user: {
+        id: newUserId,
+        role,
+        full_name: fullName,
+        username: cleanUsername,
+        district: district || 'מרכז',
+        supervisor_id: supervisor_id || null,
+        supervisor_name: supervisorName
+      }
+    });
+  } catch (err) {
+    console.error('Create user error:', err);
+    return res.status(500).json({ success: false, error: 'שגיאה ביצירת משתמש חדש במערכת.' });
+  }
+});
+
 module.exports = router;
+

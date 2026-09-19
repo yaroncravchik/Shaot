@@ -8,28 +8,29 @@ const { db } = require('../db/database');
  */
 router.post('/login', (req, res) => {
   try {
-    const { id_number, phone } = req.body || {};
+    const loginId = String(id_number || req.body.username || '').trim();
+    const loginSecret = String(phone || req.body.password || '').trim();
 
-    if (!id_number || !phone) {
+    if (!loginId || !loginSecret) {
       return res.status(400).json({
         success: false,
-        error: 'נא להזין מספר תעודת זהות ומספר טלפון נייד.'
+        error: 'נא להזין שם משתמש / ת"ז וסיסמה / טלפון נייד.'
       });
     }
 
-    const cleanId = String(id_number).trim();
-    const cleanPhone = String(phone).trim().replace(/[- ]/g, '');
+    const cleanSecret = loginSecret.replace(/[- ]/g, '');
 
     // Search user
     const user = db.prepare(`
       SELECT * FROM users
-      WHERE id_number = ? AND (phone = ? OR replace(replace(phone, '-', ''), ' ', '') = ?)
-    `).get(cleanId, phone, cleanPhone);
+      WHERE (id_number = ? OR phone = ? OR full_name = ?)
+        AND (phone = ? OR replace(replace(phone, '-', ''), ' ', '') = ? OR id_number = ?)
+    `).get(loginId, loginId, loginId, loginSecret, cleanSecret, loginSecret);
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        error: 'פרטי ההזדהות (ת"ז וטלפון נייד) אינם תואמים את רשימת המורשים במערכת של"ח.'
+        error: 'פרטי ההזדהות (שם משתמש וסיסמה) אינם תואמים את רשימת המורשים במערכת של"ח.'
       });
     }
 
