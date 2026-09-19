@@ -299,3 +299,6 @@ const Auth = {
     `;
   }
 };
+
+// Global window export
+window.Auth = Auth;

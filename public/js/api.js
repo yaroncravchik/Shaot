@@ -758,35 +758,55 @@ function showToast(message, type = 'info', title = '') {
 // 6. Modal Helpers
 // ==========================================================================
 function openModal(modalId) {
- const modal = document.getElementById(modalId);
- if (modal) {
- modal.classList.add('show');
- document.body.style.overflow = 'hidden';
- }
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    modal.style.opacity = '1';
+    modal.style.visibility = 'visible';
+    modal.style.pointerEvents = 'auto';
+    document.body.style.overflow = 'hidden';
+  } else {
+    console.error('Modal not found with id:', modalId);
+  }
 }
 
 function closeModal(modalId) {
- const modal = document.getElementById(modalId);
- if (modal) {
- modal.classList.remove('show');
- document.body.style.overflow = '';
- }
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+    modal.style.opacity = '0';
+    modal.style.visibility = 'hidden';
+    modal.style.pointerEvents = 'none';
+    document.body.style.overflow = '';
+  }
 }
 
 // Global modal backdrop and ESC key dismiss
 document.addEventListener('keydown', (e) => {
- if (e.key === 'Escape') {
- const openModals = document.querySelectorAll('.modal-backdrop.show');
- openModals.forEach(m => m.classList.remove('show'));
- document.body.style.overflow = '';
- }
+  if (e.key === 'Escape') {
+    const openModals = document.querySelectorAll('.modal-backdrop.show, .modal-backdrop[style*="display: flex"]');
+    openModals.forEach(m => {
+      m.classList.remove('show');
+      m.style.display = 'none';
+      m.style.opacity = '0';
+      m.style.visibility = 'hidden';
+      m.style.pointerEvents = 'none';
+    });
+    document.body.style.overflow = '';
+  }
 });
 
 document.addEventListener('click', (e) => {
- if (e.target.classList.contains('modal-backdrop')) {
- e.target.classList.remove('show');
- document.body.style.overflow = '';
- }
+  if (e.target.classList.contains('modal-backdrop')) {
+    e.target.classList.remove('show');
+    e.target.style.display = 'none';
+    e.target.style.opacity = '0';
+    e.target.style.visibility = 'hidden';
+    e.target.style.pointerEvents = 'none';
+    document.body.style.overflow = '';
+  }
 });
 
 // ==========================================================================

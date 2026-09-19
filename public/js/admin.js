@@ -9,17 +9,50 @@ let activeAdminReviewReport = null;
 let adminSigPad = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  currentAdmin = Auth.requireAuth(['admin']);
-  if (!currentAdmin) return;
+  try {
+    currentAdmin = Auth.requireAuth(['admin']);
+    if (currentAdmin) {
+      Auth.renderHeader('admin');
+      Auth.renderFooter();
+      loadMasterAdminData();
+      loadRosterUsers();
+      setupAdminFilters();
+      initAdminSigPad();
+    }
+  } catch (err) {
+    console.error('Admin page init warning:', err);
+  }
 
-  Auth.renderHeader('admin');
-  Auth.renderFooter();
-
-  loadMasterAdminData();
-  loadRosterUsers();
-  setupAdminFilters();
-  initAdminSigPad();
+  setupModalButtons();
 });
+
+function setupModalButtons() {
+  const teacherBtns = [
+    document.getElementById('btn-open-add-teacher'),
+    document.getElementById('btn-roster-add-teacher')
+  ];
+  teacherBtns.forEach(btn => {
+    if (btn) {
+      btn.onclick = function(e) {
+        if (e) e.preventDefault();
+        openAddTeacherModal();
+      };
+    }
+  });
+
+  const supervisorBtns = [
+    document.getElementById('btn-open-add-supervisor'),
+    document.getElementById('btn-roster-add-supervisor')
+  ];
+  supervisorBtns.forEach(btn => {
+    if (btn) {
+      btn.onclick = function(e) {
+        if (e) e.preventDefault();
+        openAddSupervisorModal();
+      };
+    }
+  });
+}
 
 function initAdminSigPad() {
   const canvas = document.getElementById('admin-sig-canvas');

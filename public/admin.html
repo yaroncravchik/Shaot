@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/style.css?v=202609191305">
+  <link rel="stylesheet" href="css/components.css?v=202609191305">
   <style>
     .timeline-list {
       display: flex;
@@ -73,10 +73,10 @@
           <p class="page-subtitle">צפייה מרוכזת בדוחות השעות, אישור סופי לתשלום וניהול צוות המורים והמנחים במחוז</p>
         </div>
         <div class="flex gap-sm flex-wrap">
-          <button type="button" class="btn btn-primary" onclick="openAddTeacherModal()">
+          <button type="button" id="btn-open-add-teacher" class="btn btn-primary" onclick="openAddTeacherModal()">
             <span>➕ הוספת מורה חדש</span>
           </button>
-          <button type="button" class="btn btn-secondary" style="background:#ffffff; color:#0c3058; border:1px solid #c8c8c8;" onclick="openAddSupervisorModal()">
+          <button type="button" id="btn-open-add-supervisor" class="btn btn-secondary" style="background:#ffffff; color:#0c3058; border:1px solid #c8c8c8;" onclick="openAddSupervisorModal()">
             <span>➕ הוספת מנחה חדש</span>
           </button>
           <button type="button" class="btn btn-secondary" onclick="exportMasterReports()">
@@ -181,10 +181,10 @@
           <span class="text-muted" style="font-size:0.8125rem;">רשימת המורים והמנחים הרשומים במחוז עם שיוך מנחה ופרטי גישה</span>
         </div>
         <div class="flex gap-xs">
-          <button type="button" class="btn btn-sm btn-primary" onclick="openAddTeacherModal()">
+          <button type="button" id="btn-roster-add-teacher" class="btn btn-sm btn-primary" onclick="openAddTeacherModal()">
             <span>➕ הוספת מורה</span>
           </button>
-          <button type="button" class="btn btn-sm btn-secondary" onclick="openAddSupervisorModal()">
+          <button type="button" id="btn-roster-add-supervisor" class="btn btn-sm btn-secondary" onclick="openAddSupervisorModal()">
             <span>➕ הוספת מנחה</span>
           </button>
         </div>
@@ -520,8 +520,8 @@
   <!-- Universal Footer Mount -->
   <div id="gov-footer-mount"></div>
 
-  <script src="js/api.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/admin.js"></script>
+  <script src="js/api.js?v=202609191305"></script>
+  <script src="js/auth.js?v=202609191305"></script>
+  <script src="js/admin.js?v=202609191305"></script>
 </body>
 </html>

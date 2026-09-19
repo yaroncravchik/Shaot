@@ -842,7 +842,7 @@
   bottom: 0;
   background-color: rgba(12, 48, 88, 0.55);
   backdrop-filter: blur(2px);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 9999;
