@@ -165,31 +165,48 @@ function loadSupervisorsList() {
   const select = document.getElementById('teacher-supervisor-select');
   if (!select) return;
 
-  const supervisors = API.getSupervisors();
+  const supervisors = (API && typeof API.getSupervisors === 'function') ? API.getSupervisors() : [];
   select.innerHTML = '<option value="">-- בחר מנחה מחוזי מתוך הרשימה --</option>';
 
-  supervisors.forEach(s => {
+  if (supervisors && supervisors.length > 0) {
+    supervisors.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = `${s.name || s.full_name} (${s.district || 'מרכז'})`;
+      select.appendChild(opt);
+    });
+    // Default select first supervisor
+    select.selectedIndex = 1;
+  } else {
     const opt = document.createElement('option');
-    opt.value = s.id;
-    opt.textContent = `${s.name || s.full_name} (${s.district || 'מרכז'})`;
+    opt.value = '011111111';
+    opt.textContent = 'אברהם מנחה (מרכז)';
     select.appendChild(opt);
-  });
-
-  // Default to first supervisor if available
-  if (supervisors.length > 0) {
     select.selectedIndex = 1;
   }
 }
 
 function openAddTeacherModal() {
-  document.getElementById('form-add-teacher').reset();
-  loadSupervisorsList();
-  openModal('admin-add-teacher-modal');
+  try {
+    const form = document.getElementById('form-add-teacher');
+    if (form) form.reset();
+    loadSupervisorsList();
+    openModal('admin-add-teacher-modal');
+  } catch (err) {
+    console.error('Error opening add teacher modal:', err);
+    openModal('admin-add-teacher-modal');
+  }
 }
 
 function openAddSupervisorModal() {
-  document.getElementById('form-add-supervisor').reset();
-  openModal('admin-add-supervisor-modal');
+  try {
+    const form = document.getElementById('form-add-supervisor');
+    if (form) form.reset();
+    openModal('admin-add-supervisor-modal');
+  } catch (err) {
+    console.error('Error opening add supervisor modal:', err);
+    openModal('admin-add-supervisor-modal');
+  }
 }
 
 function handleAddTeacherSubmit(e) {
@@ -430,3 +447,17 @@ function handleAdminReturnConfirm() {
 function exportMasterReports() {
   exportReportsToExcel(allReportsList, 'shalah_master_center_district_reports_2026.csv');
 }
+
+// Global window bindings for inline HTML event handlers
+window.openAddTeacherModal = openAddTeacherModal;
+window.openAddSupervisorModal = openAddSupervisorModal;
+window.handleAddTeacherSubmit = handleAddTeacherSubmit;
+window.handleAddSupervisorSubmit = handleAddSupervisorSubmit;
+window.openAdminReviewModal = openAdminReviewModal;
+window.handleAdminFinalApprove = handleAdminFinalApprove;
+window.openAdminReturnModal = openAdminReturnModal;
+window.handleAdminReturnConfirm = handleAdminReturnConfirm;
+window.exportMasterReports = exportMasterReports;
+window.loadSupervisorsList = loadSupervisorsList;
+window.loadRosterUsers = loadRosterUsers;
+window.loadMasterAdminData = loadMasterAdminData;

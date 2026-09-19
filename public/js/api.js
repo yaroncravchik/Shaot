@@ -629,6 +629,10 @@ const API = {
     return this.saveReport(report);
   },
 
+  saveUsers(users) {
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+  },
+
   getSupervisors() {
     const users = this.getUsers();
     return users.filter(u => u.role === 'supervisor');
@@ -645,8 +649,8 @@ const API = {
     const cleanPassword = String(password).trim();
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
-    if (users.some(u => u.id === cleanUsername || u.phone === cleanPassword)) {
-      throw new Error('משתמש עם שם משתמש זה כבר קיים במערכת');
+    if (users.some(u => u.id === cleanUsername)) {
+      throw new Error('משתמש עם שם משתמש (ת"ז) זה כבר קיים במערכת');
     }
 
     const supervisor = users.find(u => u.id === supervisorId) || { name: 'אברהם מנחה' };
@@ -683,8 +687,8 @@ const API = {
     const cleanPassword = String(password).trim();
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
-    if (users.some(u => u.id === cleanUsername || u.phone === cleanPassword)) {
-      throw new Error('משתמש עם שם משתמש זה כבר קיים במערכת');
+    if (users.some(u => u.id === cleanUsername)) {
+      throw new Error('משתמש עם שם משתמש (ת"ז) זה כבר קיים במערכת');
     }
 
     const newSupervisor = {
@@ -848,13 +852,19 @@ function exportReportsToExcel(reports, filename = 'shalah_hours_report.csv') {
 // 8. Helper Functions
 // ==========================================================================
 function formatDateTime(d) {
- const date = typeof d === 'string' ? new Date(d) : d;
- const day = String(date.getDate()).padStart(2, '0');
- const month = String(date.getMonth() + 1).padStart(2, '0');
- const year = date.getFullYear();
- const hours = String(date.getHours()).padStart(2, '0');
- const minutes = String(date.getMinutes()).padStart(2, '0');
- return `${day}/${month}/${year} ${hours}:${minutes}`;
+  const date = typeof d === 'string' ? new Date(d) : d;
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
+function formatMonthYear(year, month) {
+  const m = parseInt(month, 10);
+  const monthName = HEBREW_MONTHS_NAME[m - 1] || month;
+  return `${monthName} ${year}`;
 }
 
 function generateMockHash(report) {
@@ -866,6 +876,18 @@ function generateMockHash(report) {
   }
   return Math.abs(hash).toString(16).padStart(32, '0').slice(0, 32);
 }
+
+// Ensure global accessibility
+window.API = API;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.showToast = showToast;
+window.formatDateTime = formatDateTime;
+window.formatMonthYear = formatMonthYear;
+window.exportReportsToExcel = exportReportsToExcel;
+window.REPORT_STATUSES = REPORT_STATUSES;
+window.HEBREW_MONTHS_NAME = HEBREW_MONTHS_NAME;
+window.HEBREW_DAYS_NAME = HEBREW_DAYS_NAME;
 
 // ==========================================================================
 // 9. Reusable Graphic Signature Pad Component
