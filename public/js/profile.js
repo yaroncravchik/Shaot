@@ -1,23 +1,9 @@
-/**
- * Shalah Monthly Activity Hours Reporting System (מערכת דיווח שעות של"ח)
- * Profile Setup & Weekly Schedule Controller with Graphic Signature Pad
- */
-
-let teacherSigPad = null;
-
 document.addEventListener('DOMContentLoaded', () => {
   const user = Auth.requireAuth(['teacher']);
   if (!user) return;
 
   Auth.renderHeader('profile');
   Auth.renderFooter();
-
-  // Initialize Graphic Signature Pad
-  const sigCanvas = document.getElementById('teacher-sig-canvas');
-  const clearBtn = document.getElementById('teacher-clear-sig-btn');
-  if (sigCanvas) {
-    teacherSigPad = new GraphicSignaturePad(sigCanvas, clearBtn);
-  }
 
   loadProfileData(user);
   setupEventListeners(user);
@@ -118,8 +104,6 @@ function setupEventListeners(currentUser) {
     if (document.getElementById('field-thu').checked) updatedFieldDays.push(4);
     if (document.getElementById('field-fri').checked) updatedFieldDays.push(5);
 
-    const teacherSigImg = teacherSigPad ? teacherSigPad.toDataURL() : null;
-
     const updatedUser = {
       ...currentUser,
       name: document.getElementById('prof-name').value.trim(),
@@ -136,7 +120,6 @@ function setupEventListeners(currentUser) {
       principalEmail: document.getElementById('prof-principal-email').value.trim(),
       weeklySchedule: updatedWeeklySchedule,
       fieldDays: updatedFieldDays,
-      teacherSignatureImg: teacherSigImg || currentUser.teacherSignatureImg,
       consentSigned: true,
       consentDate: new Date().toISOString()
     };
@@ -144,7 +127,7 @@ function setupEventListeners(currentUser) {
     setTimeout(() => {
       API.saveUser(updatedUser);
       Auth.setCurrentUser(updatedUser);
-      showToast('פרופיל המורה, מערכת השעות והחתימה נשמרו בהצלחה!', 'success');
+      showToast('פרופיל המורה ומערכת השעות נשמרו בהצלחה!', 'success');
 
       setTimeout(() => {
         window.location.href = 'teacher.html';

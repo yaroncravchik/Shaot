@@ -6,7 +6,6 @@
 let currentAdmin = null;
 let allReportsList = [];
 let activeAdminReviewReport = null;
-let adminSigPad = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   try {
@@ -17,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
       loadMasterAdminData();
       loadRosterUsers();
       setupAdminFilters();
-      initAdminSigPad();
     }
   } catch (err) {
     console.error('Admin page init warning:', err);
@@ -54,13 +52,6 @@ function setupModalButtons() {
   });
 }
 
-function initAdminSigPad() {
-  const canvas = document.getElementById('admin-sig-canvas');
-  const clearBtn = document.getElementById('admin-clear-sig-btn');
-  if (canvas && typeof GraphicSignaturePad !== 'undefined') {
-    adminSigPad = new GraphicSignaturePad(canvas, clearBtn);
-  }
-}
 
 function loadMasterAdminData() {
   allReportsList = API.getReports().filter(r => !r.district || r.district === 'מרכז');
@@ -441,18 +432,16 @@ function handleAdminFinalApprove() {
 
   const btnApprove = document.getElementById('admin-btn-approve-payment');
   btnApprove.disabled = true;
-  btnApprove.innerHTML = '<div class="spinner"></div><span>מאשר לתשלום וחותם...</span>';
-
-  const sigImg = adminSigPad ? adminSigPad.toDataURL() : null;
+  btnApprove.innerHTML = '<div class="spinner"></div><span>מאשר לתשלום...</span>';
 
   setTimeout(() => {
-    const approvedReport = API.adminFinalApprove(activeAdminReviewReport.id, currentAdmin, sigImg);
+    const approvedReport = API.adminFinalApprove(activeAdminReviewReport.id, currentAdmin);
     closeModal('admin-review-modal');
-    showToast(`הדוח אושר סופית לתשלום שכר! הונפקה חתימה מאובטחת: ${approvedReport.signatureId}`, 'success', 'אושר ונחתם דיגיטלית');
+    showToast(`הדוח אושר סופית לתשלום שכר! הונפקה חתימה מאובטחת: ${approvedReport.signatureId}`, 'success', 'אושר לתשלום');
 
     loadMasterAdminData();
     btnApprove.disabled = false;
-    btnApprove.innerHTML = '<span>אישור סופי לתשלום והטבעת חתימה</span>';
+    btnApprove.innerHTML = '<span>אישור סופי לתשלום שכר</span>';
   }, 600);
 }
 

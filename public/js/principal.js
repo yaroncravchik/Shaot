@@ -6,7 +6,6 @@
 let currentPrincipal = null;
 let currentReport = null;
 let availableReports = [];
-let principalSigPad = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -20,13 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Auth.renderHeader('principal');
   Auth.renderFooter();
-
-  // Initialize Graphic Signature Pad
-  const sigCanvas = document.getElementById('p-sig-canvas');
-  const clearBtn = document.getElementById('p-clear-sig-btn');
-  if (sigCanvas) {
-    principalSigPad = new GraphicSignaturePad(sigCanvas, clearBtn);
-  }
 
   loadPrincipalReports();
 });
@@ -154,32 +146,24 @@ function renderReportDetails(report) {
     });
   }
 
-  // Signature and Approval Bar visibility
+  // Approval Bar and Approved Banner visibility
   const actionBar = document.getElementById('p-action-bar');
-  const sigCard = document.getElementById('p-sig-card');
   const approvedBanner = document.getElementById('p-approved-banner');
 
   if (report.status === 'pending_principal') {
     actionBar.style.display = 'flex';
-    sigCard.style.display = 'block';
     approvedBanner.style.display = 'none';
   } else if (report.status === 'pending_supervisor' || report.status === 'supervisor_edited' || report.status === 'approved_paid') {
     actionBar.style.display = 'none';
-    sigCard.style.display = 'none';
     approvedBanner.style.display = 'block';
 
     const stampDetails = document.getElementById('p-stamp-details');
-    stampDetails.textContent = `נחתם ע"י ${currentPrincipal.name} בתאריך ${formatDateTime(report.principalSignedAt || new Date())}`;
+    stampDetails.textContent = `אושר ע"י ${currentPrincipal.name} בתאריך ${formatDateTime(report.principalApprovedAt || report.principalSignedAt || new Date())}`;
 
     const stampImgBox = document.getElementById('p-stamp-img-box');
-    if (report.principalSignatureImg) {
-      stampImgBox.innerHTML = `<img src="${report.principalSignatureImg}" alt="חתימה גרפית" class="signature-preview-img" title="חתימת מנהל/ת בית הספר">`;
-    } else {
-      stampImgBox.innerHTML = `<div style="font-family:cursive; font-size:1.4rem; color:#0c3058; padding:4px 12px; border:1px solid #dee2e6; background:#fff;">${currentPrincipal.name}</div>`;
-    }
+    stampImgBox.innerHTML = `<span class="badge badge-success" style="font-size:0.95rem; padding:8px 16px;">✓ מאושר</span>`;
   } else {
     actionBar.style.display = 'none';
-    sigCard.style.display = 'none';
     approvedBanner.style.display = 'none';
   }
 }
@@ -187,15 +171,13 @@ function renderReportDetails(report) {
 function handlePrincipalApproval() {
   if (!currentReport) return;
 
-  const signatureImg = principalSigPad ? principalSigPad.toDataURL() : null;
-
   const btnApprove = document.getElementById('p-btn-approve');
   btnApprove.disabled = true;
-  btnApprove.innerHTML = '<div class="spinner"></div><span>מאשר וחותם על הדוח...</span>';
+  btnApprove.innerHTML = '<div class="spinner"></div><span>מאשר את הדוח...</span>';
 
   setTimeout(() => {
-    API.principalApprove(currentReport.id, currentPrincipal, 'הדוח נבדק ותואם את מערכת השעות ותוכנית הפעילות השנתית. מאושר.', signatureImg);
-    showToast('הדוח אושר ונחתם בהצלחה! הועבר לבדיקת המנחה המחוזי.', 'success');
+    API.principalApprove(currentReport.id, currentPrincipal, 'הדוח נבדק ותואם את מערכת השעות ותוכנית הפעילות השנתית. מאושר.');
+    showToast('הדוח אושר בהצלחה! הועבר לבדיקת המנחה המחוזי.', 'success');
 
     currentReport = API.getReportById(currentReport.id);
     renderReportDetails(currentReport);
