@@ -4,16 +4,11 @@
  */
 
 const { onRequest } = require('firebase-functions/v2/https');
-const admin = require('firebase-admin');
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
-
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
 
 const app = express();
+const apiRouter = express.Router();
 
 // CORS Middleware
 app.use(cors({ origin: true, credentials: true }));
@@ -22,26 +17,37 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
-// Register all API routes from server
-app.use('/auth', require('../server/routes/auth'));
-app.use('/profile', require('../server/routes/profile'));
-app.use('/reports', require('../server/routes/reports'));
-app.use('/principal', require('../server/routes/principal'));
-app.use('/supervisor', require('../server/routes/supervisor'));
-app.use('/admin', require('../server/routes/admin'));
-app.use('/verify', require('../server/routes/verify'));
-app.use('/upload', require('../server/routes/upload'));
+// Register all API routes on apiRouter
+apiRouter.use('/auth', require('./routes/auth'));
+apiRouter.use('/profile', require('./routes/profile'));
+apiRouter.use('/reports', require('./routes/reports'));
+apiRouter.use('/principal', require('./routes/principal'));
+apiRouter.use('/supervisor', require('./routes/supervisor'));
+apiRouter.use('/admin', require('./routes/admin'));
+apiRouter.use('/verify', require('./routes/verify'));
+apiRouter.use('/upload', require('./routes/upload'));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+apiRouter.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     system: 'מערכת דיווח שעות פעילות חודשית של"ח',
-    platform: 'Google Firebase (Cloud Functions v2 + Cloud Firestore)',
+    platform: 'Google Firebase Cloud Functions v2',
     version: '2.1.0',
     timestamp: new Date().toISOString()
   });
 });
+
+apiRouter.get('/', (req, res) => {
+  res.json({
+    status: 'online',
+    message: 'Shalah API is running on Google Cloud Functions v2'
+  });
+});
+
+// Mount under both /api and root
+app.use('/api', apiRouter);
+app.use('/', apiRouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -54,8 +60,8 @@ app.use((err, req, res, next) => {
 
 // Export Cloud Function v2
 exports.api = onRequest({
-  region: 'me-west1', // Tel Aviv / Middle East region (or fallback europe-west1)
   cors: true,
+  invoker: 'public',
   maxInstances: 10,
   minInstances: 0,
   memory: '256MiB',
