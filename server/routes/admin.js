@@ -313,7 +313,7 @@ router.get('/reports/export', async (req, res) => {
     sql += ' ORDER BY r.year DESC, r.month DESC, u.district ASC, u.full_name ASC';
 
     const reports = db.prepare(sql).all(params);
-    const title = `ריכוז כלל דוחות שעות פעילות חודשי של"ח - משרד החינוך`;
+    const title = `ריכוז כלל דוחות שעות פעילות חודשי של"ח`;
 
     const excelBuffer = await generateReportsSummaryExcel(reports, title);
     const fileName = `Shalah_Master_Reports_Export_${Date.now()}.xlsx`;

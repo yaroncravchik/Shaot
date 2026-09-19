@@ -34,7 +34,7 @@ router.get('/:signatureId', (req, res) => {
       return res.status(404).json({
         valid: false,
         verified: false,
-        error: 'חתימה דיגיטלית זו אינה קיימת במאגר הדיווחים המאושרים של משרד החינוך.'
+        error: 'חתימה דיגיטלית זו אינה קיימת במאגר הדיווחים המאושרים של תחום של"ח.'
       });
     }
 
@@ -85,7 +85,7 @@ router.get('/:signatureId', (req, res) => {
       valid: isCryptoValid,
       verified: isCryptoValid,
       certificate: {
-        issuer: 'מדינת ישראל - משרד החינוך - מינהל חברה ונוער - תחום של"ח',
+        issuer: 'מדינת ישראל - תחום של"ח וידיעת הארץ',
         algorithm: 'RSA 2048-bit / SHA-256',
         signatureId: report.digital_signature_id,
         signatureHash: report.signature_hash,

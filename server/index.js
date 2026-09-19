@@ -109,32 +109,32 @@ app.get('*', (req, res, next) => {
  <body>
  <div class="card">
  <div class="badge"> שרת ה-API פעיל ותקין</div>
- <h1>מערכת דיווח שעות פעילות חודשית של"ח</h1>
- <p>משרד החינוך - מינהל חברה ונוער</p>
- <p>השרת זמין ומספק שירותי API בנתיב <code>/api</code>.</p>
- </div>
- </body>
- </html>
- `);
+  <h1>מערכת דיווח שעות פעילות חודשית של"ח</h1>
+  <p>תחום של"ח וידיעת הארץ</p>
+  <p>השרת זמין ומספק שירותי API בנתיב <code>/api</code>.</p>
+  </div>
+  </body>
+  </html>
+  `);
 });
 
 // Global Error Handler
 app.use((err, req, res, next) => {
- console.error('Unhandled server error:', err);
- res.status(err.status || 500).json({
- success: false,
- error: err.message || 'שגיאת שרת פנימית בלתי צפויה.'
- });
+  console.error('Unhandled server error:', err);
+  res.status(err.status || 500).json({
+    success: false,
+    error: err.message || 'שגיאת שרת פנימית בלתי צפויה.'
+  });
 });
 
 // Start Server if executed directly
 if (require.main === module) {
- const server = app.listen(PORT, () => {
- console.log(`========================================================`);
- console.log(` מערכת דיווח שעות פעילות חודשית של"ח - משרד החינוך `);
- console.log(` Server running at http://localhost:${PORT}`);
- console.log(` API Health: http://localhost:${PORT}/api/health`);
- console.log(`========================================================`);
+  const server = app.listen(PORT, () => {
+    console.log(`========================================================`);
+    console.log(` מערכת דיווח שעות פעילות חודשית של"ח `);
+    console.log(` Server running at http://localhost:${PORT}`);
+    console.log(` API Health: http://localhost:${PORT}/api/health`);
+    console.log(`========================================================`);
  });
 }
 

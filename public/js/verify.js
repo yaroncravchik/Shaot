@@ -55,45 +55,45 @@ function verifySignature(sigId) {
  const resultContainer = document.getElementById('verification-result-container');
  const btnSubmit = document.getElementById('btn-verify-submit');
 
- btnSubmit.disabled = true;
- btnSubmit.innerHTML = '<div class="spinner"></div><span>מאמת...</span>';
- resultContainer.innerHTML = '<div class="text-center p-4"><div class="spinner" style="margin:0 auto; border-color:rgba(0,123,255,0.3); border-top-color:#007bff;"></div><p class="mt-2 text-muted">מבצע אימות קריפטוגרפי מול שרת החתימות של משרד החינוך...</p></div>';
+  btnSubmit.disabled = true;
+  btnSubmit.innerHTML = '<div class="spinner"></div><span>מאמת...</span>';
+  resultContainer.innerHTML = '<div class="text-center p-4"><div class="spinner" style="margin:0 auto; border-color:rgba(0,123,255,0.3); border-top-color:#007bff;"></div><p class="mt-2 text-muted">מבצע אימות קריפטוגרפי מול שרת החתימות המאובטח...</p></div>';
 
- setTimeout(() => {
- btnSubmit.disabled = false;
- btnSubmit.innerHTML = '<span> אימות חתימה</span>';
+  setTimeout(() => {
+    btnSubmit.disabled = false;
+    btnSubmit.innerHTML = '<span>🔍 אימות חתימה</span>';
 
- const report = API.getReportBySignature(sigId);
+    const report = API.getReportBySignature(sigId);
 
- if (!report) {
- resultContainer.innerHTML = `
- <div class="banner-alert banner-danger animate-fade-in" style="padding:24px;">
- <div class="banner-alert-icon" style="font-size:2rem;"></div>
- <div class="banner-alert-content">
- <h3 style="color:#721c24; margin-bottom:6px;">חתימה דיגיטלית לא נמצאה או אינה תקפה</h3>
- <p style="margin-bottom:8px;">
- מזהה החתימה <strong>${sigId}</strong> אינו קיים במאגר הדוחות המאושרים של משרד החינוך. ייתכן והמזהה הוקלד באופן שגוי או שהדוח טרם אושר סופית לתשלום ע"י הממונה.
- </p>
- <small class="text-muted">לבירורים נוספים ניתן לפנות לתחום של"ח וידיעת הארץ, מינהל חברה ונוער.</small>
- </div>
- </div>
- `;
- showToast('מזהה החתימה אינו תקין', 'error');
- return;
- }
+    if (!report) {
+      resultContainer.innerHTML = `
+        <div class="banner-alert banner-danger animate-fade-in" style="padding:24px;">
+          <div class="banner-alert-icon" style="font-size:2rem;">⚠️</div>
+          <div class="banner-alert-content">
+            <h3 style="color:#721c24; margin-bottom:6px;">חתימה דיגיטלית לא נמצאה או אינה תקפה</h3>
+            <p style="margin-bottom:8px;">
+              מזהה החתימה <strong>${sigId}</strong> אינו קיים במאגר הדוחות המאושרים. ייתכן והמזהה הוקלד באופן שגוי או שהדוח טרם אושר סופית לתשלום ע"י הממונה.
+            </p>
+            <small class="text-muted">לבירורים נוספים ניתן לפנות לתחום של"ח וידיעת הארץ.</small>
+          </div>
+        </div>
+      `;
+      showToast('מזהה החתימה אינו תקין', 'error');
+      return;
+    }
 
- // Verified Certificate Rendering
- resultContainer.innerHTML = `
- <div class="cert-box animate-fade-in">
- <div class="cert-seal"></div>
- <div class="cert-title">אישור דיגיטלי מאומת – משרד החינוך</div>
- <p style="color:var(--on-surface-variant); font-size:0.9375rem; max-width:600px; margin:0 auto 16px auto;">
- תעודה זו מאשרת כי דוח שעות הפעילות שלהלן נבדק, אושר ונחתם דיגיטלית באמצעות מפתח הצפנה מאובטח (RSA-2048) וכי לא בוצע בו כל שינוי לאחר החתימה.
- </p>
+    // Verified Certificate Rendering
+    resultContainer.innerHTML = `
+      <div class="cert-box animate-fade-in">
+        <div class="cert-seal">🛡️</div>
+        <div class="cert-title">אישור דיגיטלי מאומת – של"ח וידיעת הארץ</div>
+        <p style="color:var(--on-surface-variant); font-size:0.9375rem; max-width:600px; margin:0 auto 16px auto;">
+          תעודה זו מאשרת כי דוח שעות הפעילות שלהלן נבדק, אושר ונחתם דיגיטלית באמצעות מפתח הצפנה מאובטח (RSA-2048) וכי לא בוצע בו כל שינוי לאחר החתימה.
+        </p>
 
- <div class="cert-id-badge">
- מזהה חתימה: ${report.signatureId}
- </div>
+        <div class="cert-id-badge">
+          מזהה חתימה: ${report.signatureId}
+        </div>
 
  <div class="cert-grid">
  <div>

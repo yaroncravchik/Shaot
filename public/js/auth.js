@@ -182,12 +182,7 @@ const Auth = {
       <div class="gov-top-bar">
         <div class="container">
           <div class="flex items-center gap-sm">
-            <span>מדינת ישראל • משרד החינוך • מינהל חברה ונוער • תחום של"ח וידיעת הארץ</span>
-          </div>
-          <div class="gov-top-links">
-            <a href="https://education.gov.il" target="_blank" rel="noopener">פורטל משרד החינוך</a>
-            <span>|</span>
-            <a href="https://education.gov.il" target="_blank" rel="noopener">פורטל עובדי הוראה</a>
+            <span>מדינת ישראל • תחום של"ח וידיעת הארץ</span>
           </div>
         </div>
       </div>
@@ -220,11 +215,10 @@ const Auth = {
       <header class="main-header">
         <div class="container header-container">
           <a href="${user ? (user.role === 'teacher' ? 'teacher.html' : user.role === 'supervisor' ? 'supervisor.html' : user.role === 'admin' ? 'admin.html' : 'principal.html') : 'index.html'}" class="brand-wrapper">
-            <div class="brand-emblem" title="סמל משרד החינוך">
+            <div class="brand-emblem" title="סמל תחום של&quot;ח">
               <svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>
             </div>
             <div class="brand-titles">
-              <span class="brand-sub">משרד החינוך • מינהל חברה ונוער</span>
               <span class="brand-main">מערכת דיווח שעות פעילות חודשית – של"ח וידיעת הארץ</span>
             </div>
           </a>
@@ -270,11 +264,11 @@ const Auth = {
           <div class="footer-grid">
             <div class="footer-brand">
               <h4>מערכת דיווח שעות של"ח וידיעת הארץ</h4>
-              <p>מערכת ממשלתית מקוונת לניהול, דיווח, בקרה ואישור שעות פעילות, שעות נוספות וימי שדה למורי ומנחי של"ח במשרד החינוך.</p>
-              <p class="text-muted" style="color:#a0aec0; font-size:0.8125rem;">עומד בתקן הנגישות WCAG 2.1 AA ובתקני אבטחת מידע ממשלתיים.</p>
+              <p>מערכת מקוונת לניהול, דיווח, בקרה ואישור שעות פעילות, שעות נוספות וימי שדה למורי ומנחי של"ח.</p>
+              <p class="text-muted" style="color:#a0aec0; font-size:0.8125rem;">עומד בתקן הנגישות WCAG 2.1 AA ובתקני אבטחת מידע מתקדמים.</p>
             </div>
             <div class="footer-links">
-              <h5>קישורים מרכזיים</h5>
+              <h5>ניווט מהיר</h5>
               <ul>
                 <li><a href="teacher.html">לוח בקרה מורה</a></li>
                 <li><a href="profile.html">הגדרת פרופיל ומערכת שעות</a></li>
@@ -282,16 +276,9 @@ const Auth = {
                 <li><a href="admin.html">לוח בקרה ממונה מחוזי (מרכז)</a></li>
               </ul>
             </div>
-            <div class="footer-links">
-              <h5>קישורים שימושיים</h5>
-              <ul>
-                <li><a href="https://education.gov.il" target="_blank" rel="noopener">פורטל עובדי הוראה</a></li>
-                <li><a href="https://education.gov.il" target="_blank" rel="noopener">פורטל משרד החינוך</a></li>
-              </ul>
-            </div>
           </div>
           <div class="footer-bottom">
-            <span>כל הזכויות שמורות למדינת ישראל • משרד החינוך – תחום של"ח וידיעת הארץ, מינהל חברה ונוער.</span>
+            <span>כל הזכויות שמורות • תחום של"ח וידיעת הארץ.</span>
             <span>גרסה 2.1</span>
           </div>
         </div>

@@ -24,8 +24,8 @@ async function generateSingleReportExcel(report) {
  }
 
  const workbook = new ExcelJS.Workbook();
- workbook.creator = 'מערכת דיווח שעות פעילות חודשית של"ח - משרד החינוך';
- workbook.lastModifiedBy = 'משרד החינוך';
+ workbook.creator = 'מערכת דיווח שעות פעילות חודשית של"ח';
+ workbook.lastModifiedBy = 'תחום של"ח וידיעת הארץ';
  workbook.created = new Date();
  workbook.modified = new Date();
 
@@ -49,7 +49,7 @@ async function generateSingleReportExcel(report) {
  // 1. Title Block
  worksheet.mergeCells('A1:N1');
  const titleCell = worksheet.getCell('A1');
- titleCell.value = 'מדינת ישראל - משרד החינוך - מינהל חברה ונוער - תחום של"ח וידיעת הארץ';
+ titleCell.value = 'מדינת ישראל - תחום של"ח וידיעת הארץ';
  titleCell.font = { name: 'Arial', size: 16, bold: true, color: { argb: COLOR_HEADER_TEXT } };
  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_HEADER_BG } };
@@ -238,7 +238,7 @@ async function generateSingleReportExcel(report) {
 
   const isSigned = Boolean(report.digital_signature_id);
   sigCell.value = isSigned
-    ? `🔒 מסמך זה נחתם דיגיטלית ומאומת במערכת של"ח משרד החינוך.\nמזהה חתימה דיגיטלית: ${report.digital_signature_id} | גורם חותם: ${report.signed_by_role || 'ממונה ארצי'} | תאריך חתימה: ${report.signed_at ? new Date(report.signed_at).toLocaleString('he-IL') : '—'}\nגיבוב אימות (SHA-256): ${report.signature_hash || 'מאומת'}`
+    ? `🔒 מסמך זה נחתם דיגיטלית ומאומת במערכת דיווח שעות של"ח.\nמזהה חתימה דיגיטלית: ${report.digital_signature_id} | גורם חותם: ${report.signed_by_role || 'ממונה ארצי'} | תאריך חתימה: ${report.signed_at ? new Date(report.signed_at).toLocaleString('he-IL') : '—'}\nגיבוב אימות (SHA-256): ${report.signature_hash || 'מאומת'}`
     : `מסמך זה הינו טיוטה / בהליכי אישור (טרם נחתם סופית לתשלום).`;
 
   sigCell.font = { name: 'Arial', size: 9, bold: true, color: { argb: isSigned ? '0B6623' : '666666' } };
@@ -271,7 +271,7 @@ async function generateSingleReportExcel(report) {
  */
 async function generateReportsSummaryExcel(reports, title = 'דוח ריכוז מחוזי – שעות פעילות של"ח') {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'מערכת דיווח שעות של"ח – משרד החינוך';
+  workbook.creator = 'מערכת דיווח שעות של"ח';
   workbook.views = [{ rtl: true }];
 
   const worksheet = workbook.addWorksheet('ריכוז דוחות מחוזי', {
