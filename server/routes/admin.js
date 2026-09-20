@@ -395,8 +395,8 @@ router.post('/create-user', (req, res) => {
       job_percentage = 100
     } = req.body || {};
 
-    if (!role || !['teacher', 'supervisor'].includes(role)) {
-      return res.status(400).json({ success: false, error: 'חובה לבחור תפקיד תקין (מורה או מנחה).' });
+    if (!role || !['teacher', 'supervisor', 'admin', 'site_admin'].includes(role)) {
+      return res.status(400).json({ success: false, error: 'חובה לבחור תפקיד תקין (ממונה, מנחה או מורה).' });
     }
 
     if (!first_name || !first_name.trim()) {
@@ -483,19 +483,21 @@ router.post('/create-user', (req, res) => {
       }
     }
 
+    const roleNameHebrew = role === 'admin' ? 'ממונה' : role === 'supervisor' ? 'מנחה' : role === 'teacher' ? 'מורה' : 'משתמש';
+
     // Audit log
     db.prepare(`
       INSERT INTO audit_logs (id, report_id, action, performed_by_user_id, performed_by_name, details, timestamp)
-      VALUES (?, NULL, 'admin_created_user', 'usr_admin_1', 'רונן - ממונה מחוז מרכז', ?, ?)
+      VALUES (?, NULL, 'admin_created_user', 'usr_admin_1', 'מנהל מערכת', ?, ?)
     `).run(
       `aud_${crypto.randomUUID()}`,
-      `יצירת ${role === 'teacher' ? 'מורה חדש' : 'מנחה מחוזי חדש'}: ${fullName} (${cleanUsername})`,
+      `יצירת ${roleNameHebrew} חדש: ${fullName} (${cleanUsername})`,
       now
     );
 
     return res.json({
       success: true,
-      message: `${role === 'teacher' ? 'המורה' : 'המנחה'} ${fullName} נוסף בהצלחה למערכת!`,
+      message: `${roleNameHebrew} ${fullName} נוסף בהצלחה למערכת!`,
       user: {
         id: newUserId,
         role,
@@ -509,6 +511,72 @@ router.post('/create-user', (req, res) => {
   } catch (err) {
     console.error('Create user error:', err);
     return res.status(500).json({ success: false, error: 'שגיאה ביצירת משתמש חדש במערכת.' });
+  }
+});
+
+/**
+ * DELETE /api/admin/reports/:id
+ * Permanent deletion of a report and its child items (days, attachments, audit logs)
+ */
+router.delete('/reports/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { performed_by_name } = req.body || {};
+
+    const report = db.prepare('SELECT * FROM reports WHERE id = ?').get(id);
+    if (!report) {
+      return res.status(404).json({ success: false, error: 'הדוח לא נמצא במערכת.' });
+    }
+
+    // Delete child records
+    db.prepare('DELETE FROM report_days WHERE report_id = ?').run(id);
+    db.prepare('DELETE FROM report_attachments WHERE report_id = ?').run(id);
+    db.prepare('DELETE FROM audit_logs WHERE report_id = ?').run(id);
+    db.prepare('DELETE FROM reports WHERE id = ?').run(id);
+
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    db.prepare(`
+      INSERT INTO audit_logs (id, report_id, action, performed_by_user_id, performed_by_name, details, timestamp)
+      VALUES (?, NULL, 'site_admin_deleted_report', 'usr_site_admin_1', ?, ?, ?)
+    `).run(
+      `aud_${crypto.randomUUID()}`,
+      performed_by_name || 'מנהל אתר',
+      `מחיקת דוח ${id} (שנה: ${report.year}, חודש: ${report.month}) לצמיתות`,
+      now
+    );
+
+    return res.json({
+      success: true,
+      message: `הדוח ${id} נמחק בהצלחה מהמערכת לצמיתות.`
+    });
+  } catch (err) {
+    console.error('Delete report error:', err);
+    return res.status(500).json({ success: false, error: 'שגיאה במחיקת הדוח.' });
+  }
+});
+
+/**
+ * DELETE /api/admin/users/:id
+ * Permanent deletion of a user
+ */
+router.delete('/users/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'משתמש לא נמצא.' });
+    }
+
+    db.prepare('DELETE FROM teacher_schedules WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM users WHERE id = ?').run(id);
+
+    return res.json({
+      success: true,
+      message: `המשתמש ${user.full_name} נמחק בהצלחה מהמערכת.`
+    });
+  } catch (err) {
+    console.error('Delete user error:', err);
+    return res.status(500).json({ success: false, error: 'שגיאה במחיקת המשתמש.' });
   }
 });
 

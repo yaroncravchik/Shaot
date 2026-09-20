@@ -177,6 +177,14 @@ function getInitialSeedUsers() {
       role: 'admin',
       email: 'ronen.shalah@education.gov.il',
       district: 'מרכז'
+    },
+    {
+      id: 'siteadmin',
+      phone: '0500000000',
+      name: 'מנהל אתר ראשי',
+      role: 'site_admin',
+      email: 'admin.master@shalah.org.il',
+      district: 'ארצי'
     }
   ];
 }
@@ -704,6 +712,126 @@ const API = {
     this.saveUsers(users);
 
     return newSupervisor;
+  },
+
+  siteAdminCreateAdmin({ firstName, lastName, username, password, district = 'מרכז', email }) {
+    const users = this.getUsers();
+    const cleanUsername = String(username).trim();
+    const cleanPassword = String(password).trim();
+    const fullName = `${firstName.trim()} ${lastName.trim()}`;
+
+    if (users.some(u => u.id === cleanUsername)) {
+      throw new Error('משתמש עם שם משתמש זה כבר קיים במערכת');
+    }
+
+    const newAdmin = {
+      id: cleanUsername,
+      phone: cleanPassword,
+      name: fullName,
+      role: 'admin',
+      email: email ? email.trim() : `${cleanUsername}@education.gov.il`,
+      district: district || 'מרכז'
+    };
+
+    users.push(newAdmin);
+    this.saveUsers(users);
+
+    return newAdmin;
+  },
+
+  siteAdminCreateSupervisor({ firstName, lastName, username, password, district = 'מרכז', email }) {
+    return this.adminCreateSupervisor({ firstName, lastName, username, password, district, email });
+  },
+
+  siteAdminCreateTeacher({ firstName, lastName, supervisorId, username, password, schoolName, schoolCode, district = 'מרכז', municipality, email }) {
+    const users = this.getUsers();
+    const cleanUsername = String(username).trim();
+    const cleanPassword = String(password).trim();
+    const fullName = `${firstName.trim()} ${lastName.trim()}`;
+
+    if (users.some(u => u.id === cleanUsername)) {
+      throw new Error('משתמש עם שם משתמש זה כבר קיים במערכת');
+    }
+
+    const supervisor = users.find(u => u.id === supervisorId) || { name: 'אברהם מנחה' };
+
+    const newTeacher = {
+      id: cleanUsername,
+      phone: cleanPassword,
+      name: fullName,
+      role: 'teacher',
+      email: email ? email.trim() : `${cleanUsername}@education.gov.il`,
+      schoolName: schoolName ? schoolName.trim() : 'תיכון מחוזי',
+      schoolCode: schoolCode ? schoolCode.trim() : '123456',
+      district: district || 'מרכז',
+      municipality: municipality ? municipality.trim() : (district || 'מרכז'),
+      supervisorName: supervisor.name,
+      supervisorId: supervisorId,
+      principalName: 'מנהל/ת מוסד',
+      principalEmail: 'principal@school.gov.il',
+      jobScope: 100,
+      consentSigned: true,
+      weeklySchedule: { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 },
+      fieldDays: [2, 4]
+    };
+
+    users.push(newTeacher);
+    this.saveUsers(users);
+
+    return newTeacher;
+  },
+
+  deleteReport(reportId, performedByUser = null) {
+    initStorage();
+    const reports = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS) || '[]');
+    const idx = reports.findIndex(r => r.id === reportId);
+    if (idx < 0) {
+      throw new Error('הדוח לא נמצא במערכת');
+    }
+
+    const deletedReport = reports.splice(idx, 1)[0];
+    localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(reports));
+
+    const audit = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS) || '[]');
+    audit.push({
+      date: formatDateTime(new Date()),
+      user: performedByUser ? `${performedByUser.name} (מנהל אתר)` : 'מנהל אתר',
+      action: `מחיקת דוח ${deletedReport.id} עבור המורה ${deletedReport.teacherName || ''} (${deletedReport.month}/${deletedReport.year}) לצמיתות`
+    });
+    localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(audit));
+
+    return true;
+  },
+
+  deleteUser(userId, performedByUser = null) {
+    initStorage();
+    const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || '[]');
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx < 0) {
+      throw new Error('משתמש לא נמצא');
+    }
+
+    const deletedUser = users.splice(idx, 1)[0];
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+    const audit = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS) || '[]');
+    audit.push({
+      date: formatDateTime(new Date()),
+      user: performedByUser ? `${performedByUser.name} (מנהל אתר)` : 'מנהל אתר',
+      action: `מחיקת משתמש ${deletedUser.name} (${deletedUser.role})`
+    });
+    localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(audit));
+
+    return true;
+  },
+
+  getAdmins() {
+    const users = this.getUsers();
+    return users.filter(u => u.role === 'admin');
+  },
+
+  getAllDistricts() {
+    return ['מרכז', 'צפון', 'דרום', 'ירושלים', 'תל אביב', 'חיפה', 'התיישבותי', 'ארצי'];
   }
 };
 

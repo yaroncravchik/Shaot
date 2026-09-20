@@ -269,6 +269,73 @@ async function runTests() {
     assert.ok(repCheck.signature_data);
   });
 
+  // 7. Site Admin Capabilities: Adding Admins, Supervisors, Teachers and Deleting Reports
+  test('7. Site Admin: Create Roles & Delete Reports', () => {
+    // 7.1 Verify site admin user exists
+    const siteAdmin = db.prepare('SELECT * FROM users WHERE role = ?').get('site_admin');
+    assert.ok(siteAdmin, 'Site admin user must exist');
+    assert.strictEqual(siteAdmin.id_number, 'siteadmin');
+
+    // 7.2 Create a new Admin (ממונה)
+    const newAdminId = 'usr_admin_test_1';
+    db.prepare(`
+      INSERT INTO users (id, role, id_number, phone, full_name, email, district, municipality, job_percentage, consent_signed)
+      VALUES (?, 'admin', 'test_admin_user', '0501112233', 'ממונה בדיקה', 'test.admin@education.gov.il', 'דרום', 'באר שבע', 100, 1)
+    `).run(newAdminId);
+
+    const checkAdmin = db.prepare('SELECT * FROM users WHERE id = ?').get(newAdminId);
+    assert.strictEqual(checkAdmin.full_name, 'ממונה בדיקה');
+    assert.strictEqual(checkAdmin.role, 'admin');
+    assert.strictEqual(checkAdmin.district, 'דרום');
+
+    // 7.3 Create a new Supervisor (מנחה)
+    const newSupId = 'usr_sup_test_1';
+    db.prepare(`
+      INSERT INTO users (id, role, id_number, phone, full_name, email, district, municipality, job_percentage, consent_signed)
+      VALUES (?, 'supervisor', 'test_sup_user', '0502223344', 'מנחה בדיקה', 'test.sup@education.gov.il', 'דרום', 'באר שבע', 100, 1)
+    `).run(newSupId);
+
+    const checkSup = db.prepare('SELECT * FROM users WHERE id = ?').get(newSupId);
+    assert.strictEqual(checkSup.full_name, 'מנחה בדיקה');
+    assert.strictEqual(checkSup.role, 'supervisor');
+
+    // 7.4 Create a new Teacher (מורה) assigned to the supervisor
+    const newTchId = 'usr_tch_test_1';
+    db.prepare(`
+      INSERT INTO users (id, role, id_number, phone, full_name, email, school_code, school_name, district, municipality, supervisor_id, job_percentage, consent_signed)
+      VALUES (?, 'teacher', 'test_tch_user', '0503334455', 'מורה בדיקה', 'test.tch@school.org.il', '550123', 'תיכון דרום', 'דרום', 'באר שבע', ?, 100, 1)
+    `).run(newTchId, newSupId);
+
+    const checkTch = db.prepare('SELECT * FROM users WHERE id = ?').get(newTchId);
+    assert.strictEqual(checkTch.full_name, 'מורה בדיקה');
+    assert.strictEqual(checkTch.role, 'teacher');
+    assert.strictEqual(checkTch.supervisor_id, newSupId);
+
+    // 7.5 Create and then Delete a Report
+    const testRepId = 'rep_test_to_delete';
+    db.prepare(`
+      INSERT INTO reports (id, user_id, year, month, status)
+      VALUES (?, ?, 2026, 10, 'draft')
+    `).run(testRepId, newTchId);
+
+    db.prepare(`
+      INSERT INTO report_days (id, report_id, day_number, day_of_week, date_str, regular_hours, overtime_hours)
+      VALUES ('day_test_del_1', ?, 1, 0, '2026-10-01', 6, 2)
+    `).run(testRepId);
+
+    // Verify report exists
+    assert.ok(db.prepare('SELECT * FROM reports WHERE id = ?').get(testRepId));
+    assert.ok(db.prepare('SELECT * FROM report_days WHERE report_id = ?').get(testRepId));
+
+    // Delete report and child records
+    db.prepare('DELETE FROM report_days WHERE report_id = ?').run(testRepId);
+    db.prepare('DELETE FROM reports WHERE id = ?').run(testRepId);
+
+    // Verify report is deleted
+    assert.strictEqual(db.prepare('SELECT * FROM reports WHERE id = ?').get(testRepId), undefined);
+    assert.strictEqual(db.prepare('SELECT * FROM report_days WHERE report_id = ?').get(testRepId), undefined);
+  });
+
   console.log('\n============================================================');
   console.log(`  TEST RESULTS: ${passed} PASSED, ${failed} FAILED  `);
   console.log('============================================================\n');

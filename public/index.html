@@ -142,7 +142,9 @@
             showToast(`שלום, ${user.name}`, 'success');
 
             setTimeout(() => {
-              if (user.role === 'teacher') {
+              if (user.role === 'site_admin' || user.role === 'superadmin') {
+                window.location.href = 'site-admin.html';
+              } else if (user.role === 'teacher') {
                 window.location.href = user.consentSigned ? 'teacher.html' : 'profile.html';
               } else if (user.role === 'supervisor') {
                 window.location.href = 'supervisor.html';
@@ -151,7 +153,7 @@
               } else if (user.role === 'principal') {
                 window.location.href = 'principal.html';
               } else {
-                window.location.href = 'teacher.html';
+                window.location.href = 'site-admin.html';
               }
             }, 300);
           } catch (err) {

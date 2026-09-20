@@ -9,18 +9,19 @@ const { generateMonthDays } = require('../services/calendarService');
 const { signReport, generateSignatureId } = require('../services/cryptoService');
 
 function seed() {
- console.log('--- Initializing Database Schema & Seeding Data ---');
- initSchema();
+  console.log('--- Initializing Database Schema & Seeding Data ---');
+  
+  // Clean existing tables for fresh schema & seed
+  db.exec(`
+    DROP TABLE IF EXISTS audit_logs;
+    DROP TABLE IF EXISTS report_attachments;
+    DROP TABLE IF EXISTS report_days;
+    DROP TABLE IF EXISTS reports;
+    DROP TABLE IF EXISTS teacher_schedules;
+    DROP TABLE IF EXISTS users;
+  `);
 
- // Clean existing data for fresh seed
- db.exec(`
- DELETE FROM audit_logs;
- DELETE FROM report_attachments;
- DELETE FROM report_days;
- DELETE FROM reports;
- DELETE FROM teacher_schedules;
- DELETE FROM users;
- `);
+  initSchema();
 
  // 1. Seed Users
  const users = [
@@ -172,6 +173,26 @@ function seed() {
  school_name: null,
  district: 'מרכז',
  municipality: 'ירושלים',
+ job_percentage: 100,
+ consent_signed: 1,
+ consent_timestamp: '2026-08-01 07:00:00',
+ principal_id: null,
+ principal_name: null,
+ principal_email: null,
+ supervisor_id: null
+ },
+ // Site Admin
+ {
+ id: 'usr_site_admin_1',
+ role: 'site_admin',
+ id_number: 'siteadmin',
+ phone: '0500000000',
+ full_name: 'מנהל אתר ראשי',
+ email: 'admin.master@shalah.org.il',
+ school_code: null,
+ school_name: null,
+ district: 'ארצי',
+ municipality: 'ארצי',
  job_percentage: 100,
  consent_signed: 1,
  consent_timestamp: '2026-08-01 07:00:00',

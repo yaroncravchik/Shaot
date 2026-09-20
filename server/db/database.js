@@ -86,7 +86,7 @@ function initSchema() {
   dbWrapper.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
-      role TEXT NOT NULL CHECK(role IN ('teacher', 'principal', 'supervisor', 'admin')),
+      role TEXT NOT NULL CHECK(role IN ('teacher', 'principal', 'supervisor', 'admin', 'site_admin', 'superadmin')),
       id_number TEXT UNIQUE NOT NULL,
       phone TEXT NOT NULL,
       full_name TEXT NOT NULL,

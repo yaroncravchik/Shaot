@@ -75,6 +75,17 @@ const Auth = {
         targetUser = users.find(u => u.role === 'admin');
         targetUrl = 'admin.html';
         break;
+      case 'site_admin':
+      case 'superadmin':
+        targetUser = users.find(u => u.role === 'site_admin' || u.role === 'superadmin') || {
+          id: 'siteadmin',
+          phone: '0500000000',
+          name: 'מנהל אתר ראשי',
+          role: 'site_admin',
+          district: 'ארצי'
+        };
+        targetUrl = 'site-admin.html';
+        break;
       case 'verify':
         window.location.href = 'verify.html?sig=SHALAH-202606-A17F9D';
         return;
@@ -107,6 +118,7 @@ const Auth = {
       else if (demoParam === 'supervisor') demoUser = users.find(u => u.role === 'supervisor');
       else if (demoParam === 'admin') demoUser = users.find(u => u.role === 'admin');
       else if (demoParam === 'principal') demoUser = users.find(u => u.role === 'principal');
+      else if (demoParam === 'site_admin' || demoParam === 'superadmin') demoUser = users.find(u => u.role === 'site_admin' || u.role === 'superadmin');
 
       if (demoUser) {
         this.setCurrentUser(demoUser);
@@ -126,10 +138,18 @@ const Auth = {
 
     let user = this.getCurrentUser();
 
-    // If no user is logged in, default to teacher for preview convenience
+    // If no user is logged in, default to role matching page
     if (!user) {
       const users = API.getUsers();
-      if (window.location.pathname.includes('supervisor.html')) {
+      if (window.location.pathname.includes('site-admin.html')) {
+        user = users.find(u => u.role === 'site_admin') || {
+          id: 'siteadmin',
+          phone: '0500000000',
+          name: 'מנהל אתר ראשי',
+          role: 'site_admin',
+          district: 'ארצי'
+        };
+      } else if (window.location.pathname.includes('supervisor.html')) {
         user = users.find(u => u.role === 'supervisor');
       } else if (window.location.pathname.includes('admin.html')) {
         user = users.find(u => u.role === 'admin');
@@ -147,11 +167,17 @@ const Auth = {
       }
     }
 
+    // Site admins have access to all admin and supervisor views
+    if (user.role === 'site_admin' || user.role === 'superadmin') {
+      return user;
+    }
+
     if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
       if (user.role === 'teacher') window.location.href = 'teacher.html';
       else if (user.role === 'principal') window.location.href = 'principal.html';
       else if (user.role === 'supervisor') window.location.href = 'supervisor.html';
       else if (user.role === 'admin') window.location.href = 'admin.html';
+      else if (user.role === 'site_admin') window.location.href = 'site-admin.html';
       else window.location.href = 'index.html';
       return null;
     }
@@ -174,6 +200,8 @@ const Auth = {
       principal: 'מנהל/ת בית ספר',
       supervisor: 'מנחה מחוזי',
       admin: 'ממונה מחוזי (רונן - מרכז)',
+      site_admin: 'מנהל אתר ראשי',
+      superadmin: 'מנהל אתר',
       guest: 'הזדהות'
     };
 
@@ -196,16 +224,19 @@ const Auth = {
           </div>
           <div class="flex items-center gap-xs flex-wrap">
             <button type="button" class="btn btn-sm ${currentRole === 'teacher' && window.location.pathname.includes('teacher.html') ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('teacher')">
-              מורה: ישראל ישראלי
+              מורה: ישראל
             </button>
             <button type="button" class="btn btn-sm ${currentRole === 'principal' ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('principal')">
-              מנהלת: שרה כהן (קישור ישיר)
+              מנהלת: שרה (קישור ישיר)
             </button>
             <button type="button" class="btn btn-sm ${currentRole === 'supervisor' ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('supervisor')">
-              מנחה מחוזי: אברהם מנחה (מרכז)
+              מנחה: אברהם (מרכז)
             </button>
             <button type="button" class="btn btn-sm ${currentRole === 'admin' ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('admin')">
-              ממונה מחוזי: רונן (מרכז)
+              ממונה: רונן (מרכז)
+            </button>
+            <button type="button" class="btn btn-sm ${currentRole === 'site_admin' || currentRole === 'superadmin' ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px; font-weight:700; border-color:#8dcdff;" onclick="Auth.switchRole('site_admin')">
+              ⚙️ מנהל אתר
             </button>
           </div>
         </div>
@@ -214,7 +245,7 @@ const Auth = {
       <!-- Main Navigation Header -->
       <header class="main-header">
         <div class="container header-container">
-          <a href="${user ? (user.role === 'teacher' ? 'teacher.html' : user.role === 'supervisor' ? 'supervisor.html' : user.role === 'admin' ? 'admin.html' : 'principal.html') : 'index.html'}" class="brand-wrapper">
+          <a href="${user ? (user.role === 'site_admin' || user.role === 'superadmin' ? 'site-admin.html' : user.role === 'teacher' ? 'teacher.html' : user.role === 'supervisor' ? 'supervisor.html' : user.role === 'admin' ? 'admin.html' : 'principal.html') : 'index.html'}" class="brand-wrapper">
             <div class="brand-emblem" title="סמל תחום של&quot;ח">
               <svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>
             </div>
@@ -236,6 +267,12 @@ const Auth = {
               ${user.role === 'teacher' ? `
                 <a href="profile.html" class="btn btn-secondary btn-sm" title="הגדרות פרופיל ומערכת שעות">
                   פרופיל אישי
+                </a>
+              ` : ''}
+
+              ${user.role === 'site_admin' || user.role === 'superadmin' ? `
+                <a href="site-admin.html" class="btn btn-primary btn-sm" title="לוח בקרה מנהל אתר">
+                  ניהול אתר
                 </a>
               ` : ''}
 
@@ -270,10 +307,11 @@ const Auth = {
             <div class="footer-links">
               <h5>ניווט מהיר</h5>
               <ul>
+                <li><a href="site-admin.html">לוח בקרה מנהל אתר</a></li>
+                <li><a href="admin.html">לוח בקרה ממונה מחוזי</a></li>
+                <li><a href="supervisor.html">לוח בקרה מנחה מחוזי</a></li>
                 <li><a href="teacher.html">לוח בקרה מורה</a></li>
                 <li><a href="profile.html">הגדרת פרופיל ומערכת שעות</a></li>
-                <li><a href="supervisor.html">לוח בקרה מנחה מחוזי</a></li>
-                <li><a href="admin.html">לוח בקרה ממונה מחוזי (מרכז)</a></li>
               </ul>
             </div>
           </div>

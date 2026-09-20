@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ניהול אתר ומערכת – של"ח וידיעת הארץ</title>
+  
+  <!-- Google Fonts: Rubik -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/style.css?v=202609200900">
+  <link rel="stylesheet" href="css/components.css?v=202609200900">
+
+  <style>
+    .tab-btn {
+      padding: 10px 20px;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      border: none;
+      background: transparent;
+      color: var(--on-surface-variant);
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tab-btn:hover {
+      color: var(--primary);
+    }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: rgba(0, 123, 255, 0.05);
+    }
+    .tab-pane {
+      display: none;
+    }
+    .tab-pane.active {
+      display: block;
+    }
+    .badge-role-admin {
+      background: #e3f2fd;
+      color: #0d47a1;
+      border: 1px solid #90caf9;
+      font-weight: 700;
+    }
+    .badge-role-supervisor {
+      background: #f3e5f5;
+      color: #4a148c;
+      border: 1px solid #ce93d8;
+      font-weight: 700;
+    }
+    .badge-role-teacher {
+      background: #e8f5e9;
+      color: #1b5e20;
+      border: 1px solid #a5d6a7;
+      font-weight: 700;
+    }
+    .badge-role-principal {
+      background: #fff3e0;
+      color: #e65100;
+      border: 1px solid #ffcc80;
+      font-weight: 700;
+    }
+    .badge-role-site_admin {
+      background: #fbe9e7;
+      color: #bf360c;
+      border: 1px solid #ffab91;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Gov Header Mount -->
+  <div id="gov-header-mount"></div>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb-wrapper">
+    <div class="container">
+      <nav class="breadcrumb">
+        <span>תחום של"ח וידיעת הארץ</span>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">לוח בקרה מנהל אתר ראשי</span>
+      </nav>
+    </div>
+  </div>
+
+  <main class="container my-4">
+    <!-- Profile & Hero Bar -->
+    <div class="profile-bar animate-fade-in mb-4">
+      <div class="profile-info-main">
+        <div class="profile-avatar" style="background: linear-gradient(135deg, #bf360c 0%, #d84315 100%); font-size:1.5rem;">
+          ⚙️
+        </div>
+        <div>
+          <h1 class="profile-name" id="site-admin-name">מנהל אתר ומערכת ראשי</h1>
+          <div class="profile-meta">
+            <span>תחום של"ח וידיעת הארץ</span>
+            <span>•</span>
+            <span>הרשאות ניהול כוללות: ניהול משתמשים (ממונים, מנחים, מורים) ומחיקת דוחות</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-actions flex items-center gap-xs flex-wrap">
+        <button type="button" class="btn btn-primary" onclick="openAddAdminModal()">
+          <span>➕ הוסף ממונה</span>
+        </button>
+        <button type="button" class="btn btn-primary" onclick="openAddSupervisorModal()">
+          <span>➕ הוסף מנחה</span>
+        </button>
+        <button type="button" class="btn btn-primary" onclick="openAddTeacherModal()">
+          <span>➕ הוסף מורה</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI Statistics Overview -->
+    <div class="stats-grid mb-4 animate-fade-in">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e3f2fd; color:#007bff;">📋</div>
+        <div>
+          <div class="stat-value" id="stat-total-reports">0</div>
+          <div class="stat-label">סה"כ דוחות שעות במערכת</div>
+          <div style="font-size:0.75rem; color:var(--on-surface-variant); margin-top:2px;" id="stat-reports-sub">—</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e8f5e9; color:#28a745;">👥</div>
+        <div>
+          <div class="stat-value" id="stat-total-users">0</div>
+          <div class="stat-label">סה"כ משתמשים במערכת</div>
+          <div style="font-size:0.75rem; color:var(--on-surface-variant); margin-top:2px;" id="stat-users-sub">—</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#f3e5f5; color:#6f42c1;">⏱️</div>
+        <div>
+          <div class="stat-value" id="stat-total-overtime">0</div>
+          <div class="stat-label">שעות נוספות מאושרות סה"כ</div>
+          <div style="font-size:0.75rem; color:var(--on-surface-variant); margin-top:2px;">בדוחות מאושרים לתשלום</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fff3e0; color:#fd7e14;">🏢</div>
+        <div>
+          <div class="stat-value" id="stat-total-districts">8</div>
+          <div class="stat-label">מחוזות פעילים</div>
+          <div style="font-size:0.75rem; color:var(--on-surface-variant); margin-top:2px;">מרכז, צפון, דרום, י-ם, ת"א ועוד</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="card mb-4 animate-fade-in" style="padding:0; overflow:hidden;">
+      <div style="display:flex; border-bottom:1px solid var(--outline); background:#f8fafc; padding:0 8px;">
+        <button type="button" class="tab-btn active" id="tab-btn-reports" onclick="switchTab('reports')">
+          <span>📋 ניהול ומחיקת דוחות</span>
+        </button>
+        <button type="button" class="tab-btn" id="tab-btn-users" onclick="switchTab('users')">
+          <span>👥 ניהול משתמשי המערכת</span>
+        </button>
+        <button type="button" class="tab-btn" id="tab-btn-audit" onclick="switchTab('audit')">
+          <span>📜 יומן פעולות ואבטחה</span>
+        </button>
+      </div>
+
+      <!-- ====================================================================
+           TAB 1: REPORTS MANAGEMENT & DELETION
+           ==================================================================== -->
+      <div class="tab-pane active" id="pane-reports" style="padding:20px;">
+        <!-- Filter Bar -->
+        <div class="card p-3 mb-3" style="background:#f0f9fa; border:1px solid #b8daff;">
+          <div class="grid grid-4 gap-sm">
+            <div class="form-group mb-0">
+              <label class="form-label" for="filter-report-district" style="font-size:0.8125rem;">מחוז:</label>
+              <select id="filter-report-district" class="form-control form-select" onchange="filterReportsList()">
+                <option value="all">כל המחוזות</option>
+                <option value="מרכז">מרכז</option>
+                <option value="צפון">צפון</option>
+                <option value="דרום">דרום</option>
+                <option value="ירושלים">ירושלים</option>
+                <option value="תל אביב">תל אביב</option>
+                <option value="חיפה">חיפה</option>
+                <option value="התיישבותי">המינהל לחינוך התיישבותי</option>
+              </select>
+            </div>
+
+            <div class="form-group mb-0">
+              <label class="form-label" for="filter-report-status" style="font-size:0.8125rem;">סטטוס דוח:</label>
+              <select id="filter-report-status" class="form-control form-select" onchange="filterReportsList()">
+                <option value="all">כל הסטטוסים</option>
+                <option value="draft">טיוטה</option>
+                <option value="pending_principal">ממתין לאישור מנהל/ת</option>
+                <option value="pending_supervisor">ממתין לבדיקת מנחה</option>
+                <option value="supervisor_edited">עודכן ע"י מנחה</option>
+                <option value="pending_admin">ממתין לאישור ממונה</option>
+                <option value="approved_paid">אושר לתשלום (חתום דיגיטלית)</option>
+                <option value="returned">הוחזר לתיקון</option>
+              </select>
+            </div>
+
+            <div class="form-group mb-0">
+              <label class="form-label" for="filter-report-search" style="font-size:0.8125rem;">חיפוש חופשי:</label>
+              <input type="text" id="filter-report-search" class="form-control" placeholder="שם מורה, תעודת זהות, בי&quot;ס..." oninput="filterReportsList()">
+            </div>
+
+            <div class="form-group mb-0 flex items-end">
+              <button type="button" class="btn btn-secondary" style="width:100%;" onclick="resetReportFilters()">
+                איפוס סינונים
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reports Table -->
+        <div class="table-container">
+          <table class="gov-table" id="site-admin-reports-table">
+            <thead>
+              <tr>
+                <th style="width:50px;">#</th>
+                <th>שם המורה</th>
+                <th>שם משתמש</th>
+                <th>מוסד חינוכי</th>
+                <th>מחוז</th>
+                <th>חודש / שנה</th>
+                <th style="text-align:center;">שעות נוספות</th>
+                <th style="text-align:center;">היעדרות</th>
+                <th>סטטוס</th>
+                <th>מזהה חתימה</th>
+                <th style="text-align:center; min-width:140px;">פעולות</th>
+              </tr>
+            </thead>
+            <tbody id="site-admin-reports-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="reports-empty-state" class="text-center p-5 text-muted" style="display:none;">
+          <div style="font-size:2.5rem; margin-bottom:8px;">🔍</div>
+          <h4>לא נמצאו דוחות התואמים את החיפוש</h4>
+          <p>נסה לאפס את הסינונים כדי לצפות בכלל דוחות המערכת.</p>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           TAB 2: USERS MANAGEMENT
+           ==================================================================== -->
+      <div class="tab-pane" id="pane-users" style="padding:20px;">
+        <!-- User Filters & Actions -->
+        <div class="card p-3 mb-3" style="background:#f8fafc; border:1px solid var(--outline);">
+          <div class="grid grid-3 gap-sm">
+            <div class="form-group mb-0">
+              <label class="form-label" for="filter-user-role" style="font-size:0.8125rem;">סינון לפי תפקיד:</label>
+              <select id="filter-user-role" class="form-control form-select" onchange="filterUsersList()">
+                <option value="all">כל התפקידים</option>
+                <option value="admin">ממונים מחוזיים / ארציים</option>
+                <option value="supervisor">מנחים מחוזיים</option>
+                <option value="teacher">מורי של"ח</option>
+                <option value="principal">מנהלי בתי ספר</option>
+                <option value="site_admin">מנהלי אתר</option>
+              </select>
+            </div>
+
+            <div class="form-group mb-0">
+              <label class="form-label" for="filter-user-district" style="font-size:0.8125rem;">מחוז:</label>
+              <select id="filter-user-district" class="form-control form-select" onchange="filterUsersList()">
+                <option value="all">כל המחוזות</option>
+                <option value="מרכז">מרכז</option>
+                <option value="צפון">צפון</option>
+                <option value="דרום">דרום</option>
+                <option value="ירושלים">ירושלים</option>
+                <option value="תל אביב">תל אביב</option>
+                <option value="חיפה">חיפה</option>
+                <option value="התיישבותי">המינהל לחינוך התיישבותי</option>
+                <option value="ארצי">ארצי</option>
+              </select>
+            </div>
+
+            <div class="form-group mb-0">
+              <label class="form-label" for="filter-user-search" style="font-size:0.8125rem;">חיפוש משתמש:</label>
+              <input type="text" id="filter-user-search" class="form-control" placeholder="שם מלא, שם משתמש, בית ספר..." oninput="filterUsersList()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="table-container">
+          <table class="gov-table" id="site-admin-users-table">
+            <thead>
+              <tr>
+                <th style="width:50px;">#</th>
+                <th>שם מלא</th>
+                <th>שם משתמש (הזדהות)</th>
+                <th>תפקיד</th>
+                <th>מחוז</th>
+                <th>מוסד חינוכי</th>
+                <th>מנחה משויך</th>
+                <th>פרטי קשר</th>
+                <th style="text-align:center; width:90px;">פעולות</th>
+              </tr>
+            </thead>
+            <tbody id="site-admin-users-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           TAB 3: SYSTEM AUDIT LOGS
+           ==================================================================== -->
+      <div class="tab-pane" id="pane-audit" style="padding:20px;">
+        <div class="flex justify-between items-center mb-3">
+          <h3 style="font-size:1.1rem; font-weight:700; margin:0;">יומן פעולות ואירועי אבטחה במערכת</h3>
+          <span class="text-muted" style="font-size:0.8125rem;">תיעוד פעולות מחיקה, יצירת משתמשים ואישורים</span>
+        </div>
+
+        <div class="table-container">
+          <table class="gov-table">
+            <thead>
+              <tr>
+                <th style="width:160px;">תאריך ושעה</th>
+                <th style="width:180px;">מבצע הפעולה</th>
+                <th>פירוט הפעולה</th>
+              </tr>
+            </thead>
+            <tbody id="site-admin-audit-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       MODAL 1: ADD ADMIN / DIRECTOR (הוספת ממונה חדש)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="modal-add-admin">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">הוספת ממונה חדש למערכת</h3>
+          <span class="text-muted" style="font-size:0.8125rem;">הגדרת פרטי ממונה מחוזי או ארצי עם הרשאות אישור סופי לתשלום</span>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modal-add-admin')">&times;</button>
+      </div>
+      <form id="form-add-admin" onsubmit="handleAddAdminSubmit(event)">
+        <div class="modal-body">
+          <div class="grid grid-2 gap-sm mb-2">
+            <div class="form-group">
+              <label class="form-label" for="admin-first-name">
+                <span>שם פרטי</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="admin-first-name" class="form-control" placeholder="לדוגמה: רונן" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="admin-last-name">
+                <span>שם משפחה</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="admin-last-name" class="form-control" placeholder="לדוגמה: כהן" required>
+            </div>
+          </div>
+
+          <div class="form-group mb-2">
+            <label class="form-label" for="admin-district">
+              <span>מחוז שיפוט</span>
+              <span class="required">*</span>
+            </label>
+            <select id="admin-district" class="form-control form-select" required>
+              <option value="מרכז" selected>מרכז</option>
+              <option value="צפון">צפון</option>
+              <option value="דרום">דרום</option>
+              <option value="ירושלים">ירושלים</option>
+              <option value="תל אביב">תל אביב</option>
+              <option value="חיפה">חיפה</option>
+              <option value="התיישבותי">המינהל לחינוך התיישבותי</option>
+              <option value="ארצי">ארצי</option>
+            </select>
+          </div>
+
+          <div class="grid grid-2 gap-sm mb-2">
+            <div class="form-group">
+              <label class="form-label" for="admin-username">
+                <span>שם משתמש לכניסה</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="admin-username" class="form-control" placeholder="שם משתמש ייחודי" required autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="admin-password">
+                <span>סיסמה לכניסה</span>
+                <span class="required">*</span>
+              </label>
+              <input type="password" id="admin-password" class="form-control" placeholder="הזן סיסמה ראשונית" required autocomplete="off">
+            </div>
+          </div>
+
+          <div class="grid grid-2 gap-sm">
+            <div class="form-group">
+              <label class="form-label" for="admin-email">דוא"ל:</label>
+              <input type="email" id="admin-email" class="form-control" placeholder="name@education.gov.il">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="admin-phone">טלפון נייד:</label>
+              <input type="tel" id="admin-phone" class="form-control" placeholder="050-0000000">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-admin')">ביטול</button>
+          <button type="submit" id="btn-save-admin" class="btn btn-primary">
+            <span>שמור והוסף ממונה</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 2: ADD SUPERVISOR (הוספת מנחה חדש)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="modal-add-supervisor">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">הוספת מנחה מחוזי חדש</h3>
+          <span class="text-muted" style="font-size:0.8125rem;">הזנת פרטי המנחה, שיוך למחוז והגדרת פרטי הזדהות</span>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modal-add-supervisor')">&times;</button>
+      </div>
+      <form id="form-add-supervisor" onsubmit="handleAddSupervisorSubmit(event)">
+        <div class="modal-body">
+          <div class="grid grid-2 gap-sm mb-2">
+            <div class="form-group">
+              <label class="form-label" for="sup-first-name">
+                <span>שם פרטי</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="sup-first-name" class="form-control" placeholder="לדוגמה: אברהם" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="sup-last-name">
+                <span>שם משפחה</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="sup-last-name" class="form-control" placeholder="לדוגמה: מנחה" required>
+            </div>
+          </div>
+
+          <div class="form-group mb-2">
+            <label class="form-label" for="sup-district">
+              <span>מחוז</span>
+              <span class="required">*</span>
+            </label>
+            <select id="sup-district" class="form-control form-select" required>
+              <option value="מרכז" selected>מרכז</option>
+              <option value="צפון">צפון</option>
+              <option value="דרום">דרום</option>
+              <option value="ירושלים">ירושלים</option>
+              <option value="תל אביב">תל אביב</option>
+              <option value="חיפה">חיפה</option>
+              <option value="התיישבותי">המינהל לחינוך התיישבותי</option>
+            </select>
+          </div>
+
+          <div class="grid grid-2 gap-sm mb-2">
+            <div class="form-group">
+              <label class="form-label" for="sup-username">
+                <span>שם משתמש לכניסה</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="sup-username" class="form-control" placeholder="שם משתמש" required autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="sup-password">
+                <span>סיסמה לכניסה</span>
+                <span class="required">*</span>
+              </label>
+              <input type="password" id="sup-password" class="form-control" placeholder="הזן סיסמה" required autocomplete="off">
+            </div>
+          </div>
+
+          <div class="grid grid-2 gap-sm">
+            <div class="form-group">
+              <label class="form-label" for="sup-email">דוא"ל:</label>
+              <input type="email" id="sup-email" class="form-control" placeholder="supervisor@education.gov.il">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="sup-phone">טלפון נייד:</label>
+              <input type="tel" id="sup-phone" class="form-control" placeholder="050-0000000">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-supervisor')">ביטול</button>
+          <button type="submit" id="btn-save-supervisor" class="btn btn-primary">
+            <span>שמור והוסף מנחה</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 3: ADD TEACHER (הוספת מורה חדש)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="modal-add-teacher">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">הוספת מורה של"ח חדש</h3>
+          <span class="text-muted" style="font-size:0.8125rem;">הזנת פרטי המורה, שיוך למנחה מחוזי וקביעת פרטי הזדהות</span>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modal-add-teacher')">&times;</button>
+      </div>
+      <form id="form-add-teacher" onsubmit="handleAddTeacherSubmit(event)">
+        <div class="modal-body">
+          <div class="grid grid-2 gap-sm mb-2">
+            <div class="form-group">
+              <label class="form-label" for="tch-first-name">
+                <span>שם פרטי</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="tch-first-name" class="form-control" placeholder="לדוגמה: ישראל" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="tch-last-name">
+                <span>שם משפחה</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="tch-last-name" class="form-control" placeholder="לדוגמה: ישראלי" required>
+            </div>
+          </div>
+
+          <div class="grid grid-2 gap-sm mb-2">
+            <div class="form-group">
+              <label class="form-label" for="tch-district">
+                <span>מחוז</span>
+                <span class="required">*</span>
+              </label>
+              <select id="tch-district" class="form-control form-select" onchange="updateTeacherModalSupervisors()" required>
+                <option value="מרכז" selected>מרכז</option>
+                <option value="צפון">צפון</option>
+                <option value="דרום">דרום</option>
+                <option value="ירושלים">ירושלים</option>
+                <option value="תל אביב">תל אביב</option>
+                <option value="חיפה">חיפה</option>
+                <option value="התיישבותי">המינהל לחינוך התיישבותי</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="tch-supervisor">
+                <span>שיוך למנחה מחוזי</span>
+                <span class="required">*</span>
+              </label>
+              <select id="tch-supervisor" class="form-control form-select" required>
+                <!-- Populated dynamically via JS -->
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-2 gap-sm mb-2">
+            <div class="form-group">
+              <label class="form-label" for="tch-school-name">שם מוסד חינוכי:</label>
+              <input type="text" id="tch-school-name" class="form-control" placeholder="לדוגמה: תיכון יצחק רבין">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="tch-school-code">סמל מוסד (קוד בית ספר):</label>
+              <input type="text" id="tch-school-code" class="form-control" placeholder="לדוגמה: 440123">
+            </div>
+          </div>
+
+          <div class="grid grid-2 gap-sm mb-2">
+            <div class="form-group">
+              <label class="form-label" for="tch-username">
+                <span>שם משתמש לכניסה</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="tch-username" class="form-control" placeholder="שם משתמש" required autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="tch-password">
+                <span>סיסמה לכניסה</span>
+                <span class="required">*</span>
+              </label>
+              <input type="password" id="tch-password" class="form-control" placeholder="הזן סיסמה" required autocomplete="off">
+            </div>
+          </div>
+
+          <div class="grid grid-2 gap-sm">
+            <div class="form-group">
+              <label class="form-label" for="tch-email">דוא"ל:</label>
+              <input type="email" id="tch-email" class="form-control" placeholder="teacher@school.org.il">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="tch-phone">טלפון נייד:</label>
+              <input type="tel" id="tch-phone" class="form-control" placeholder="050-0000000">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-teacher')">ביטול</button>
+          <button type="submit" id="btn-save-teacher" class="btn btn-primary">
+            <span>שמור והוסף מורה</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 4: DELETE REPORT CONFIRMATION (אישור מחיקת דוח)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="modal-delete-report">
+    <div class="modal-container" style="max-width: 520px;">
+      <div class="modal-header" style="background:#fff5f5; border-bottom:1px solid #fed7d7;">
+        <h3 class="modal-title" style="color:#c53030;">⚠️ אישור מחיקת דוח שעות</h3>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modal-delete-report')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-weight:600; color:#2d3748; margin-bottom:12px;">
+          האם אתה בטוח שברצונך למחוק את דוח השעות שלהלן?
+        </p>
+
+        <div class="card p-3 mb-3" style="background:#f7fafc; border:1px solid #e2e8f0; font-size:0.875rem;">
+          <div style="margin-bottom:6px;"><strong>מזהה דוח:</strong> <span id="del-rep-id">—</span></div>
+          <div style="margin-bottom:6px;"><strong>שם המורה:</strong> <span id="del-rep-teacher">—</span></div>
+          <div style="margin-bottom:6px;"><strong>תקופה:</strong> <span id="del-rep-period">—</span></div>
+          <div style="margin-bottom:6px;"><strong>מוסד חינוכי ומחוז:</strong> <span id="del-rep-school">—</span></div>
+          <div><strong>סטטוס נוכחי:</strong> <span id="del-rep-status">—</span></div>
+        </div>
+
+        <div class="banner-alert banner-danger" style="margin-bottom:0;">
+          <div class="banner-alert-content" style="font-size:0.8125rem;">
+            <strong>שים לב:</strong> פעולת המחיקה הינה סופית ובלתי הפיכה. כלל הנתונים שנשמרו בדוח זה, לרבות דיווחי ימים, נספחים והיסטוריית אישורים יימחקו לחלוטין.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer flex justify-between">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-delete-report')">ביטול</button>
+        <button type="button" id="btn-confirm-delete-report" class="btn btn-danger" onclick="executeDeleteReport()">
+          <span>🗑️ מחק דוח לצמיתות</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 5: DELETE USER CONFIRMATION (אישור מחיקת משתמש)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="modal-delete-user">
+    <div class="modal-container" style="max-width: 480px;">
+      <div class="modal-header" style="background:#fff5f5; border-bottom:1px solid #fed7d7;">
+        <h3 class="modal-title" style="color:#c53030;">⚠️ אישור מחיקת משתמש</h3>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modal-delete-user')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-weight:600; color:#2d3748; margin-bottom:12px;">
+          האם אתה בטוח שברצונך להסיר את המשתמש הבא מהמערכת?
+        </p>
+
+        <div class="card p-3 mb-3" style="background:#f7fafc; border:1px solid #e2e8f0; font-size:0.875rem;">
+          <div style="margin-bottom:6px;"><strong>שם מלא:</strong> <span id="del-usr-name">—</span></div>
+          <div style="margin-bottom:6px;"><strong>שם משתמש:</strong> <span id="del-usr-id">—</span></div>
+          <div style="margin-bottom:6px;"><strong>תפקיד:</strong> <span id="del-usr-role">—</span></div>
+          <div><strong>מחוז:</strong> <span id="del-usr-district">—</span></div>
+        </div>
+      </div>
+      <div class="modal-footer flex justify-between">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-delete-user')">ביטול</button>
+        <button type="button" id="btn-confirm-delete-user" class="btn btn-danger" onclick="executeDeleteUser()">
+          <span>🗑️ מחק משתמש</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 6: VIEW REPORT DETAILS (צפייה בפרטי דוח)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="modal-view-report">
+    <div class="modal-container" style="max-width: 900px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="view-modal-title">צפייה בפרטי דוח שעות</h3>
+          <span class="text-muted" style="font-size:0.8125rem;" id="view-modal-sub">—</span>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modal-view-report')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Quick Meta Info -->
+        <div class="grid grid-4 gap-xs mb-3">
+          <div class="card p-2 text-center" style="background:#f8fafc;">
+            <div style="font-size:0.75rem; color:var(--on-surface-variant);">מורה מדווח</div>
+            <div style="font-weight:700;" id="view-rep-teacher">—</div>
+          </div>
+          <div class="card p-2 text-center" style="background:#f8fafc;">
+            <div style="font-size:0.75rem; color:var(--on-surface-variant);">שעות נוספות</div>
+            <div style="font-weight:700; color:var(--primary);" id="view-rep-overtime">0</div>
+          </div>
+          <div class="card p-2 text-center" style="background:#f8fafc;">
+            <div style="font-size:0.75rem; color:var(--on-surface-variant);">שעות היעדרות</div>
+            <div style="font-weight:700; color:#dc3545;" id="view-rep-absence">0</div>
+          </div>
+          <div class="card p-2 text-center" style="background:#f8fafc;">
+            <div style="font-size:0.75rem; color:var(--on-surface-variant);">סטטוס נוכחי</div>
+            <div id="view-rep-status-badge">—</div>
+          </div>
+        </div>
+
+        <!-- Days Table -->
+        <div class="table-container mb-3" style="max-height:350px; overflow-y:auto;">
+          <table class="gov-table" style="font-size:0.8125rem;">
+            <thead>
+              <tr>
+                <th style="width:40px;">יום</th>
+                <th>יום בשבוע</th>
+                <th style="text-align:center;">שעות קבועות</th>
+                <th style="text-align:center;">היעדרות</th>
+                <th>סיבת היעדרות</th>
+                <th style="text-align:center;">שעות נוספות</th>
+                <th>סיבת שעות נוספות</th>
+                <th>פעילות / כיתה</th>
+              </tr>
+            </thead>
+            <tbody id="view-rep-days-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer flex justify-between">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-view-report')">סגור</button>
+        <button type="button" id="btn-modal-delete-this-report" class="btn btn-outline-danger" onclick="promptDeleteFromViewModal()">
+          <span>🗑️ מחק דוח זה</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Universal Footer Mount -->
+  <div id="gov-footer-mount"></div>
+
+  <!-- Scripts -->
+  <script src="js/api.js?v=202609200900"></script>
+  <script src="js/auth.js?v=202609200900"></script>
+  <script src="js/site-admin.js?v=202609200900"></script>
+</body>
+</html>
