@@ -825,6 +825,119 @@ const API = {
     return true;
   },
 
+  updateUser(userId, updateData, performedByUser = null) {
+    initStorage();
+    const users = this.getUsers();
+    const userIndex = users.findIndex(u => u.id === userId);
+    if (userIndex < 0) {
+      throw new Error('משתמש לא נמצא במערכת');
+    }
+
+    const current = users[userIndex];
+    const oldId = current.id;
+
+    // Handle name
+    let newFullName = current.name;
+    if (updateData.firstName || updateData.lastName) {
+      const fName = (updateData.firstName || '').trim();
+      const lName = (updateData.lastName || '').trim();
+      newFullName = `${fName} ${lName}`.trim() || current.name;
+    } else if (updateData.name) {
+      newFullName = updateData.name.trim();
+    }
+
+    // Handle username/id change if requested
+    let newId = current.id;
+    if (updateData.username && updateData.username.trim() !== current.id) {
+      const cleanUsername = updateData.username.trim();
+      if (users.some(u => u.id === cleanUsername && u.id !== current.id)) {
+        throw new Error('שם משתמש זה כבר קיים במערכת');
+      }
+      newId = cleanUsername;
+    }
+
+    // Handle supervisor assignment
+    let supervisorName = current.supervisorName;
+    let supervisorId = current.supervisorId;
+    if (updateData.supervisorId !== undefined) {
+      supervisorId = updateData.supervisorId;
+      const sup = users.find(u => u.id === supervisorId);
+      supervisorName = sup ? sup.name : (updateData.supervisorName || current.supervisorName);
+    }
+
+    const updatedUser = {
+      ...current,
+      id: newId,
+      name: newFullName,
+      phone: updateData.password ? String(updateData.password).trim() : (updateData.phone ? String(updateData.phone).trim() : current.phone),
+      email: updateData.email !== undefined ? updateData.email.trim() : current.email,
+      district: updateData.district !== undefined ? updateData.district : current.district,
+      schoolName: updateData.schoolName !== undefined ? updateData.schoolName.trim() : current.schoolName,
+      schoolCode: updateData.schoolCode !== undefined ? updateData.schoolCode.trim() : current.schoolCode,
+      municipality: updateData.municipality !== undefined ? updateData.municipality.trim() : current.municipality,
+      supervisorId: supervisorId,
+      supervisorName: supervisorName,
+      jobScope: updateData.jobScope !== undefined ? Number(updateData.jobScope) : current.jobScope
+    };
+
+    users[userIndex] = updatedUser;
+
+    // Cascade changes:
+    // 1. If this was a supervisor and name changed or id changed, update assigned teachers
+    if (current.role === 'supervisor') {
+      users.forEach(u => {
+        if (u.supervisorId === oldId) {
+          u.supervisorId = newId;
+          u.supervisorName = newFullName;
+        }
+      });
+    }
+
+    this.saveUsers(users);
+
+    // 2. If this was a teacher and name or school or id changed, cascade to existing reports
+    const reports = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS) || '[]');
+    let reportsUpdated = false;
+    reports.forEach(r => {
+      if (r.teacherId === oldId || r.userId === oldId) {
+        r.teacherId = newId;
+        r.userId = newId;
+        if (newFullName) r.teacherName = newFullName;
+        if (updatedUser.schoolName) r.schoolName = updatedUser.schoolName;
+        if (updatedUser.schoolCode) r.schoolCode = updatedUser.schoolCode;
+        if (updatedUser.district) r.district = updatedUser.district;
+        reportsUpdated = true;
+      }
+    });
+    if (reportsUpdated) {
+      localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(reports));
+    }
+
+    // 3. Update current user session if editing own profile
+    try {
+      if (typeof Auth !== 'undefined' && Auth.getCurrentUser) {
+        const loggedInUser = Auth.getCurrentUser();
+        if (loggedInUser && loggedInUser.id === oldId) {
+          Auth.setCurrentUser(updatedUser);
+        }
+      }
+    } catch (e) {}
+
+    // 4. Audit Log
+    const audit = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS) || '[]');
+    const roleLabels = { teacher: 'מורה', supervisor: 'מנחה', admin: 'ממונה', site_admin: 'מנהל אתר', principal: 'מנהל/ת' };
+    const performerRole = performedByUser ? (roleLabels[performedByUser.role] || performedByUser.role) : 'מערכת';
+    const performerName = performedByUser ? `${performedByUser.name || performedByUser.id} (${performerRole})` : 'מערכת';
+    audit.push({
+      date: formatDateTime(new Date()),
+      user: performerName,
+      action: `עדכון פרטי ${roleLabels[updatedUser.role] || 'משתמש'}: ${updatedUser.name} (${updatedUser.id})`
+    });
+    localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(audit));
+
+    return updatedUser;
+  },
+
   getAdmins() {
     const users = this.getUsers();
     return users.filter(u => u.role === 'admin');
@@ -1116,4 +1229,16 @@ class GraphicSignaturePad {
   toDataURL() {
     return this.hasDrawn ? this.canvas.toDataURL('image/png') : null;
   }
+}
+
+// Global window bindings
+if (typeof window !== 'undefined') {
+  window.STORAGE_KEYS = STORAGE_KEYS;
+  window.API = API;
+  window.REPORT_STATUSES = REPORT_STATUSES;
+  window.HEBREW_MONTHS_NAME = HEBREW_MONTHS_NAME;
+  window.HEBREW_DAYS_NAME = HEBREW_DAYS_NAME;
+  window.showToast = showToast;
+  window.openModal = openModal;
+  window.closeModal = closeModal;
 }

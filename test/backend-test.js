@@ -336,6 +336,40 @@ async function runTests() {
     assert.strictEqual(db.prepare('SELECT * FROM report_days WHERE report_id = ?').get(testRepId), undefined);
   });
 
+  // 8. Edit Users (Teachers & Supervisors)
+  test('8. Update Teacher and Supervisor Details', () => {
+    const userToEdit = db.prepare('SELECT * FROM users WHERE id = ?').get('usr_teacher_1');
+    assert.ok(userToEdit);
+
+    // Update teacher details
+    db.prepare(`
+      UPDATE users SET
+        full_name = ?,
+        school_name = ?,
+        school_code = ?,
+        job_percentage = ?
+      WHERE id = ?
+    `).run('ישראל ישראלי מעודכן', 'תיכון חדש כפר סבא', '654321', 80, 'usr_teacher_1');
+
+    const updatedTch = db.prepare('SELECT * FROM users WHERE id = ?').get('usr_teacher_1');
+    assert.strictEqual(updatedTch.full_name, 'ישראל ישראלי מעודכן');
+    assert.strictEqual(updatedTch.school_name, 'תיכון חדש כפר סבא');
+    assert.strictEqual(updatedTch.school_code, '654321');
+    assert.strictEqual(updatedTch.job_percentage, 80);
+
+    // Update supervisor details
+    db.prepare(`
+      UPDATE users SET
+        full_name = ?,
+        phone = ?
+      WHERE id = ?
+    `).run('אברהם מנחה בכיר', '0541112233', 'usr_supervisor_1');
+
+    const updatedSup = db.prepare('SELECT * FROM users WHERE id = ?').get('usr_supervisor_1');
+    assert.strictEqual(updatedSup.full_name, 'אברהם מנחה בכיר');
+    assert.strictEqual(updatedSup.phone, '0541112233');
+  });
+
   console.log('\n============================================================');
   console.log(`  TEST RESULTS: ${passed} PASSED, ${failed} FAILED  `);
   console.log('============================================================\n');

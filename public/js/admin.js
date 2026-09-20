@@ -161,7 +161,7 @@ function loadRosterUsers() {
   tbody.innerHTML = '';
 
   if (!users || users.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted p-3">אין משתמשים רשומים במחוז</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted p-3">אין משתמשים רשומים במחוז</td></tr>`;
     return;
   }
 
@@ -180,9 +180,128 @@ function loadRosterUsers() {
       <td>${u.schoolName || u.school_name || (isTeacher ? 'תיכון מחוזי מרכז' : 'פיקוח מחוז מרכז')}</td>
       <td><span class="badge" style="background:#f1f3f5; color:#0c3058;">${u.district || 'מרכז'}</span></td>
       <td><span class="badge badge-success">פעיל במערכת</span></td>
+      <td style="text-align:center;">
+        <button type="button" class="btn btn-sm btn-outline-primary" onclick="openEditUserModal('${u.id}')" style="padding:3px 10px; font-size:0.8125rem;">
+          ✏️ עריכה
+        </button>
+      </td>
     `;
     tbody.appendChild(tr);
   });
+}
+
+function openEditUserModal(userId) {
+  const users = API.getUsers();
+  const user = users.find(u => u.id === userId);
+  if (!user) {
+    showToast('משתמש לא נמצא', 'error');
+    return;
+  }
+
+  const parts = (user.name || '').trim().split(/\s+/);
+  const firstName = parts[0] || '';
+  const lastName = parts.slice(1).join(' ') || '';
+
+  document.getElementById('edit-user-id').value = user.id;
+  document.getElementById('edit-user-role').value = user.role;
+  document.getElementById('edit-user-first-name').value = firstName;
+  document.getElementById('edit-user-last-name').value = lastName;
+  document.getElementById('edit-user-username').value = user.id;
+  document.getElementById('edit-user-password').value = user.phone || '';
+  document.getElementById('edit-user-email').value = user.email || '';
+  document.getElementById('edit-user-district').value = user.district || 'מרכז';
+
+  const teacherFields = document.getElementById('edit-teacher-fields');
+  const titleEl = document.getElementById('admin-edit-user-title');
+
+  if (user.role === 'teacher') {
+    if (teacherFields) teacherFields.style.display = 'block';
+    if (titleEl) titleEl.textContent = `עריכת פרטי מורה – ${user.name}`;
+
+    // Populate supervisor dropdown
+    const supSelect = document.getElementById('edit-teacher-supervisor');
+    if (supSelect) {
+      const supervisors = API.getSupervisors();
+      supSelect.innerHTML = '<option value="">-- בחר מנחה מחוזי מתוך הרשימה --</option>';
+      supervisors.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.name} (${s.district || 'מרכז'})`;
+        if (s.id === user.supervisorId || s.name === user.supervisorName) {
+          opt.selected = true;
+        }
+        supSelect.appendChild(opt);
+      });
+    }
+
+    document.getElementById('edit-teacher-school-name').value = user.schoolName || '';
+    document.getElementById('edit-teacher-school-code').value = user.schoolCode || '';
+  } else {
+    if (teacherFields) teacherFields.style.display = 'none';
+    if (titleEl) titleEl.textContent = `עריכת פרטי מנחה – ${user.name}`;
+  }
+
+  openModal('admin-edit-user-modal');
+}
+
+function handleEditUserSubmit(e) {
+  e.preventDefault();
+
+  const userId = document.getElementById('edit-user-id').value;
+  const role = document.getElementById('edit-user-role').value;
+  const firstName = document.getElementById('edit-user-first-name').value.trim();
+  const lastName = document.getElementById('edit-user-last-name').value.trim();
+  const username = document.getElementById('edit-user-username').value.trim();
+  const password = document.getElementById('edit-user-password').value.trim();
+  const email = document.getElementById('edit-user-email').value.trim();
+
+  if (!firstName || !lastName || !username || !password) {
+    showToast('נא למלא את כל שדות החובה המסומנים בכוכבית', 'warning');
+    return;
+  }
+
+  const updateData = {
+    firstName,
+    lastName,
+    username,
+    password,
+    email,
+    district: 'מרכז'
+  };
+
+  if (role === 'teacher') {
+    const supervisorId = document.getElementById('edit-teacher-supervisor').value;
+    const schoolName = document.getElementById('edit-teacher-school-name').value.trim();
+    const schoolCode = document.getElementById('edit-teacher-school-code').value.trim();
+
+    if (!supervisorId) {
+      showToast('נא לבחור מנחה מחוזי משויך', 'warning');
+      return;
+    }
+
+    updateData.supervisorId = supervisorId;
+    updateData.schoolName = schoolName;
+    updateData.schoolCode = schoolCode;
+  }
+
+  const btn = document.getElementById('btn-update-user');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div><span>מעדכן פרטים...</span>';
+
+  setTimeout(() => {
+    try {
+      const updatedUser = API.updateUser(userId, updateData, currentAdmin);
+      closeModal('admin-edit-user-modal');
+      showToast(`פרטי ${role === 'teacher' ? 'המורה' : 'המנחה'} ${updatedUser.name} עודכנו בהצלחה!`, 'success', 'עודכן בהצלחה');
+      loadRosterUsers();
+      loadMasterAdminData();
+    } catch (err) {
+      showToast(err.message || 'שגיאה בעדכון פרטי המשתמש', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span>שמור שינויים</span>';
+    }
+  }, 400);
 }
 
 function loadSupervisorsList() {
@@ -475,6 +594,8 @@ window.openAddTeacherModal = openAddTeacherModal;
 window.openAddSupervisorModal = openAddSupervisorModal;
 window.handleAddTeacherSubmit = handleAddTeacherSubmit;
 window.handleAddSupervisorSubmit = handleAddSupervisorSubmit;
+window.openEditUserModal = openEditUserModal;
+window.handleEditUserSubmit = handleEditUserSubmit;
 window.openAdminReviewModal = openAdminReviewModal;
 window.handleAdminFinalApprove = handleAdminFinalApprove;
 window.openAdminReturnModal = openAdminReturnModal;

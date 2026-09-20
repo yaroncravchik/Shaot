@@ -580,5 +580,98 @@ router.delete('/users/:id', (req, res) => {
   }
 });
 
+/**
+ * PUT /api/admin/users/:id
+ * Update an existing user's details (Teacher, Supervisor, Admin)
+ */
+router.put('/users/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      first_name,
+      last_name,
+      full_name,
+      phone,
+      password,
+      email,
+      school_code,
+      school_name,
+      district,
+      municipality,
+      supervisor_id,
+      job_percentage,
+      performed_by_name
+    } = req.body || {};
+
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'משתמש לא נמצא.' });
+    }
+
+    let newFullName = user.full_name;
+    if (first_name || last_name) {
+      newFullName = `${(first_name || '').trim()} ${(last_name || '').trim()}`.trim();
+    } else if (full_name) {
+      newFullName = full_name.trim();
+    }
+
+    const newPhone = password ? String(password).trim() : (phone ? String(phone).trim() : user.phone);
+    const newEmail = email !== undefined ? (email ? email.trim() : null) : user.email;
+    const newSchoolCode = school_code !== undefined ? (school_code ? school_code.trim() : null) : user.school_code;
+    const newSchoolName = school_name !== undefined ? (school_name ? school_name.trim() : null) : user.school_name;
+    const newDistrict = district !== undefined ? district : user.district;
+    const newMunicipality = municipality !== undefined ? (municipality ? municipality.trim() : null) : user.municipality;
+    const newSupervisorId = supervisor_id !== undefined ? (supervisor_id || null) : user.supervisor_id;
+    const newJobPercentage = job_percentage !== undefined ? (Number(job_percentage) || user.job_percentage) : user.job_percentage;
+
+    db.prepare(`
+      UPDATE users SET
+        full_name = ?,
+        phone = ?,
+        email = ?,
+        school_code = ?,
+        school_name = ?,
+        district = ?,
+        municipality = ?,
+        supervisor_id = ?,
+        job_percentage = ?
+      WHERE id = ?
+    `).run(
+      newFullName,
+      newPhone,
+      newEmail,
+      newSchoolCode,
+      newSchoolName,
+      newDistrict,
+      newMunicipality,
+      newSupervisorId,
+      newJobPercentage,
+      id
+    );
+
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    db.prepare(`
+      INSERT INTO audit_logs (id, report_id, action, performed_by_user_id, performed_by_name, details, timestamp)
+      VALUES (?, NULL, 'admin_updated_user', 'usr_admin_1', ?, ?, ?)
+    `).run(
+      `aud_${crypto.randomUUID()}`,
+      performed_by_name || 'מנהל מערכת',
+      `עדכון פרטי משתמש: ${newFullName} (${user.id_number || id})`,
+      now
+    );
+
+    const updatedUser = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+
+    return res.json({
+      success: true,
+      message: `פרטי המשתמש ${newFullName} עודכנו בהצלחה.`,
+      user: updatedUser
+    });
+  } catch (err) {
+    console.error('Update user error:', err);
+    return res.status(500).json({ success: false, error: 'שגיאה בעדכון פרטי המשתמש.' });
+  }
+});
+
 module.exports = router;
 

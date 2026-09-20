@@ -325,11 +325,16 @@ function renderUsersTable(users) {
         <div>📞 ${u.phone || '—'}</div>
       </td>
       <td style="text-align:center;">
-        ${isCurrentAdmin ? '<span class="badge" style="background:#e2e8f0; color:#4a5568;">חשבון נוכחי</span>' : `
-          <button type="button" class="btn btn-sm btn-outline-danger" title="הסרת משתמש" onclick="promptDeleteUser('${u.id}')" style="padding:3px 8px; font-size:0.75rem;">
-            🗑️ הסר
+        <div class="flex items-center justify-center gap-xs">
+          <button type="button" class="btn btn-sm btn-outline-primary" title="עריכת משתמש" onclick="openEditUserModal('${u.id}')" style="padding:3px 8px; font-size:0.75rem;">
+            ✏️ ערוך
           </button>
-        `}
+          ${isCurrentAdmin ? '' : `
+            <button type="button" class="btn btn-sm btn-outline-danger" title="הסרת משתמש" onclick="promptDeleteUser('${u.id}')" style="padding:3px 8px; font-size:0.75rem;">
+              🗑️ הסר
+            </button>
+          `}
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
@@ -570,6 +575,135 @@ function handleAddTeacherSubmit(e) {
 }
 
 // ============================================================================
+// EDIT USER (עריכת משתמש ע"י מנהל אתר)
+// ============================================================================
+function openEditUserModal(userId) {
+  const user = allUsers.find(u => u.id === userId);
+  if (!user) {
+    showToast('משתמש לא נמצא', 'error');
+    return;
+  }
+
+  const parts = (user.name || '').trim().split(/\s+/);
+  const firstName = parts[0] || '';
+  const lastName = parts.slice(1).join(' ') || '';
+
+  document.getElementById('site-edit-user-id').value = user.id;
+  document.getElementById('site-edit-user-role').value = user.role;
+  document.getElementById('site-edit-first-name').value = firstName;
+  document.getElementById('site-edit-last-name').value = lastName;
+  document.getElementById('site-edit-district').value = user.district || 'מרכז';
+  document.getElementById('site-edit-username').value = user.id;
+  document.getElementById('site-edit-password').value = user.phone || '';
+  document.getElementById('site-edit-email').value = user.email || '';
+  document.getElementById('site-edit-phone').value = user.phone || '';
+
+  const supWrapper = document.getElementById('site-edit-supervisor-wrapper');
+  const schoolWrapper = document.getElementById('site-edit-school-wrapper');
+  const titleEl = document.getElementById('site-edit-user-title');
+
+  const roleLabels = { teacher: 'מורה של"ח', supervisor: 'מנחה מחוזי', admin: 'ממונה מחוזי/ארצי', site_admin: 'מנהל אתר', principal: 'מנהל/ת מוסד' };
+  if (titleEl) titleEl.textContent = `עריכת פרטי ${roleLabels[user.role] || 'משתמש'} – ${user.name}`;
+
+  if (user.role === 'teacher') {
+    if (supWrapper) supWrapper.style.display = 'block';
+    if (schoolWrapper) schoolWrapper.style.display = 'grid';
+    document.getElementById('site-edit-school-name').value = user.schoolName || '';
+    document.getElementById('site-edit-school-code').value = user.schoolCode || '';
+    updateEditTeacherSupervisors(user.supervisorId);
+  } else {
+    if (supWrapper) supWrapper.style.display = 'none';
+    if (schoolWrapper) schoolWrapper.style.display = 'none';
+  }
+
+  openModal('modal-edit-user');
+}
+
+function updateEditTeacherSupervisors(selectedSupervisorId = null) {
+  const select = document.getElementById('site-edit-supervisor');
+  if (!select) return;
+
+  const district = document.getElementById('site-edit-district').value;
+  const supervisors = API.getSupervisors();
+
+  select.innerHTML = '<option value="">-- בחר מנחה מחוזי --</option>';
+
+  const filteredSups = supervisors.filter(s => !s.district || s.district === district || district === 'all');
+  const listToRender = filteredSups.length > 0 ? filteredSups : supervisors;
+
+  listToRender.forEach(sup => {
+    const opt = document.createElement('option');
+    opt.value = sup.id;
+    opt.textContent = `${sup.name} (${sup.district || 'מרכז'})`;
+    if (selectedSupervisorId && (sup.id === selectedSupervisorId || sup.name === selectedSupervisorId)) {
+      opt.selected = true;
+    }
+    select.appendChild(opt);
+  });
+}
+
+function handleEditUserSubmit(e) {
+  e.preventDefault();
+
+  const userId = document.getElementById('site-edit-user-id').value;
+  const role = document.getElementById('site-edit-user-role').value;
+  const firstName = document.getElementById('site-edit-first-name').value.trim();
+  const lastName = document.getElementById('site-edit-last-name').value.trim();
+  const district = document.getElementById('site-edit-district').value;
+  const username = document.getElementById('site-edit-username').value.trim();
+  const password = document.getElementById('site-edit-password').value.trim();
+  const email = document.getElementById('site-edit-email').value.trim();
+  const phone = document.getElementById('site-edit-phone').value.trim();
+
+  if (!firstName || !lastName || !username || !password) {
+    showToast('נא למלא את כל שדות החובה המסומנים בכוכבית', 'warning');
+    return;
+  }
+
+  const updateData = {
+    firstName,
+    lastName,
+    username,
+    password: phone || password,
+    email,
+    district
+  };
+
+  if (role === 'teacher') {
+    const supervisorId = document.getElementById('site-edit-supervisor').value;
+    const schoolName = document.getElementById('site-edit-school-name').value.trim();
+    const schoolCode = document.getElementById('site-edit-school-code').value.trim();
+
+    if (!supervisorId) {
+      showToast('נא לבחור מנחה מחוזי משויך', 'warning');
+      return;
+    }
+
+    updateData.supervisorId = supervisorId;
+    updateData.schoolName = schoolName;
+    updateData.schoolCode = schoolCode;
+  }
+
+  const btn = document.getElementById('btn-site-save-user');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div><span>מעדכן פרטים...</span>';
+
+  setTimeout(() => {
+    try {
+      const updatedUser = API.updateUser(userId, updateData, currentSiteAdmin);
+      closeModal('modal-edit-user');
+      showToast(`פרטי המשתמש ${updatedUser.name} עודכנו בהצלחה!`, 'success', 'משתמש עודכן');
+      loadInitialData();
+    } catch (err) {
+      showToast(err.message || 'שגיאה בעדכון המשתמש', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span>שמור שינויים</span>';
+    }
+  }, 400);
+}
+
+// ============================================================================
 // AUDIT LOGS
 // ============================================================================
 function renderAuditLogs() {
@@ -602,7 +736,29 @@ function setupEventListeners() {
   // Modal background clicks & Esc
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      ['modal-add-admin', 'modal-add-supervisor', 'modal-add-teacher', 'modal-delete-report', 'modal-delete-user', 'modal-view-report'].forEach(closeModal);
+      ['modal-add-admin', 'modal-add-supervisor', 'modal-add-teacher', 'modal-delete-report', 'modal-delete-user', 'modal-view-report', 'modal-edit-user'].forEach(closeModal);
     }
   });
 }
+
+// Global window bindings for inline HTML event handlers
+window.switchTab = switchTab;
+window.filterReportsList = filterReportsList;
+window.resetReportFilters = resetReportFilters;
+window.filterUsersList = filterUsersList;
+window.viewReportDetails = viewReportDetails;
+window.promptDeleteReport = promptDeleteReport;
+window.executeDeleteReport = executeDeleteReport;
+window.promptDeleteUser = promptDeleteUser;
+window.executeDeleteUser = executeDeleteUser;
+window.promptDeleteFromViewModal = promptDeleteFromViewModal;
+window.openAddAdminModal = openAddAdminModal;
+window.handleAddAdminSubmit = handleAddAdminSubmit;
+window.openAddSupervisorModal = openAddSupervisorModal;
+window.handleAddSupervisorSubmit = handleAddSupervisorSubmit;
+window.openAddTeacherModal = openAddTeacherModal;
+window.handleAddTeacherSubmit = handleAddTeacherSubmit;
+window.updateTeacherModalSupervisors = updateTeacherModalSupervisors;
+window.openEditUserModal = openEditUserModal;
+window.updateEditTeacherSupervisors = updateEditTeacherSupervisors;
+window.handleEditUserSubmit = handleEditUserSubmit;

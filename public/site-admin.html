@@ -750,12 +750,124 @@
     </div>
   </div>
 
+  <!-- ==========================================================================
+       MODAL 7: EDIT USER (עריכת משתמש ע"י מנהל אתר)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="modal-edit-user">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="site-edit-user-title">עריכת פרטי משתמש</h3>
+          <span class="text-muted" style="font-size:0.8125rem;">עדכון פרטים, שיוך מנחה, מחוז והרשאות כניסה</span>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modal-edit-user')">&times;</button>
+      </div>
+      <form id="form-site-edit-user" onsubmit="handleEditUserSubmit(event)">
+        <input type="hidden" id="site-edit-user-id">
+        <input type="hidden" id="site-edit-user-role">
+        <div class="modal-body">
+          <div class="grid grid-2 gap-sm mb-2">
+            <div class="form-group">
+              <label class="form-label" for="site-edit-first-name">
+                <span>שם פרטי</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="site-edit-first-name" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="site-edit-last-name">
+                <span>שם משפחה</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="site-edit-last-name" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="grid grid-2 gap-sm mb-2">
+            <div class="form-group">
+              <label class="form-label" for="site-edit-district">
+                <span>מחוז</span>
+                <span class="required">*</span>
+              </label>
+              <select id="site-edit-district" class="form-control form-select" onchange="updateEditTeacherSupervisors()" required>
+                <option value="מרכז">מרכז</option>
+                <option value="צפון">צפון</option>
+                <option value="דרום">דרום</option>
+                <option value="ירושלים">ירושלים</option>
+                <option value="תל אביב">תל אביב</option>
+                <option value="חיפה">חיפה</option>
+                <option value="התיישבותי">המינהל לחינוך התיישבותי</option>
+                <option value="ארצי">ארצי</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="site-edit-supervisor-wrapper">
+              <label class="form-label" for="site-edit-supervisor">
+                <span>שיוך למנחה מחוזי</span>
+                <span class="required">*</span>
+              </label>
+              <select id="site-edit-supervisor" class="form-control form-select">
+                <!-- Populated dynamically via JS -->
+              </select>
+            </div>
+          </div>
+
+          <!-- Teacher school fields -->
+          <div id="site-edit-school-wrapper" class="grid grid-2 gap-sm mb-2">
+            <div class="form-group">
+              <label class="form-label" for="site-edit-school-name">שם מוסד חינוכי:</label>
+              <input type="text" id="site-edit-school-name" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="site-edit-school-code">סמל מוסד:</label>
+              <input type="text" id="site-edit-school-code" class="form-control">
+            </div>
+          </div>
+
+          <div class="grid grid-2 gap-sm mb-2">
+            <div class="form-group">
+              <label class="form-label" for="site-edit-username">
+                <span>שם משתמש לכניסה</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="site-edit-username" class="form-control" required maxlength="25">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="site-edit-password">
+                <span>סיסמה לכניסה</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="site-edit-password" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="grid grid-2 gap-sm">
+            <div class="form-group">
+              <label class="form-label" for="site-edit-email">דוא"ל:</label>
+              <input type="email" id="site-edit-email" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="site-edit-phone">טלפון נייד:</label>
+              <input type="tel" id="site-edit-phone" class="form-control">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit-user')">ביטול</button>
+          <button type="submit" id="btn-site-save-user" class="btn btn-primary">
+            <span>שמור שינויים</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Universal Footer Mount -->
   <div id="gov-footer-mount"></div>
 
   <!-- Scripts -->
-  <script src="js/api.js?v=202609200900"></script>
-  <script src="js/auth.js?v=202609200900"></script>
-  <script src="js/site-admin.js?v=202609200900"></script>
+  <script src="js/api.js?v=202609201200"></script>
+  <script src="js/auth.js?v=202609201200"></script>
+  <script src="js/site-admin.js?v=202609201200"></script>
 </body>
 </html>
