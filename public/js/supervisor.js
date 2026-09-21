@@ -145,7 +145,8 @@ function renderSupervisorGrid(report) {
   const fixed = parseFloat(day.fixedHours || 0);
   const overtime = parseFloat(day.overtimeHours || 0);
   const reason = (day.overtimeReason || '').trim();
-  const isExceeded = (reason !== 'גיחה' && reason !== 'מסע') && ((fixed + overtime) > 10);
+  const total = fixed + overtime;
+  const isExceeded = (reason === 'גיחה' || reason === 'מסע') ? (total > 14) : (total > 10);
 
   let cellClass = isEdited ? 'cell-input supervisor-edited-cell' : 'cell-input';
   if (isExceeded) {

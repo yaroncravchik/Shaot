@@ -295,13 +295,15 @@ function isDailyHoursExceeded(day) {
   const fixed = parseFloat(day.fixedHours || 0);
   const overtime = parseFloat(day.overtimeHours || 0);
   const reason = (day.overtimeReason || '').trim();
+  const total = fixed + overtime;
 
-  // סייג לכלל זה: אם נבחר בסיבת שעות נוספות "גיחה" או "מסע", אין התראה
+  // סייג לכלל זה: אם נבחר בסיבת שעות נוספות "גיחה" או "מסע", סף השעות הוא 14 (התראה מעל 14)
   if (reason === 'גיחה' || reason === 'מסע') {
-    return false;
+    return total > 14;
   }
 
-  return (fixed + overtime) > 10;
+  // עבור יתר הסיבות, סף השעות הוא 10 (התראה מעל 10)
+  return total > 10;
 }
 
 function updateDayThresholdWarning(idx) {

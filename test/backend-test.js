@@ -371,16 +371,18 @@ async function runTests() {
   });
 
   // 9. Overtime Reasons & Daily Hours Threshold Exceeded Rule
-  test('9. Overtime Reason Options and Threshold Rule (>10 Hours Exemption)', () => {
+  test('9. Overtime Reason Options and Threshold Rule (>10h standard, >14h for גיחה/מסע)', () => {
     const validReasons = ['יום שדה', 'גיחה', 'מסע', 'מש"צים', 'אחר'];
 
     function isDailyHoursExceeded(fixed, overtime, reason) {
+      const total = fixed + overtime;
       if (reason === 'גיחה' || reason === 'מסע') {
-        return false; // Exempt
+        return total > 14;
       }
-      return (fixed + overtime) > 10;
+      return total > 10;
     }
 
+    // Standard reasons: threshold > 10
     // Case 1: 8 fixed + 3 overtime = 11 > 10, reason = 'יום שדה' -> EXCEEDED (true)
     assert.strictEqual(isDailyHoursExceeded(8, 3, 'יום שדה'), true);
 
@@ -390,17 +392,24 @@ async function runTests() {
     // Case 3: 8 fixed + 3 overtime = 11 > 10, reason = 'אחר' -> EXCEEDED (true)
     assert.strictEqual(isDailyHoursExceeded(8, 3, 'אחר'), true);
 
-    // Case 4: 8 fixed + 3 overtime = 11 > 10, reason = 'גיחה' -> EXEMPT (false)
-    assert.strictEqual(isDailyHoursExceeded(8, 3, 'גיחה'), false);
-
-    // Case 5: 8 fixed + 6 overtime = 14 > 10, reason = 'מסע' -> EXEMPT (false)
-    assert.strictEqual(isDailyHoursExceeded(8, 6, 'מסע'), false);
-
-    // Case 6: 6 fixed + 4 overtime = 10 <= 10, reason = 'יום שדה' -> NOT EXCEEDED (false)
+    // Case 4: 6 fixed + 4 overtime = 10 <= 10, reason = 'יום שדה' -> NOT EXCEEDED (false)
     assert.strictEqual(isDailyHoursExceeded(6, 4, 'יום שדה'), false);
 
-    // Case 7: 6 fixed + 2 overtime = 8 <= 10, reason = 'אחר' -> NOT EXCEEDED (false)
+    // Case 5: 6 fixed + 2 overtime = 8 <= 10, reason = 'אחר' -> NOT EXCEEDED (false)
     assert.strictEqual(isDailyHoursExceeded(6, 2, 'אחר'), false);
+
+    // Excursion / Trek (גיחה / מסע): threshold > 14
+    // Case 6: 8 fixed + 3 overtime = 11 <= 14, reason = 'גיחה' -> NOT EXCEEDED (false)
+    assert.strictEqual(isDailyHoursExceeded(8, 3, 'גיחה'), false);
+
+    // Case 7: 8 fixed + 6 overtime = 14 <= 14, reason = 'מסע' -> NOT EXCEEDED (false)
+    assert.strictEqual(isDailyHoursExceeded(8, 6, 'מסע'), false);
+
+    // Case 8: 8 fixed + 7 overtime = 15 > 14, reason = 'גיחה' -> EXCEEDED (true)
+    assert.strictEqual(isDailyHoursExceeded(8, 7, 'גיחה'), true);
+
+    // Case 9: 8 fixed + 7 overtime = 15 > 14, reason = 'מסע' -> EXCEEDED (true)
+    assert.strictEqual(isDailyHoursExceeded(8, 7, 'מסע'), true);
   });
 
   console.log('\n============================================================');
