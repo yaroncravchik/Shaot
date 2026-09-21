@@ -92,8 +92,8 @@ async function seedFirestore() {
     submittedAt: '2026-08-25T14:00:00Z',
     daysData: [
       { dayOfMonth: 2, dayOfWeek: 0, dayName: 'ראשון', fixedHours: 6, absenceHours: 0, overtimeHours: 0, isFieldDay: false, description: 'שעות הוראה קבועות' },
-      { dayOfMonth: 4, dayOfWeek: 2, dayName: 'שלישי', fixedHours: 8, absenceHours: 0, overtimeHours: 4, overtimeReason: 'פעילות שדה מורחבת', isFieldDay: true, gradeClass: 'ט-1', description: 'סיור שדה נחל אלכסנדר' },
-      { dayOfMonth: 6, dayOfWeek: 4, dayName: 'חמישי', fixedHours: 8, absenceHours: 0, overtimeHours: 6, overtimeReason: 'הכנה וסיור שטח', isFieldDay: true, gradeClass: 'י-2', description: 'סדנת ניווט מעשית יער בן שמן' }
+      { dayOfMonth: 4, dayOfWeek: 2, dayName: 'שלישי', fixedHours: 8, absenceHours: 0, overtimeHours: 4, overtimeReason: 'יום שדה', isFieldDay: true, gradeClass: 'ט-1', description: 'סיור שדה נחל אלכסנדר' },
+      { dayOfMonth: 6, dayOfWeek: 4, dayName: 'חמישי', fixedHours: 8, absenceHours: 0, overtimeHours: 6, overtimeReason: 'גיחה', isFieldDay: true, gradeClass: 'י-2', description: 'סדנת ניווט מעשית יער בן שמן' }
     ],
     attachments: [
       { id: 'att_01', name: 'אישור_סיור_שדה_אוגוסט.pdf', size: '1.2 MB', uploadDate: '25/08/2026' }

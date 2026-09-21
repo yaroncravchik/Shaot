@@ -455,7 +455,7 @@ function seed() {
  augDays.forEach(d => {
  if (d.day_number === 3) {
  d.overtime_hours = 2;
- d.overtime_reason = 'הכנת מערכי שיעור פתיחת שנה';
+ d.overtime_reason = 'אחר';
  d.activity_description = 'תכנון שנתי';
  }
  });

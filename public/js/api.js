@@ -4,10 +4,10 @@
  */
 
 const STORAGE_KEYS = {
- USERS: 'shalah_users_v2',
- REPORTS: 'shalah_reports_v2',
- CURRENT_USER: 'shalah_current_user_v2',
- AUDIT_LOGS: 'shalah_audit_logs_v2'
+  USERS: 'shalah_users_v3',
+  REPORTS: 'shalah_reports_v3',
+  CURRENT_USER: 'shalah_current_user_v3',
+  AUDIT_LOGS: 'shalah_audit_logs_v3'
 };
 
 // ==========================================================================
@@ -376,13 +376,74 @@ function generateSampleDaysData(year, month, weeklySchedule = {}, fieldDays = []
 // ==========================================================================
 // 3. Database Initializer & Local Storage Wrapper
 // ==========================================================================
+const VALID_OVERTIME_REASONS = ['יום שדה', 'גיחה', 'מסע', 'מש"צים', 'אחר'];
+
+function normalizeOvertimeReason(reason) {
+  if (!reason || typeof reason !== 'string' || !reason.trim()) return '';
+  const r = reason.trim();
+  if (VALID_OVERTIME_REASONS.includes(r)) return r;
+  if (r.includes('שדה') || r.includes('סיור')) return 'יום שדה';
+  if (r.includes('גיחה')) return 'גיחה';
+  if (r.includes('מסע')) return 'מסע';
+  if (r.includes('מש"צ') || r.includes('משצים') || r.includes('מש"צים')) return 'מש"צים';
+  return 'אחר';
+}
+
 function initStorage() {
- if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
- localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(getInitialSeedUsers()));
- }
- if (!localStorage.getItem(STORAGE_KEYS.REPORTS)) {
- localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(getInitialSeedReports()));
- }
+  // Migrate users from previous versions if needed
+  if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
+    const v2Users = localStorage.getItem('shalah_users_v2');
+    if (v2Users) {
+      localStorage.setItem(STORAGE_KEYS.USERS, v2Users);
+    } else {
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(getInitialSeedUsers()));
+    }
+  }
+
+  // Migrate reports from previous versions if needed and normalize overtime reasons
+  if (!localStorage.getItem(STORAGE_KEYS.REPORTS)) {
+    const v2Reports = localStorage.getItem('shalah_reports_v2');
+    if (v2Reports) {
+      try {
+        const parsed = JSON.parse(v2Reports);
+        parsed.forEach(rep => {
+          if (rep && Array.isArray(rep.daysData)) {
+            rep.daysData.forEach(d => {
+              if (d && d.overtimeReason) {
+                d.overtimeReason = normalizeOvertimeReason(d.overtimeReason);
+              }
+            });
+          }
+        });
+        localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(parsed));
+      } catch (e) {
+        localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(getInitialSeedReports()));
+      }
+    } else {
+      localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(getInitialSeedReports()));
+    }
+  } else {
+    // Normalize existing reports in v3
+    try {
+      const existing = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS) || '[]');
+      let updated = false;
+      existing.forEach(rep => {
+        if (rep && Array.isArray(rep.daysData)) {
+          rep.daysData.forEach(d => {
+            if (d && d.overtimeReason && !VALID_OVERTIME_REASONS.includes(d.overtimeReason.trim())) {
+              d.overtimeReason = normalizeOvertimeReason(d.overtimeReason);
+              updated = true;
+            }
+          });
+        }
+      });
+      if (updated) {
+        localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(existing));
+      }
+    } catch (e) {
+      // Ignore parse error
+    }
+  }
 }
 
 initStorage();

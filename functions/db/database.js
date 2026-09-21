@@ -176,7 +176,7 @@ for (let d = 1; d <= 31; d++) {
     absence_hours: 0,
     absence_reason: null,
     overtime_hours: (d === 4 ? 4 : (d === 6 ? 6 : 0)),
-    overtime_reason: (d === 4 ? 'פעילות שדה מורחבת' : (d === 6 ? 'הכנה וסיור שטח' : null)),
+    overtime_reason: (d === 4 ? 'יום שדה' : (d === 6 ? 'גיחה' : null)),
     grade_class: (d === 4 ? 'ט-1' : (d === 6 ? 'י-2' : null)),
     activity_description: (d === 4 ? 'סיור שדה נחל אלכסנדר' : (d === 6 ? 'סדנת ניווט מעשית יער בן שמן' : (regHours > 0 ? 'שעות הוראה קבועות' : null))),
     supervisor_edited: 0,
