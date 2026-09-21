@@ -133,48 +133,59 @@ function renderSupervisorGrid(report) {
  if (day.isHoliday) tr.classList.add('row-holiday');
  if (day.isFieldDay) tr.classList.add('row-field-day');
 
- let dayTags = '';
- if (day.isHoliday) {
- dayTags += `<span class="holiday-tag"> ${day.holidayName || 'חג'}</span>`;
- }
- if (day.isFieldDay) {
- dayTags += `<span class="field-day-tag"> יום שדה</span>`;
- }
+  let dayTags = '';
+  if (day.isHoliday) {
+    dayTags += `<span class="holiday-tag"> ${day.holidayName || 'חג'}</span>`;
+  }
+  if (day.isFieldDay) {
+    dayTags += `<span class="field-day-tag"> יום שדה</span>`;
+  }
 
- const isEdited = day.supervisorEdited;
- const cellClass = isEdited ? 'cell-input supervisor-edited-cell' : 'cell-input';
+  const isEdited = day.supervisorEdited;
+  const fixed = parseFloat(day.fixedHours || 0);
+  const overtime = parseFloat(day.overtimeHours || 0);
+  const reason = (day.overtimeReason || '').trim();
+  const isExceeded = (reason !== 'גיחה' && reason !== 'מסע') && ((fixed + overtime) > 10);
 
- tr.innerHTML = `
- <td style="text-align:center; font-weight:700;">${day.dayOfMonth}</td>
- <td>
- <div style="font-weight:600;">${day.dayName}</div>
- <div>${dayTags}</div>
- </td>
- <td style="text-align:center;" class="cell-readonly">${day.fixedHours || 0}</td>
- <td style="text-align:center;">${day.absenceHours || 0}</td>
- <td>${day.absenceReason || '-'}</td>
- <!-- Direct Overtime Editing Cell -->
- <td>
- <div class="supervisor-edited-wrapper">
- ${isEdited ? `<span class="edit-diff-indicator">תוקן ע"י מנחה</span>` : ''}
- <input 
- type="number" 
- class="${cellClass}" 
- min="0" 
- max="16" 
- step="0.5" 
- value="${day.overtimeHours || 0}" 
- data-day-idx="${index}"
- >
- ${isEdited && day.originalOvertime !== undefined ? `<span class="original-value-hint">מקורי: ${day.originalOvertime} שעות</span>` : ''}
- </div>
- </td>
- <td>${day.overtimeReason || '-'}</td>
- <td>${day.gradeClass || '-'}</td>
- <td>${day.description || '-'}</td>
- `;
- tbody.appendChild(tr);
- });
+  let cellClass = isEdited ? 'cell-input supervisor-edited-cell' : 'cell-input';
+  if (isExceeded) {
+    cellClass += ' cell-overtime-exceeded';
+  }
+
+  tr.innerHTML = `
+    <td style="text-align:center; font-weight:700;">${day.dayOfMonth}</td>
+    <td>
+      <div style="font-weight:600;">${day.dayName}</div>
+      <div>${dayTags}</div>
+    </td>
+    <td style="text-align:center;" class="cell-readonly">${day.fixedHours || 0}</td>
+    <td style="text-align:center;">${day.absenceHours || 0}</td>
+    <td>${day.absenceReason || '-'}</td>
+    <!-- Direct Overtime Editing Cell -->
+    <td>
+      <div class="supervisor-edited-wrapper">
+        ${isEdited ? `<span class="edit-diff-indicator">תוקן ע"י מנחה</span>` : ''}
+        <input 
+          type="number" 
+          class="${cellClass}" 
+          min="0" 
+          max="16" 
+          step="0.5" 
+          value="${day.overtimeHours || 0}" 
+          data-day-idx="${index}"
+        >
+        ${isEdited && day.originalOvertime !== undefined ? `<span class="original-value-hint">מקורי: ${day.originalOvertime} שעות</span>` : ''}
+        <div class="overtime-threshold-warning" style="display: ${isExceeded ? 'block' : 'none'};">
+          ⚠️ סך השעות היומי עובר את הסף המותר
+        </div>
+      </div>
+    </td>
+    <td>${day.overtimeReason || '-'}</td>
+    <td>${day.gradeClass || '-'}</td>
+    <td>${day.description || '-'}</td>
+  `;
+  tbody.appendChild(tr);
+  });
 
  // Attach direct edit listener to overtime input cells
  tbody.querySelectorAll('input[type="number"]').forEach(input => {

@@ -214,9 +214,9 @@ function getInitialSeedReports() {
  totalOvertimeHours: 14,
  totalPayableHours: 156,
  daysData: generateSampleDaysData(2026, 8, { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 }, [2, 4], [
- { day: 4, overtime: 4, overtimeReason: 'סיור של"ח הכנה לנחל אלכסנדר', grade: 'ט\'2', desc: 'הדרכת שטח וניווט' },
- { day: 11, overtime: 4, overtimeReason: 'יום שדה - פארק השרון', grade: 'י\'1', desc: 'סיור בוטניקה ומורשת' },
- { day: 18, overtime: 6, overtimeReason: 'מסע שנתי - הרי ירושלים', grade: 'יא\'3', desc: 'ליווי וניהול מסע' },
+ { day: 4, overtime: 4, overtimeReason: 'יום שדה', grade: 'ט\'2', desc: 'הדרכת שטח וניווט' },
+ { day: 11, overtime: 4, overtimeReason: 'יום שדה', grade: 'י\'1', desc: 'סיור בוטניקה ומורשת' },
+ { day: 18, overtime: 6, overtimeReason: 'מסע', grade: 'יא\'3', desc: 'ליווי וניהול מסע' },
  { day: 23, absence: 6, absenceReason: 'מחלה', desc: 'אישור מחלה מצורף' }
  ]),
  attachments: [
@@ -252,9 +252,9 @@ function getInitialSeedReports() {
  totalOvertimeHours: 16,
  totalPayableHours: 146,
  daysData: generateSampleDaysData(2026, 7, { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 }, [2, 4], [
- { day: 7, overtime: 6, overtimeReason: 'סמינר מנהיגות מש"צים', grade: 'ט\'-י\'', desc: 'הכשרת מש"צים צעירים' },
- { day: 14, overtime: 5, overtimeReason: 'הכנת מסלול - כרמל', grade: 'צוות', desc: 'בדיקת בטיחות מסלול' },
- { day: 21, overtime: 5, overtimeReason: 'מחנה קיץ של"ח', grade: 'י\'2', desc: 'הדרכת שדה מעשית' }
+ { day: 7, overtime: 6, overtimeReason: 'מש"צים', grade: 'ט\'-י\'', desc: 'הכשרת מש"צים צעירים' },
+ { day: 14, overtime: 5, overtimeReason: 'אחר', grade: 'צוות', desc: 'בדיקת בטיחות מסלול' },
+ { day: 21, overtime: 5, overtimeReason: 'גיחה', grade: 'י\'2', desc: 'הדרכת שדה מעשית' }
  ]),
  attachments: [
  { name: 'mischazim_seminar_list.pdf', size: '512 KB', type: 'application/pdf', uploadDate: '2026-07-28' }
@@ -287,8 +287,8 @@ function getInitialSeedReports() {
  totalOvertimeHours: 9, // originally reported 12
  totalPayableHours: 119,
  daysData: generateSampleDaysData(2026, 8, { 0: 5, 1: 7, 2: 5, 3: 7, 4: 0, 5: 0 }, [1, 3], [
- { day: 5, overtime: 4, overtimeReason: 'יום שדה - נחל פולג', grade: 'ט\'1', desc: 'סיור ופעילות גיאוגרפית' },
- { day: 12, overtime: 5, originalOvertime: 8, overtimeReason: 'סיור הכנה להרי ירושלים', grade: 'ט\'3', desc: 'הכנת מסלול', supervisorEdited: true, editNote: 'תוקן מ-8 שעות ל-5 שעות ע"י המנחה דוד לוי' }
+ { day: 5, overtime: 4, overtimeReason: 'יום שדה', grade: 'ט\'1', desc: 'סיור ופעילות גיאוגרפית' },
+ { day: 12, overtime: 5, originalOvertime: 8, overtimeReason: 'יום שדה', grade: 'ט\'3', desc: 'הכנת מסלול', supervisorEdited: true, editNote: 'תוקן מ-8 שעות ל-5 שעות ע"י המנחה דוד לוי' }
  ]),
  attachments: [],
  auditHistory: [
@@ -316,8 +316,8 @@ function getInitialSeedReports() {
  totalOvertimeHours: 10,
  totalPayableHours: 158,
  daysData: generateSampleDaysData(2026, 8, { 0: 6, 1: 6, 2: 8, 3: 6, 4: 6, 5: 0 }, [2], [
- { day: 11, overtime: 5, overtimeReason: 'יום שדה - ירקון', grade: 'י\'2', desc: 'סיור מקורות הירקון' },
- { day: 18, overtime: 5, overtimeReason: 'פעילות ערב של"ח', grade: 'ט\'1-ט\'3', desc: 'ערב מורשת ואש' }
+ { day: 11, overtime: 5, overtimeReason: 'יום שדה', grade: 'י\'2', desc: 'סיור מקורות הירקון' },
+ { day: 18, overtime: 5, overtimeReason: 'אחר', grade: 'ט\'1-ט\'3', desc: 'ערב מורשת ואש' }
  ]),
  attachments: [],
  auditHistory: [

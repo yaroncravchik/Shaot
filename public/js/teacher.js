@@ -290,142 +290,199 @@ function openReportModal(year, month) {
  openModal('monthly-report-modal');
 }
 
+function isDailyHoursExceeded(day) {
+  if (!day) return false;
+  const fixed = parseFloat(day.fixedHours || 0);
+  const overtime = parseFloat(day.overtimeHours || 0);
+  const reason = (day.overtimeReason || '').trim();
+
+  // סייג לכלל זה: אם נבחר בסיבת שעות נוספות "גיחה" או "מסע", אין התראה
+  if (reason === 'גיחה' || reason === 'מסע') {
+    return false;
+  }
+
+  return (fixed + overtime) > 10;
+}
+
+function updateDayThresholdWarning(idx) {
+  const rep = currentActiveReport || (typeof window !== 'undefined' ? window.currentActiveReport : null);
+  if (!rep || !rep.daysData || !rep.daysData[idx]) return;
+  const day = rep.daysData[idx];
+  const isExceeded = isDailyHoursExceeded(day);
+  const inputEl = document.getElementById(`ot-input-${idx}`);
+  const warnEl = document.getElementById(`ot-warning-${idx}`);
+
+  if (inputEl) {
+    if (isExceeded) {
+      inputEl.classList.add('cell-overtime-exceeded');
+    } else {
+      inputEl.classList.remove('cell-overtime-exceeded');
+    }
+  }
+
+  if (warnEl) {
+    warnEl.style.display = isExceeded ? 'block' : 'none';
+  }
+}
+
 function renderReportGrid(report, isReadOnly) {
- const tbody = document.getElementById('report-grid-tbody');
- tbody.innerHTML = '';
+  currentActiveReport = report;
+  if (typeof window !== 'undefined') window.currentActiveReport = report;
+  const tbody = document.getElementById('report-grid-tbody');
+  tbody.innerHTML = '';
 
- const absenceReasonOptions = ['מחלה', 'מילואים', 'השתלמות', 'חופשה', 'אישי', 'אחר'];
- const overtimeReasonOptions = ['סיור של"ח', 'יום שדה', 'מסע שנתי', 'סמינר מנהיגות', 'הכנת מסלול', 'פעילות ערב', 'ישיבת צוות', 'אחר'];
+  const absenceReasonOptions = ['מחלה', 'מילואים', 'השתלמות', 'חופשה', 'אישי', 'אחר'];
+  const overtimeReasonOptions = ['יום שדה', 'גיחה', 'מסע', 'מש"צים', 'אחר'];
 
- report.daysData.forEach((day, index) => {
- const tr = document.createElement('tr');
- if (day.isHoliday) tr.classList.add('row-holiday');
- if (day.isFieldDay) tr.classList.add('row-field-day');
+  report.daysData.forEach((day, index) => {
+    const tr = document.createElement('tr');
+    if (day.isHoliday) tr.classList.add('row-holiday');
+    if (day.isFieldDay) tr.classList.add('row-field-day');
 
- let dayTags = '';
- if (day.isHoliday) {
- dayTags += `<span class="holiday-tag" title="${day.holidayName}"> ${day.holidayName || 'חג/חופשה'}</span>`;
- }
- if (day.isFieldDay) {
- dayTags += `<span class="field-day-tag"> יום שדה</span>`;
- }
+    let dayTags = '';
+    if (day.isHoliday) {
+      dayTags += `<span class="holiday-tag" title="${day.holidayName}"> ${day.holidayName || 'חג/חופשה'}</span>`;
+    }
+    if (day.isFieldDay) {
+      dayTags += `<span class="field-day-tag"> יום שדה</span>`;
+    }
 
- // Check if cell was edited by supervisor
- let overtimeCellClass = 'cell-input';
- let overtimeWrapper = '';
- if (day.supervisorEdited) {
- overtimeCellClass += ' supervisor-edited-cell';
- }
+    // Check if daily threshold is exceeded (>10 hours total daily without exemption)
+    const isExceeded = isDailyHoursExceeded(day);
 
- tr.innerHTML = `
- <td style="text-align: center; font-weight: 700;">${day.dayOfMonth}</td>
- <td>
- <div style="font-weight: 600;">${day.dayName}</div>
- <div>${dayTags}</div>
- </td>
- <!-- Fixed hours: Read-only gray background (PRD 4.4 #3) -->
- <td style="text-align: center;">
- <input type="text" class="cell-input cell-readonly" value="${day.fixedHours || 0}" readonly>
- </td>
- <!-- Absence Hours -->
- <td>
- <input 
- type="number" 
- class="cell-input" 
- min="0" 
- max="12" 
- step="0.5" 
- value="${day.absenceHours || ''}" 
- data-day-idx="${index}" 
- data-field="absenceHours"
- ${isReadOnly ? 'readonly' : ''}
- >
- </td>
- <!-- Absence Reason -->
- <td>
- <select 
- class="cell-input cell-input-text" 
- data-day-idx="${index}" 
- data-field="absenceReason"
- ${isReadOnly ? 'disabled' : ''}
- >
- <option value="">-- בחר סיבה --</option>
- ${absenceReasonOptions.map(r => `<option value="${r}" ${day.absenceReason === r ? 'selected' : ''}>${r}</option>`).join('')}
- </select>
- </td>
- <!-- Overtime Hours -->
- <td>
- <div class="supervisor-edited-wrapper">
- ${day.supervisorEdited ? `<span class="edit-diff-indicator" title="${day.editNote}">עודכן ע"י מנחה</span>` : ''}
- <input 
- type="number" 
- class="${overtimeCellClass}" 
- min="0" 
- max="16" 
- step="0.5" 
- value="${day.overtimeHours || ''}" 
- data-day-idx="${index}" 
- data-field="overtimeHours"
- ${isReadOnly ? 'readonly' : ''}
- >
- ${day.supervisorEdited && day.originalOvertime !== undefined ? `<span class="original-value-hint">מקורי: ${day.originalOvertime} שעות</span>` : ''}
- </div>
- </td>
- <!-- Overtime Reason -->
- <td>
- <select 
- class="cell-input cell-input-text" 
- data-day-idx="${index}" 
- data-field="overtimeReason"
- ${isReadOnly ? 'disabled' : ''}
- >
- <option value="">-- בחר פעילות --</option>
- ${overtimeReasonOptions.map(r => `<option value="${r}" ${day.overtimeReason === r ? 'selected' : ''}>${r}</option>`).join('')}
- </select>
- </td>
- <!-- Grade / Class -->
- <td>
- <input 
- type="text" 
- class="cell-input cell-input-text" 
- placeholder="ט'1, י'2..." 
- value="${day.gradeClass || ''}" 
- data-day-idx="${index}" 
- data-field="gradeClass"
- ${isReadOnly ? 'readonly' : ''}
- >
- </td>
- <!-- Activity Description -->
- <td>
- <input 
- type="text" 
- class="cell-input cell-input-text" 
- placeholder="פירוט סיור, הדרכה, מסלול..." 
- value="${day.description || ''}" 
- data-day-idx="${index}" 
- data-field="description"
- ${isReadOnly ? 'readonly' : ''}
- >
- </td>
- `;
- tbody.appendChild(tr);
- });
+    // Check if cell was edited by supervisor
+    let overtimeCellClass = 'cell-input';
+    if (day.supervisorEdited) {
+      overtimeCellClass += ' supervisor-edited-cell';
+    }
+    if (isExceeded) {
+      overtimeCellClass += ' cell-overtime-exceeded';
+    }
 
- // Attach live input change listeners to recalculate totals
- if (!isReadOnly) {
- tbody.querySelectorAll('input, select').forEach(input => {
- input.addEventListener('input', (e) => {
- const idx = parseInt(e.target.dataset.dayIdx, 10);
- const field = e.target.dataset.field;
- let val = e.target.value;
- if (field === 'absenceHours' || field === 'overtimeHours') {
- val = parseFloat(val) || 0;
- }
- currentActiveReport.daysData[idx][field] = val;
- calculateGridTotals();
- });
- });
- }
+    tr.innerHTML = `
+      <td style="text-align: center; font-weight: 700;">${day.dayOfMonth}</td>
+      <td>
+        <div style="font-weight: 600;">${day.dayName}</div>
+        <div>${dayTags}</div>
+      </td>
+      <!-- Fixed hours: Read-only gray background -->
+      <td style="text-align: center;">
+        <input type="text" class="cell-input cell-readonly" value="${day.fixedHours || 0}" readonly>
+      </td>
+      <!-- Absence Hours -->
+      <td>
+        <input 
+          type="number" 
+          class="cell-input" 
+          min="0" 
+          max="12" 
+          step="0.5" 
+          value="${day.absenceHours || ''}" 
+          data-day-idx="${index}" 
+          data-field="absenceHours"
+          ${isReadOnly ? 'readonly' : ''}
+        >
+      </td>
+      <!-- Absence Reason -->
+      <td>
+        <select 
+          class="cell-input cell-input-text" 
+          data-day-idx="${index}" 
+          data-field="absenceReason"
+          ${isReadOnly ? 'disabled' : ''}
+        >
+          <option value="">-- בחר סיבה --</option>
+          ${absenceReasonOptions.map(r => `<option value="${r}" ${day.absenceReason === r ? 'selected' : ''}>${r}</option>`).join('')}
+        </select>
+      </td>
+      <!-- Overtime Hours -->
+      <td>
+        <div class="supervisor-edited-wrapper" id="ot-wrapper-${index}">
+          ${day.supervisorEdited ? `<span class="edit-diff-indicator" title="${day.editNote}">עודכן ע"י מנחה</span>` : ''}
+          <input 
+            type="number" 
+            class="${overtimeCellClass}" 
+            id="ot-input-${index}"
+            min="0" 
+            max="16" 
+            step="0.5" 
+            value="${day.overtimeHours || ''}" 
+            data-day-idx="${index}" 
+            data-field="overtimeHours"
+            ${isReadOnly ? 'readonly' : ''}
+          >
+          ${day.supervisorEdited && day.originalOvertime !== undefined ? `<span class="original-value-hint">מקורי: ${day.originalOvertime} שעות</span>` : ''}
+          <div id="ot-warning-${index}" class="overtime-threshold-warning" style="display: ${isExceeded ? 'block' : 'none'};">
+            ⚠️ סך השעות היומי עובר את הסף המותר
+          </div>
+        </div>
+      </td>
+      <!-- Overtime Reason -->
+      <td>
+        <select 
+          class="cell-input cell-input-text" 
+          id="ot-reason-${index}"
+          data-day-idx="${index}" 
+          data-field="overtimeReason"
+          ${isReadOnly ? 'disabled' : ''}
+        >
+          <option value="">-- בחר פעילות --</option>
+          ${overtimeReasonOptions.map(r => `<option value="${r}" ${day.overtimeReason === r ? 'selected' : ''}>${r}</option>`).join('')}
+        </select>
+      </td>
+      <!-- Grade / Class -->
+      <td>
+        <input 
+          type="text" 
+          class="cell-input cell-input-text" 
+          placeholder="ט'1, י'2..." 
+          value="${day.gradeClass || ''}" 
+          data-day-idx="${index}" 
+          data-field="gradeClass"
+          ${isReadOnly ? 'readonly' : ''}
+        >
+      </td>
+      <!-- Activity Description -->
+      <td>
+        <input 
+          type="text" 
+          class="cell-input cell-input-text" 
+          placeholder="פירוט סיור, הדרכה, מסלול..." 
+          value="${day.description || ''}" 
+          data-day-idx="${index}" 
+          data-field="description"
+          ${isReadOnly ? 'readonly' : ''}
+        >
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Attach live input change listeners to recalculate totals & threshold warnings
+  if (!isReadOnly) {
+    tbody.querySelectorAll('input, select').forEach(input => {
+      const handleLiveChange = (e) => {
+        const idx = parseInt(e.target.dataset.dayIdx, 10);
+        const field = e.target.dataset.field;
+        let val = e.target.value;
+        if (field === 'absenceHours' || field === 'overtimeHours') {
+          val = parseFloat(val) || 0;
+        }
+        currentActiveReport.daysData[idx][field] = val;
+
+        if (field === 'overtimeHours' || field === 'overtimeReason') {
+          updateDayThresholdWarning(idx);
+        }
+
+        calculateGridTotals();
+      };
+
+      input.addEventListener('input', handleLiveChange);
+      if (input.tagName === 'SELECT') {
+        input.addEventListener('change', handleLiveChange);
+      }
+    });
+  }
 }
 
 function calculateGridTotals() {
@@ -559,4 +616,17 @@ function submitCurrentReport() {
  submitBtn.disabled = false;
  submitBtn.innerHTML = '<span> הגשת דוח לאישור מנהל/ת</span>';
  }, 700);
+}
+
+// Global window bindings
+if (typeof window !== 'undefined') {
+  window.isDailyHoursExceeded = isDailyHoursExceeded;
+  window.updateDayThresholdWarning = updateDayThresholdWarning;
+  window.renderReportGrid = renderReportGrid;
+  window.calculateGridTotals = calculateGridTotals;
+  window.openReportModal = openReportModal;
+  window.saveCurrentReportDraft = saveCurrentReportDraft;
+  window.submitCurrentReport = submitCurrentReport;
+  window.handleFileUpload = handleFileUpload;
+  window.removeAttachment = removeAttachment;
 }

@@ -295,13 +295,13 @@ function seed() {
  rep1Reg += d.regular_hours;
  if (d.is_field_day && d.day_number === 8) {
  d.overtime_hours = 3;
- d.overtime_reason = 'הדרכת סיור שדה כרמל חוף';
+ d.overtime_reason = 'יום שדה';
  d.grade_class = 'שכבה ט׳';
  d.activity_description = 'סיור של"ח בנושא התיישבות ונוף בכרמל';
  rep1Ot += 3;
  } else if (d.is_field_day && d.day_number === 17) {
  d.overtime_hours = 4;
- d.overtime_reason = 'הכנת מסלול והובלת סיור נחל שופט';
+ d.overtime_reason = 'יום שדה';
  d.grade_class = 'שכבה י׳';
  d.activity_description = 'סיור שדה בנחל שופט ורמות מנשה';
  rep1Ot += 4;
@@ -386,14 +386,14 @@ function seed() {
  if (d.day_number === 6) {
  d.overtime_hours = 2; // Edited down by supervisor from 4 to 2
  d.original_overtime_hours = 4;
- d.overtime_reason = 'הכנת מפת ניווט';
+ d.overtime_reason = 'אחר';
  d.grade_class = 'שכבה ח׳';
  d.activity_description = 'הכנת מסלול ניווט בית ספרי';
  d.supervisor_edited = 1;
  d.supervisor_note = 'אושר חלקי: לפי נוהל של"ח שעות הכנה מאושרות עד 2 שעות.';
  } else if (d.day_number === 15) {
  d.overtime_hours = 3;
- d.overtime_reason = 'סדנת מנהיגות צעירה';
+ d.overtime_reason = 'מש"צים';
  d.grade_class = 'שכבה ט׳';
  d.activity_description = 'הדרכת מש"צים';
  }
@@ -513,7 +513,7 @@ function seed() {
  t2AugDays.forEach(d => {
  if (d.is_field_day && d.day_number === 4) {
  d.overtime_hours = 4;
- d.overtime_reason = 'הדרכת סיור הכנה למש"צים';
+ d.overtime_reason = 'מש"צים';
  d.grade_class = 'שכבה ט׳';
  d.activity_description = 'סיור הכנה להנהגת מש"צים ביער בן שמן';
  }
