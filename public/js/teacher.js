@@ -171,6 +171,21 @@ function renderHistoryTable(reports) {
       `;
     }
 
+    const isApproved = API.isReportSupervisorApproved(r);
+
+    const actionButtons = `
+      <div style="display:inline-flex; gap:6px; align-items:center; justify-content:center; flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="openReportModal(${r.year}, ${r.month})">
+          ${r.status === 'draft' || r.status === 'returned' ? '✏️ עריכה' : '👁️ צפייה'}
+        </button>
+        ${isApproved ? `
+          <button class="btn btn-outline-primary btn-sm" onclick="downloadReportPDF('${r.id}')" title="הורדת דוח מאושר בקובץ PDF">
+            <span>📄 הורדת PDF</span>
+          </button>
+        ` : ''}
+      </div>
+    `;
+
     tr.innerHTML = `
       <td><strong>${HEBREW_MONTHS_NAME[r.month - 1] || r.month} ${r.year}</strong></td>
       <td><span class="badge ${st.badgeClass}"><span class="badge-dot"></span> ${st.label}</span></td>
@@ -180,9 +195,7 @@ function renderHistoryTable(reports) {
       <td>${sigHtml}</td>
       <td style="max-width:200px;">${remarksHtml}</td>
       <td style="text-align: center;">
-        <button class="btn btn-secondary btn-sm" onclick="openReportModal(${r.year}, ${r.month})">
-          ${r.status === 'draft' || r.status === 'returned' ? '✏️ עריכה' : '👁️ צפייה'}
-        </button>
+        ${actionButtons}
       </td>
     `;
     tbody.appendChild(tr);
@@ -264,16 +277,29 @@ function openReportModal(year, month) {
  remarksBanner.style.display = 'none';
  }
 
- // Buttons state
- const btnSaveDraft = document.getElementById('btn-save-draft');
- const btnSubmit = document.getElementById('btn-submit-report');
- if (isReadOnly) {
- btnSaveDraft.style.display = 'none';
- btnSubmit.style.display = 'none';
- } else {
- btnSaveDraft.style.display = 'inline-flex';
- btnSubmit.style.display = 'inline-flex';
- }
+  // Buttons state
+  const btnSaveDraft = document.getElementById('btn-save-draft');
+  const btnSubmit = document.getElementById('btn-submit-report');
+  const btnModalPdf = document.getElementById('btn-download-modal-pdf');
+
+  if (isReadOnly) {
+    btnSaveDraft.style.display = 'none';
+    btnSubmit.style.display = 'none';
+  } else {
+    btnSaveDraft.style.display = 'inline-flex';
+    btnSubmit.style.display = 'inline-flex';
+  }
+
+  // Show PDF download button in modal if report is approved by supervisor
+  if (btnModalPdf) {
+    const isApproved = API.isReportSupervisorApproved(currentActiveReport);
+    if (isApproved && currentActiveReport.id) {
+      btnModalPdf.style.display = 'inline-flex';
+      btnModalPdf.onclick = () => downloadReportPDF(currentActiveReport.id);
+    } else {
+      btnModalPdf.style.display = 'none';
+    }
+  }
 
  renderReportGrid(currentActiveReport, isReadOnly);
  renderAttachmentsList(currentActiveReport, isReadOnly);
@@ -620,6 +646,15 @@ function submitCurrentReport() {
  }, 700);
 }
 
+function downloadReportPDF(reportId) {
+  const report = API.getReportById(reportId);
+  if (!report) {
+    showToast('דוח לא נמצא במערכת', 'error');
+    return;
+  }
+  API.exportReportToPDF(report);
+}
+
 // Global window bindings
 if (typeof window !== 'undefined') {
   window.isDailyHoursExceeded = isDailyHoursExceeded;
@@ -631,4 +666,5 @@ if (typeof window !== 'undefined') {
   window.submitCurrentReport = submitCurrentReport;
   window.handleFileUpload = handleFileUpload;
   window.removeAttachment = removeAttachment;
+  window.downloadReportPDF = downloadReportPDF;
 }

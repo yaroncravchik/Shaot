@@ -1006,6 +1006,14 @@ const API = {
 
   getAllDistricts() {
     return ['מרכז', 'צפון', 'דרום', 'ירושלים', 'תל אביב', 'חיפה', 'התיישבותי', 'ארצי'];
+  },
+
+  exportReportToPDF(report) {
+    return exportReportToPDF(report);
+  },
+
+  isReportSupervisorApproved(report) {
+    return isReportSupervisorApproved(report);
   }
 };
 
@@ -1167,6 +1175,421 @@ function exportReportsToExcel(reports, filename = 'shalah_hours_report.csv') {
 }
 
 // ==========================================================================
+// 7.1. PDF Export Utility for Approved Monthly Activity Reports
+// ==========================================================================
+function isReportSupervisorApproved(report) {
+  if (!report) return false;
+  return Boolean(
+    report.supervisorApprovedAt ||
+    ['pending_admin', 'supervisor_edited', 'approved_paid'].includes(report.status)
+  );
+}
+
+function generateReportPDFHtml(report) {
+  const monthName = HEBREW_MONTHS_NAME[(report.month || 1) - 1] || report.month;
+  const days = report.daysData || [];
+  
+  let rowsHtml = '';
+  days.forEach(d => {
+    let dayBadges = '';
+    if (d.isHoliday) dayBadges += `<span class="pdf-tag tag-holiday">${d.holidayName || 'חג/חופשה'}</span>`;
+    if (d.isFieldDay) dayBadges += `<span class="pdf-tag tag-field">יום שדה</span>`;
+    
+    let otDisplay = d.overtimeHours ? `${d.overtimeHours}` : '-';
+    if (d.supervisorEdited && d.originalOvertime !== undefined) {
+      otDisplay += ` <span class="pdf-edit-note">(מקורי: ${d.originalOvertime})</span>`;
+    }
+    
+    rowsHtml += `
+      <tr class="${d.isFieldDay ? 'row-field' : ''} ${d.isHoliday ? 'row-holiday' : ''}">
+        <td class="col-num">${d.dayOfMonth}</td>
+        <td class="col-day"><strong>${d.dayName || ''}</strong> ${dayBadges}</td>
+        <td class="col-num col-fixed">${d.fixedHours || 0}</td>
+        <td class="col-num">${d.absenceHours || 0}</td>
+        <td>${d.absenceReason || '-'}</td>
+        <td class="col-num col-ot"><strong>${otDisplay}</strong></td>
+        <td>${d.overtimeReason || '-'}</td>
+        <td>${d.gradeClass || '-'}</td>
+        <td class="col-desc">${d.description || '-'}</td>
+      </tr>
+    `;
+  });
+
+  const supApprovedDate = report.supervisorApprovedAt ? formatDateTime(report.supervisorApprovedAt) : 'טרם אושר';
+  const principalApprovedDate = report.principalApprovedAt ? formatDateTime(report.principalApprovedAt) : 'טרם אושר';
+  const exportDate = formatDateTime(new Date());
+
+  return `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>דוח שעות פעילות חודשי – ${report.teacherName || 'מורה'} – ${monthName} ${report.year}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 8mm 10mm;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Rubik', sans-serif;
+      direction: rtl;
+      color: #0c3058;
+      background-color: #ffffff;
+      padding: 16px;
+      font-size: 11px;
+      line-height: 1.35;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .no-print {
+      background: #0c3058;
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .no-print button {
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Rubik', sans-serif;
+    }
+    .btn-print-action {
+      background: #007bff;
+      color: #ffffff;
+      margin-left: 8px;
+    }
+    .btn-print-action:hover {
+      background: #0056b3;
+    }
+    .btn-close-action {
+      background: rgba(255,255,255,0.2);
+      color: #ffffff;
+    }
+    .btn-close-action:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        padding: 0;
+      }
+    }
+    .pdf-header {
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .pdf-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #0c3058;
+    }
+    .pdf-subtitle {
+      font-size: 13px;
+      color: #007bff;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .pdf-stamp {
+      border: 1.5px solid #28a745;
+      background: #f4faf4;
+      color: #1e7e34;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .meta-card {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+    .meta-card-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #0056b3;
+      border-bottom: 1px solid #e9ecef;
+      padding-bottom: 4px;
+      margin-bottom: 6px;
+    }
+    .meta-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5px;
+      margin-bottom: 2px;
+    }
+    .meta-label {
+      color: #6c757d;
+      font-weight: 500;
+    }
+    .meta-val {
+      font-weight: 600;
+      color: #0c3058;
+    }
+    .pdf-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+      margin-bottom: 12px;
+    }
+    .pdf-table th {
+      background-color: #0c3058;
+      color: #ffffff;
+      padding: 6px 4px;
+      font-weight: 600;
+      border: 1px solid #0c3058;
+      text-align: center;
+    }
+    .pdf-table td {
+      padding: 4px 4px;
+      border: 1px solid #dee2e6;
+      vertical-align: middle;
+    }
+    .col-num {
+      text-align: center;
+      width: 32px;
+    }
+    .col-day {
+      width: 80px;
+    }
+    .col-fixed {
+      background-color: #f1f3f5;
+      color: #495057;
+    }
+    .col-ot {
+      color: #0056b3;
+      background-color: #f0f7ff;
+    }
+    .col-desc {
+      font-size: 9.5px;
+    }
+    .row-field {
+      background-color: #f0f9fa;
+    }
+    .row-holiday {
+      background-color: #fff9e6;
+    }
+    .pdf-tag {
+      display: inline-block;
+      font-size: 8px;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 4px;
+      margin-right: 2px;
+    }
+    .tag-field {
+      background: #e1f5fe;
+      color: #0277bd;
+    }
+    .tag-holiday {
+      background: #fff3e0;
+      color: #e65100;
+    }
+    .pdf-edit-note {
+      font-size: 8.5px;
+      color: #c82333;
+      display: block;
+    }
+    .pdf-table tfoot td {
+      background-color: #e9ecef;
+      font-weight: 700;
+      font-size: 11px;
+      border: 1px solid #ced4da;
+      padding: 6px 4px;
+    }
+    .remarks-box {
+      border: 1px solid #ffeeba;
+      background: #fffdf5;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 10px;
+      margin-bottom: 8px;
+    }
+    .pdf-footer-sign {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed #ced4da;
+    }
+    .sign-box {
+      border: 1px solid #e9ecef;
+      background: #fafbfc;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 9.5px;
+      text-align: center;
+    }
+    .sign-title {
+      font-weight: 700;
+      color: #0056b3;
+      margin-bottom: 3px;
+    }
+    .sign-status {
+      color: #28a745;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <div>
+      <span style="font-size:14px; font-weight:700;">📄 תצוגת דוח פעילות להורדה כקובץ PDF</span>
+      <span style="font-size:12px; opacity:0.85; margin-right:12px;">בחר "שמור כ-PDF" (Save as PDF) בחלון ההדפסה</span>
+    </div>
+    <div>
+      <button class="btn-print-action" onclick="window.print()">🖨️ שמירה כ-PDF / הדפסה</button>
+      <button class="btn-close-action" onclick="window.close()">סגירה</button>
+    </div>
+  </div>
+
+  <div class="pdf-header">
+    <div>
+      <div class="pdf-title">מערכת דיווח שעות פעילות – תחום של"ח וידיעת הארץ</div>
+      <div class="pdf-subtitle">דוח שעות חודשי מאושר לחודש ${monthName} ${report.year}</div>
+    </div>
+    <div class="pdf-stamp">
+      ✓ אושר ע"י מנחה מחוזי<br>
+      <span style="font-size:9px; font-weight:500;">מזהה: ${report.signatureId || report.id}</span>
+    </div>
+  </div>
+
+  <div class="meta-grid">
+    <div class="meta-card">
+      <div class="meta-card-title">פרטי המורה ומוסד החינוך</div>
+      <div class="meta-item"><span class="meta-label">שם המורה:</span><span class="meta-val">${report.teacherName || '-'}</span></div>
+      <div class="meta-item"><span class="meta-label">שם משתמש:</span><span class="meta-val">${report.teacherId || '-'}</span></div>
+      <div class="meta-item"><span class="meta-label">מוסד חינוכי:</span><span class="meta-val">${report.schoolName || '-'}</span></div>
+      <div class="meta-item"><span class="meta-label">סמל מוסד:</span><span class="meta-val">${report.schoolCode || '-'}</span></div>
+      <div class="meta-item"><span class="meta-label">מחוז ורשות:</span><span class="meta-val">${report.district || '-'} • ${report.municipality || '-'}</span></div>
+    </div>
+
+    <div class="meta-card">
+      <div class="meta-card-title">סטטוס ואישורים רשמיים</div>
+      <div class="meta-item"><span class="meta-label">סטטוס דוח:</span><span class="meta-val" style="color:#28a745;">${(REPORT_STATUSES[report.status] && REPORT_STATUSES[report.status].label) || 'מאושר'}</span></div>
+      <div class="meta-item"><span class="meta-label">מנחה מאשר:</span><span class="meta-val">${report.supervisorName || 'מנחה מחוזי'}</span></div>
+      <div class="meta-item"><span class="meta-label">תאריך אישור מנחה:</span><span class="meta-val">${supApprovedDate}</span></div>
+      <div class="meta-item"><span class="meta-label">מנהל/ת בי"ס:</span><span class="meta-val">${report.principalName || 'מנהל/ת'}</span></div>
+      <div class="meta-item"><span class="meta-label">תאריך אישור מנהל/ת:</span><span class="meta-val">${principalApprovedDate}</span></div>
+    </div>
+
+    <div class="meta-card">
+      <div class="meta-card-title">סיכום שעות חודשי</div>
+      <div class="meta-item"><span class="meta-label">סה"כ שעות נוספות:</span><span class="meta-val" style="color:#0056b3; font-size:12px;">${report.totalOvertimeHours || 0} שעות</span></div>
+      <div class="meta-item"><span class="meta-label">סה"כ שעות היעדרות:</span><span class="meta-val">${report.totalAbsenceHours || 0} שעות</span></div>
+      <div class="meta-item"><span class="meta-label">תאריך הגשה:</span><span class="meta-val">${report.submittedAt ? report.submittedAt.slice(0,10) : '-'}</span></div>
+      <div class="meta-item"><span class="meta-label">הופק בתאריך:</span><span class="meta-val">${exportDate}</span></div>
+    </div>
+  </div>
+
+  ${report.supervisorRemarks ? `<div class="remarks-box"><strong>הערות מנחה מחוזי:</strong> ${report.supervisorRemarks}</div>` : ''}
+  ${report.principalRemarks ? `<div class="remarks-box"><strong>הערות מנהל/ת מוסד:</strong> ${report.principalRemarks}</div>` : ''}
+
+  <table class="pdf-table">
+    <thead>
+      <tr>
+        <th style="width:28px;">יום</th>
+        <th style="width:85px;">יום בשבוע</th>
+        <th style="width:40px;">שעות קבועות</th>
+        <th style="width:40px;">שעות היעדרות</th>
+        <th style="width:70px;">סיבת היעדרות</th>
+        <th style="width:45px;">שעות נוספות</th>
+        <th style="width:75px;">סיבת שעות נוספות</th>
+        <th style="width:60px;">שכבה/כיתה</th>
+        <th>פירוט הפעילות</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rowsHtml}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3" style="text-align:left; padding-left:10px;">סה"כ חודשי:</td>
+        <td class="col-num">${report.totalAbsenceHours || 0}</td>
+        <td></td>
+        <td class="col-num col-ot" style="color:#0056b3;">${report.totalOvertimeHours || 0}</td>
+        <td colspan="3"></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="pdf-footer-sign">
+    <div class="sign-box">
+      <div class="sign-title">הצהרת המורה</div>
+      <div class="sign-status">✓ נחתם ואושר דיגיטלית</div>
+      <div style="color:#6c757d; font-size:8.5px;">${report.teacherName || ''}</div>
+    </div>
+    <div class="sign-box">
+      <div class="sign-title">אישור מנהל/ת בית הספר</div>
+      <div class="sign-status">✓ אושר דיגיטלית</div>
+      <div style="color:#6c757d; font-size:8.5px;">${report.principalName || ''} (${principalApprovedDate})</div>
+    </div>
+    <div class="sign-box">
+      <div class="sign-title">אישור מנחה של"ח מחוזי</div>
+      <div class="sign-status">✓ נבדק ואושר</div>
+      <div style="color:#6c757d; font-size:8.5px;">${report.supervisorName || ''} (${supApprovedDate})</div>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        window.print();
+      }, 500);
+    });
+  </script>
+</body>
+</html>`;
+}
+
+function exportReportToPDF(report) {
+  if (!report) {
+    showToast('לא נמצא דוח להורדה', 'error');
+    return;
+  }
+  
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    showToast('נא לאפשר חלונות קופצים בדפדפן כדי להוריד את קובץ ה-PDF', 'warning');
+    return;
+  }
+  
+  const htmlContent = generateReportPDFHtml(report);
+  printWindow.document.open();
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+}
+
+// ==========================================================================
 // 8. Helper Functions
 // ==========================================================================
 function formatDateTime(d) {
@@ -1203,6 +1626,9 @@ window.showToast = showToast;
 window.formatDateTime = formatDateTime;
 window.formatMonthYear = formatMonthYear;
 window.exportReportsToExcel = exportReportsToExcel;
+window.exportReportToPDF = exportReportToPDF;
+window.isReportSupervisorApproved = isReportSupervisorApproved;
+window.generateReportPDFHtml = generateReportPDFHtml;
 window.REPORT_STATUSES = REPORT_STATUSES;
 window.HEBREW_MONTHS_NAME = HEBREW_MONTHS_NAME;
 window.HEBREW_DAYS_NAME = HEBREW_DAYS_NAME;
