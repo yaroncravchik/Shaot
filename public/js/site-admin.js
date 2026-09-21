@@ -138,7 +138,11 @@ function renderReportsTable(reports) {
     tr.innerHTML = `
       <td style="text-align:center; font-weight:600; color:var(--on-surface-variant);">${index + 1}</td>
       <td>
-        <div style="font-weight:700; color:#0c3058;">${rep.teacherName || '—'}</div>
+        <div style="font-weight:700;">
+          <a href="javascript:void(0)" class="clickable-teacher-name" onclick="openTeacherProfileModal('${rep.teacherId || rep.teacherName}')" title="לחץ לצפייה בפרופיל המורה ובמערכת השעות">
+            ${rep.teacherName || '—'} <span class="teacher-info-icon">👤</span>
+          </a>
+        </div>
         <div style="font-size:0.75rem; color:var(--on-surface-variant);">שם משתמש: ${rep.teacherId || '—'}</div>
       </td>
       <td>
@@ -221,7 +225,10 @@ function viewReportDetails(reportId) {
   document.getElementById('view-modal-title').textContent = `דוח שעות – ${report.teacherName || 'מורה'}`;
   document.getElementById('view-modal-sub').textContent = `${monthName} ${report.year} | ${report.schoolName || ''} (${report.district || 'מרכז'})`;
 
-  document.getElementById('view-rep-teacher').textContent = report.teacherName || '—';
+  const teacherEl = document.getElementById('view-rep-teacher');
+  if (teacherEl) {
+    teacherEl.innerHTML = `<a href="javascript:void(0)" class="clickable-teacher-name" onclick="openTeacherProfileModal('${report.teacherId || report.teacherName}')" title="לחץ לצפייה בפרופיל המורה ובמערכת השעות" style="color:var(--primary); font-size:1rem;"><strong>${report.teacherName || '—'}</strong> <span class="teacher-info-icon">👤</span></a>`;
+  }
   document.getElementById('view-rep-overtime').textContent = report.totalOvertimeHours || 0;
   document.getElementById('view-rep-absence').textContent = report.totalAbsenceHours || 0;
 
@@ -306,11 +313,17 @@ function renderUsersTable(users) {
     const roleMeta = roleBadgeMap[u.role] || { label: u.role, cls: 'badge-draft' };
     const isCurrentAdmin = currentSiteAdmin && u.id === currentSiteAdmin.id;
 
+    const nameCellHtml = u.role === 'teacher'
+      ? `<a href="javascript:void(0)" class="clickable-teacher-name" onclick="openTeacherProfileModal('${u.id}')" title="לחץ לצפייה בפרופיל המורה ובמערכת השעות">
+          ${u.name || '—'} <span class="teacher-info-icon">👤</span>
+        </a>`
+      : (u.name || '—');
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="text-align:center; font-weight:600; color:var(--on-surface-variant);">${index + 1}</td>
       <td>
-        <div style="font-weight:700; color:#0c3058;">${u.name || '—'}</div>
+        <div style="font-weight:700; color:#0c3058;">${nameCellHtml}</div>
         <div style="font-size:0.75rem; color:var(--on-surface-variant);">${u.email || ''}</div>
       </td>
       <td><code>${u.id}</code></td>

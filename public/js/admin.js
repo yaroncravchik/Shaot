@@ -130,7 +130,12 @@ function renderMasterReportsTable(reports) {
 
     tr.innerHTML = `
       <td><span style="font-family:monospace; font-size:0.8125rem;">${r.id}</span></td>
-      <td><strong>${r.teacherName || ''}</strong></td>
+      <td>
+        <a href="javascript:void(0)" class="clickable-teacher-name" onclick="openTeacherProfileModal('${r.teacherId || r.teacherName}')" title="לחץ לצפייה בפרופיל המורה ובמערכת השעות">
+          <strong>${r.teacherName || ''}</strong>
+          <span class="teacher-info-icon">👤</span>
+        </a>
+      </td>
       <td><span class="badge" style="background:#eef2f7; color:#0c3058;">${r.district || 'מרכז'}</span></td>
       <td>${r.schoolName || ''}</td>
       <td>${r.supervisorName || 'אברהם מנחה'}</td>
@@ -171,9 +176,16 @@ function loadRosterUsers() {
       ? '<span class="badge" style="background:#e3f2fd; color:#0d47a1; font-weight:600;">מורה של"ח</span>'
       : '<span class="badge" style="background:#ede7f6; color:#4a148c; font-weight:600;">מנחה מחוזי</span>';
 
+    const nameCellHtml = isTeacher
+      ? `<a href="javascript:void(0)" class="clickable-teacher-name" onclick="openTeacherProfileModal('${u.id}')" title="לחץ לצפייה בפרופיל המורה ובמערכת השעות">
+          <strong>${u.name || u.full_name || ''}</strong>
+          <span class="teacher-info-icon">👤</span>
+        </a>`
+      : `<strong>${u.name || u.full_name || ''}</strong>`;
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><strong>${u.name || u.full_name || ''}</strong></td>
+      <td>${nameCellHtml}</td>
       <td>${roleBadge}</td>
       <td><span style="font-family:monospace; font-size:0.875rem;">${u.id || u.id_number || ''}</span></td>
       <td>${isTeacher ? (u.supervisorName || 'אברהם מנחה') : '<span class="text-muted">— (מנחה)</span>'}</td>
@@ -448,7 +460,10 @@ function openAdminReviewModal(reportId) {
   activeAdminReviewReport = report;
 
   document.getElementById('admin-modal-title').textContent = `בדיקת ממונה מחוזי ואישור סופי לתשלום – דוח ${formatMonthYear(report.year, report.month)}`;
-  document.getElementById('admin-m-teacher').textContent = `${report.teacherName || ''} (${report.teacherId || ''})`;
+  const teacherEl = document.getElementById('admin-m-teacher');
+  if (teacherEl) {
+    teacherEl.innerHTML = `<a href="javascript:void(0)" class="clickable-teacher-name" onclick="openTeacherProfileModal('${report.teacherId || report.teacherName}')" title="לחץ לצפייה בפרופיל המורה ובמערכת השעות" style="color:var(--primary); font-size:1.05rem;"><strong>${report.teacherName || ''}</strong> (${report.teacherId || ''}) <span class="teacher-info-icon">👤</span></a>`;
+  }
   document.getElementById('admin-m-school').textContent = `${report.schoolName || ''} (${report.schoolCode || ''})`;
   document.getElementById('admin-m-district').textContent = `מחוז מרכז • מנחה: ${report.supervisorName || 'אברהם מנחה'}`;
 

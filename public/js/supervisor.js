@@ -90,7 +90,12 @@ function renderReportsList(reports) {
     }
 
     tr.innerHTML = `
-      <td><strong>${r.teacherName || 'מורה'}</strong></td>
+      <td>
+        <a href="javascript:void(0)" class="clickable-teacher-name" onclick="openTeacherProfileModal('${r.teacherId || r.teacherName}')" title="לחץ לצפייה בפרופיל המורה ובמערכת השעות">
+          <strong>${r.teacherName || 'מורה'}</strong>
+          <span class="teacher-info-icon">👤</span>
+        </a>
+      </td>
       <td>${r.teacherId || ''}</td>
       <td>${r.schoolName || ''}</td>
       <td>${r.municipality || ''}</td>
@@ -114,8 +119,11 @@ function openSupervisorReviewModal(reportId) {
 
  activeReviewReport = JSON.parse(JSON.stringify(report));
 
- document.getElementById('sup-modal-title').textContent = `בדיקת דוח שעות – ${activeReviewReport.teacherName} (${HEBREW_MONTHS_NAME[activeReviewReport.month - 1]} ${activeReviewReport.year})`;
- document.getElementById('sup-remarks-input').value = activeReviewReport.supervisorRemarks || '';
+  const titleEl = document.getElementById('sup-modal-title');
+  if (titleEl) {
+    titleEl.innerHTML = `בדיקת דוח שעות – <a href="javascript:void(0)" class="clickable-teacher-name" onclick="openTeacherProfileModal('${activeReviewReport.teacherId || activeReviewReport.teacherName}')" title="לחץ לצפייה בפרופיל המורה ובמערכת השעות" style="color:var(--primary);">${activeReviewReport.teacherName} <span class="teacher-info-icon">👤</span></a> (${HEBREW_MONTHS_NAME[activeReviewReport.month - 1]} ${activeReviewReport.year})`;
+  }
+  document.getElementById('sup-remarks-input').value = activeReviewReport.supervisorRemarks || '';
 
  renderSupervisorGrid(activeReviewReport);
  renderSupervisorAttachments(activeReviewReport);

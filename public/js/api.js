@@ -1094,30 +1094,320 @@ function closeModal(modalId) {
 }
 
 // Global modal backdrop and ESC key dismiss
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    const openModals = document.querySelectorAll('.modal-backdrop.show, .modal-backdrop[style*="display: flex"]');
-    openModals.forEach(m => {
-      m.classList.remove('show');
-      m.style.display = 'none';
-      m.style.opacity = '0';
-      m.style.visibility = 'hidden';
-      m.style.pointerEvents = 'none';
-    });
-    document.body.style.overflow = '';
-  }
-});
+if (typeof document !== 'undefined') {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const openModals = document.querySelectorAll('.modal-backdrop.show, .modal-backdrop[style*="display: flex"]');
+      openModals.forEach(m => {
+        m.classList.remove('show');
+        m.style.display = 'none';
+        m.style.opacity = '0';
+        m.style.visibility = 'hidden';
+        m.style.pointerEvents = 'none';
+      });
+      document.body.style.overflow = '';
+    }
+  });
 
-document.addEventListener('click', (e) => {
-  if (e.target.classList.contains('modal-backdrop')) {
-    e.target.classList.remove('show');
-    e.target.style.display = 'none';
-    e.target.style.opacity = '0';
-    e.target.style.visibility = 'hidden';
-    e.target.style.pointerEvents = 'none';
-    document.body.style.overflow = '';
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-backdrop')) {
+      e.target.classList.remove('show');
+      e.target.style.display = 'none';
+      e.target.style.opacity = '0';
+      e.target.style.visibility = 'hidden';
+      e.target.style.pointerEvents = 'none';
+      document.body.style.overflow = '';
+    }
+  });
+}
+
+/**
+ * 6.1 Teacher Profile & Weekly Schedule Floating Modal (חלון צף לפרופיל מורה ומערכת שעות)
+ * Automatically mounted when clicking any teacher name across Supervisor, Admin, and Site-Admin views.
+ */
+function ensureTeacherProfileModalDOM() {
+  if (typeof document === 'undefined') return;
+  if (document.getElementById('modal-teacher-profile-view')) return;
+
+  const modalHtml = `
+  <div class="modal-backdrop" id="modal-teacher-profile-view" style="z-index: 10050;">
+    <div class="modal-container modal-lg" style="max-width: 860px; max-height: 90vh;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #0c3058 0%, #1a4a82 100%); color: #ffffff; padding: 16px 20px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-size:1.4rem;">
+            👤
+          </div>
+          <div>
+            <h3 id="tp-modal-name" class="modal-title" style="color:#ffffff; font-size:1.25rem; margin-bottom:2px; font-weight:700;">
+              ישראל ישראלי
+            </h3>
+            <div id="tp-modal-subtitle" style="font-size:0.8125rem; color:#cfe2ff; font-weight:500;">
+              מורה של"ח וידיעת הארץ | ת.ז. / שם משתמש: 012345678
+            </div>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" style="color:#ffffff; font-size:1.6rem;" onclick="closeTeacherProfileModal()" aria-label="סגור">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 20px; background-color: var(--surface, #f5f8fa); overflow-y: auto;">
+        <!-- Info Cards Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 18px;">
+          
+          <!-- Card 1: School & Role Details -->
+          <div class="card" style="margin:0; box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid var(--outline, #dee2e6); background:#ffffff;">
+            <div class="card-header" style="padding:10px 14px; background:#f8fafc; border-bottom:1px solid #edf2f7;">
+              <strong style="color:#0c3058; font-size:0.9rem;">🏫 פרטי מוסד ותפקיד</strong>
+            </div>
+            <div class="card-body" style="padding:12px 14px; display:flex; flex-direction:column; gap:8px; font-size:0.875rem;">
+              <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding-bottom:4px;">
+                <span class="text-muted">מוסד חינוכי:</span>
+                <span style="font-weight:600; text-align:left;"><span id="tp-school-name">—</span> <span id="tp-school-code" class="text-muted" style="font-size:0.75rem;"></span></span>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding-bottom:4px;">
+                <span class="text-muted">מחוז ורשות:</span>
+                <span style="font-weight:600;"><span id="tp-district">—</span> | <span id="tp-municipality">—</span></span>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding-bottom:4px;">
+                <span class="text-muted">היקף משרה:</span>
+                <span id="tp-job-scope" class="badge badge-success" style="font-size:0.8125rem;">100% משרה</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span class="text-muted">מנחה מחוזי:</span>
+                <span id="tp-supervisor-name" style="font-weight:600; color:#0c3058;">—</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Contact & Principal Details -->
+          <div class="card" style="margin:0; box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid var(--outline, #dee2e6); background:#ffffff;">
+            <div class="card-header" style="padding:10px 14px; background:#f8fafc; border-bottom:1px solid #edf2f7;">
+              <strong style="color:#0c3058; font-size:0.9rem;">📞 פרטי קשר ומנהל/ת</strong>
+            </div>
+            <div class="card-body" style="padding:12px 14px; display:flex; flex-direction:column; gap:8px; font-size:0.875rem;">
+              <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding-bottom:4px;">
+                <span class="text-muted">טלפון נייד:</span>
+                <span id="tp-phone" style="font-family:monospace; font-weight:600;">—</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding-bottom:4px;">
+                <span class="text-muted">כתובת דוא"ל:</span>
+                <span id="tp-email" style="font-size:0.8125rem; font-weight:500;">—</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding-bottom:4px;">
+                <span class="text-muted">מנהל/ת המוסד:</span>
+                <span id="tp-principal-name" style="font-weight:600;">—</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span class="text-muted">דוא"ל מנהל/ת:</span>
+                <span id="tp-principal-email" class="text-muted" style="font-size:0.8125rem;">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Weekly Schedule Table -->
+        <div class="card" style="margin:0; box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid var(--outline, #dee2e6); background:#ffffff;">
+          <div class="card-header" style="padding:10px 14px; background:#f8fafc; border-bottom:1px solid #edf2f7; display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:1.1rem;">📅</span>
+              <strong style="color:#0c3058; font-size:0.9rem;">מערכת שעות שבועית קבועה וימי שדה</strong>
+            </div>
+            <span id="tp-weekly-total-badge" class="badge" style="background:#e8f4fd; color:#0d47a1; font-weight:700;">
+              סה"כ: 34 שעות
+            </span>
+          </div>
+          <div class="card-body" style="padding:0; overflow-x:auto;">
+            <table class="gov-table" style="margin:0; width:100%; font-size:0.875rem; border-collapse:collapse;">
+              <thead>
+                <tr style="background:#f1f5f9; border-bottom:2px solid var(--outline, #dee2e6);">
+                  <th style="width:16%; padding:8px 12px;">יום בשבוע</th>
+                  <th style="width:16%; text-align:center; padding:8px 12px;">שעות תקן קבועות</th>
+                  <th style="width:24%; padding:8px 12px;">סוג יום</th>
+                  <th style="padding:8px 12px;">הערות / פירוט כיתות קבוע</th>
+                </tr>
+              </thead>
+              <tbody id="tp-schedule-tbody">
+                <!-- Dynamically populated -->
+              </tbody>
+              <tfoot>
+                <tr style="background:#f8fafc; font-weight:700; border-top:2px solid var(--outline, #dee2e6);">
+                  <td style="padding:10px 12px;">סה"כ שבועי</td>
+                  <td id="tp-foot-total-hours" style="text-align:center; color:var(--primary, #007bff); font-size:0.95rem; padding:10px 12px;">
+                    34 שעות
+                  </td>
+                  <td id="tp-foot-field-days-count" colspan="2" style="color:#0f5132; padding:10px 12px;">
+                    2 ימי שדה קבועים
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer" style="padding: 12px 20px; background:#ffffff; border-top:1px solid var(--outline, #dee2e6);">
+        <button type="button" class="btn btn-secondary" onclick="closeTeacherProfileModal()">
+          סגור
+        </button>
+      </div>
+    </div>
+  </div>
+  `;
+
+  const container = document.createElement('div');
+  container.innerHTML = modalHtml;
+  document.body.appendChild(container.firstElementChild);
+}
+
+function openTeacherProfileModal(identifier) {
+  if (!identifier) return;
+
+  const users = API.getUsers();
+  const cleanId = String(identifier).trim();
+  
+  // Find teacher by ID or by exact Name
+  let teacher = users.find(u => (u.id === cleanId || u.name === cleanId) && u.role === 'teacher');
+  if (!teacher) {
+    teacher = users.find(u => u.id === cleanId || u.name === cleanId);
   }
-});
+  
+  if (!teacher) {
+    const reports = API.getReports ? API.getReports() : [];
+    const rep = reports.find(r => r.teacherId === cleanId || r.teacherName === cleanId);
+    if (rep) {
+      teacher = {
+        id: rep.teacherId || cleanId,
+        name: rep.teacherName || cleanId,
+        role: 'teacher',
+        schoolName: rep.schoolName || '—',
+        schoolCode: rep.schoolCode || '',
+        municipality: rep.municipality || '—',
+        district: rep.district || 'מרכז',
+        supervisorName: rep.supervisorName || '—',
+        phone: '—',
+        email: '—',
+        jobScope: 100,
+        weeklySchedule: { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 },
+        fieldDays: [2, 4]
+      };
+    }
+  }
+
+  if (!teacher) {
+    if (typeof showToast === 'function') {
+      showToast('לא נמצאו פרטי מורה במערכת', 'warning');
+    } else {
+      alert('לא נמצאו פרטי מורה במערכת');
+    }
+    return;
+  }
+
+  ensureTeacherProfileModalDOM();
+
+  // Populate Header
+  const nameEl = document.getElementById('tp-modal-name');
+  if (nameEl) nameEl.textContent = teacher.name || 'מורה של"ח';
+  const subEl = document.getElementById('tp-modal-subtitle');
+  if (subEl) subEl.textContent = `מורה של"ח וידיעת הארץ | ת.ז. / שם משתמש: ${teacher.id || '—'}`;
+
+  // Populate School & Role Info
+  const schNameEl = document.getElementById('tp-school-name');
+  if (schNameEl) schNameEl.textContent = teacher.schoolName || teacher.school_name || '—';
+  const schoolCode = teacher.schoolCode || teacher.school_code;
+  const schCodeEl = document.getElementById('tp-school-code');
+  if (schCodeEl) schCodeEl.textContent = schoolCode ? `(סמל: ${schoolCode})` : '';
+  const distEl = document.getElementById('tp-district');
+  if (distEl) distEl.textContent = teacher.district || 'מרכז';
+  const munEl = document.getElementById('tp-municipality');
+  if (munEl) munEl.textContent = teacher.municipality || '—';
+  
+  const jobScopeVal = teacher.jobScope !== undefined ? teacher.jobScope : (teacher.job_percentage !== undefined ? teacher.job_percentage : 100);
+  const jobScopeEl = document.getElementById('tp-job-scope');
+  if (jobScopeEl) jobScopeEl.textContent = `${jobScopeVal}% משרה`;
+  const supEl = document.getElementById('tp-supervisor-name');
+  if (supEl) supEl.textContent = teacher.supervisorName || 'דוד לוי';
+
+  // Populate Contact & Principal Info
+  const phoneEl = document.getElementById('tp-phone');
+  if (phoneEl) phoneEl.textContent = teacher.phone || '—';
+  const emailEl = document.getElementById('tp-email');
+  if (emailEl) emailEl.textContent = teacher.email || '—';
+  const princEl = document.getElementById('tp-principal-name');
+  if (princEl) princEl.textContent = teacher.principalName || teacher.principal_name || '—';
+  const princMailEl = document.getElementById('tp-principal-email');
+  if (princMailEl) princMailEl.textContent = teacher.principalEmail || teacher.principal_email || '—';
+
+  // Populate Weekly Schedule
+  const schedule = teacher.weeklySchedule || { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 };
+  const fieldDays = Array.isArray(teacher.fieldDays) ? teacher.fieldDays : [2, 4];
+  const notes = teacher.scheduleNotes || {
+    0: 'שעות הוראה בכיתה',
+    1: 'שעות הוראה בכיתה',
+    2: 'יציאה לסיורי שדה שכבת ט\'',
+    3: 'שעות הוראה בכיתה',
+    4: 'יציאה לסיורי שדה שכבת י\'',
+    5: 'יום חופשי / ללא הוראה'
+  };
+
+  const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
+  const tbody = document.getElementById('tp-schedule-tbody');
+  if (tbody) {
+    tbody.innerHTML = '';
+
+    let totalWeeklyHours = 0;
+    let totalFieldDays = 0;
+
+    for (let d = 0; d < 6; d++) {
+      const hours = Number(schedule[d] !== undefined ? schedule[d] : 0);
+      const isFieldDay = fieldDays.includes(d);
+      const dayNote = notes[d] !== undefined ? notes[d] : (isFieldDay ? 'סיור שדה' : (hours > 0 ? 'שעות הוראה בכיתה' : 'יום חופשי'));
+
+      totalWeeklyHours += hours;
+      if (isFieldDay) totalFieldDays++;
+
+      const tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid #f1f5f9';
+
+      const dayBadge = isFieldDay
+        ? `<span class="badge" style="background:#d1fae5; color:#065f46; font-weight:600; padding:3px 8px;">🌿 יום שדה קבוע</span>`
+        : (hours > 0 
+            ? `<span class="badge" style="background:#f1f5f9; color:#475569; font-weight:500; padding:3px 8px;">📖 שעות בכיתה</span>`
+            : `<span class="badge" style="background:#fef2f2; color:#991b1b; font-weight:500; padding:3px 8px;">🏖️ יום חופשי</span>`);
+
+      tr.innerHTML = `
+        <td style="padding:9px 12px;"><strong>יום ${dayNames[d]}</strong></td>
+        <td style="padding:9px 12px; text-align:center; font-weight:700; color:${hours > 0 ? '#0c3058' : 'var(--text-muted, #94a3b8)'};">
+          ${hours > 0 ? `${hours} שעות` : '—'}
+        </td>
+        <td style="padding:9px 12px;">${dayBadge}</td>
+        <td style="padding:9px 12px; color:#334155;">${dayNote}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    const badgeEl = document.getElementById('tp-weekly-total-badge');
+    if (badgeEl) badgeEl.textContent = `סה"כ: ${totalWeeklyHours} שעות שבועיות`;
+    const footHoursEl = document.getElementById('tp-foot-total-hours');
+    if (footHoursEl) footHoursEl.textContent = `${totalWeeklyHours} שעות`;
+    const footFieldEl = document.getElementById('tp-foot-field-days-count');
+    if (footFieldEl) footFieldEl.textContent = `${totalFieldDays} ימי שדה קבועים בשבוע`;
+  }
+
+  // Show modal
+  openModal('modal-teacher-profile-view');
+}
+
+function closeTeacherProfileModal() {
+  closeModal('modal-teacher-profile-view');
+}
+
+// Global bindings for modal
+if (typeof window !== 'undefined') {
+  window.openTeacherProfileModal = openTeacherProfileModal;
+  window.closeTeacherProfileModal = closeTeacherProfileModal;
+}
+API.openTeacherProfileModal = openTeacherProfileModal;
+API.closeTeacherProfileModal = closeTeacherProfileModal;
 
 // ==========================================================================
 // 7. Excel Export Utility (Hebrew UTF-8 BOM Compliant)

@@ -952,6 +952,31 @@
   gap: 12px;
 }
 
+/* Clickable Teacher Name Link in Tables */
+.clickable-teacher-name {
+  color: var(--primary, #007bff);
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px;
+  border-radius: var(--rounded-sm, 4px);
+  transition: all var(--transition-fast, 0.15s ease);
+}
+
+.clickable-teacher-name:hover {
+  background-color: #e8f4fd;
+  color: var(--primary-hover, #0056b3);
+  text-decoration: underline;
+}
+
+.clickable-teacher-name .teacher-info-icon {
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+
 /* ==========================================================================
    10. Toast Notifications
    ========================================================================== */
