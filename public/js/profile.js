@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function loadProfileData(user) {
   document.getElementById('prof-name').value = user.name || '';
   document.getElementById('prof-id').value = user.id || '';
+  document.getElementById('prof-password').value = user.password || user.phone || '';
   document.getElementById('prof-phone').value = user.phone || '';
   document.getElementById('prof-email').value = user.email || '';
   document.getElementById('prof-job-scope').value = user.jobScope || 100;
@@ -33,6 +34,22 @@ function loadProfileData(user) {
   document.getElementById('sched-wed').value = sched[3] !== undefined ? sched[3] : 6;
   document.getElementById('sched-thu').value = sched[4] !== undefined ? sched[4] : 8;
   document.getElementById('sched-fri').value = sched[5] !== undefined ? sched[5] : 0;
+
+  // Schedule Notes
+  const notes = user.scheduleNotes || {
+    0: 'שעות הוראה בכיתה',
+    1: 'שעות הוראה בכיתה',
+    2: 'יציאה לסיורי שדה שכבת ט\'',
+    3: 'שעות הוראה בכיתה',
+    4: 'יציאה לסיורי שדה שכבת י\'',
+    5: 'יום חופשי / ללא הוראה'
+  };
+  document.getElementById('sched-note-sun').value = notes[0] !== undefined ? notes[0] : '';
+  document.getElementById('sched-note-mon').value = notes[1] !== undefined ? notes[1] : '';
+  document.getElementById('sched-note-tue').value = notes[2] !== undefined ? notes[2] : '';
+  document.getElementById('sched-note-wed').value = notes[3] !== undefined ? notes[3] : '';
+  document.getElementById('sched-note-thu').value = notes[4] !== undefined ? notes[4] : '';
+  document.getElementById('sched-note-fri').value = notes[5] !== undefined ? notes[5] : '';
 
   // Field days
   const fDays = user.fieldDays || [2, 4];
@@ -96,6 +113,15 @@ function setupEventListeners(currentUser) {
       5: parseFloat(document.getElementById('sched-fri').value) || 0
     };
 
+    const updatedScheduleNotes = {
+      0: document.getElementById('sched-note-sun').value.trim(),
+      1: document.getElementById('sched-note-mon').value.trim(),
+      2: document.getElementById('sched-note-tue').value.trim(),
+      3: document.getElementById('sched-note-wed').value.trim(),
+      4: document.getElementById('sched-note-thu').value.trim(),
+      5: document.getElementById('sched-note-fri').value.trim()
+    };
+
     const updatedFieldDays = [];
     if (document.getElementById('field-sun').checked) updatedFieldDays.push(0);
     if (document.getElementById('field-mon').checked) updatedFieldDays.push(1);
@@ -104,9 +130,12 @@ function setupEventListeners(currentUser) {
     if (document.getElementById('field-thu').checked) updatedFieldDays.push(4);
     if (document.getElementById('field-fri').checked) updatedFieldDays.push(5);
 
+    const passwordVal = document.getElementById('prof-password').value.trim();
+
     const updatedUser = {
       ...currentUser,
       name: document.getElementById('prof-name').value.trim(),
+      password: passwordVal || currentUser.password || currentUser.phone,
       phone: document.getElementById('prof-phone').value.trim(),
       email: document.getElementById('prof-email').value.trim(),
       jobScope: parseFloat(document.getElementById('prof-job-scope').value) || 100,
@@ -119,6 +148,7 @@ function setupEventListeners(currentUser) {
       principalName: document.getElementById('prof-principal-name').value.trim(),
       principalEmail: document.getElementById('prof-principal-email').value.trim(),
       weeklySchedule: updatedWeeklySchedule,
+      scheduleNotes: updatedScheduleNotes,
       fieldDays: updatedFieldDays,
       consentSigned: true,
       consentDate: new Date().toISOString()

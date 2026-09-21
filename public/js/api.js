@@ -330,47 +330,47 @@ function getInitialSeedReports() {
 /**
  * Generate full month days (excluding Saturdays) with default schedule hours and holiday metadata
  */
-function generateSampleDaysData(year, month, weeklySchedule = {}, fieldDays = [], overrides = []) {
- const daysInMonth = new Date(year, month, 0).getDate();
- const days = [];
- const overrideMap = {};
- overrides.forEach(o => { overrideMap[o.day] = o; });
+function generateSampleDaysData(year, month, weeklySchedule = {}, fieldDays = [], overrides = [], scheduleNotes = {}) {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const days = [];
+  const overrideMap = {};
+  overrides.forEach(o => { overrideMap[o.day] = o; });
 
- for (let d = 1; d <= daysInMonth; d++) {
- const dateObj = new Date(year, month - 1, d);
- const dayOfWeek = dateObj.getDay(); // 0 = Sun, 5 = Fri, 6 = Sat
- if (dayOfWeek === 6) continue; // Skip Saturday per PRD!
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateObj = new Date(year, month - 1, d);
+    const dayOfWeek = dateObj.getDay(); // 0 = Sun, 5 = Fri, 6 = Sat
+    if (dayOfWeek === 6) continue; // Skip Saturday per PRD!
 
- const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
- const isHoliday = !!ISRAELI_HOLIDAYS_DB[dateStr];
- const holidayName = ISRAELI_HOLIDAYS_DB[dateStr] || '';
- const isFieldDay = fieldDays.includes(dayOfWeek);
- const fixedHours = weeklySchedule[dayOfWeek] || 0;
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const isHoliday = !!ISRAELI_HOLIDAYS_DB[dateStr];
+    const holidayName = ISRAELI_HOLIDAYS_DB[dateStr] || '';
+    const isFieldDay = fieldDays.includes(dayOfWeek);
+    const fixedHours = weeklySchedule[dayOfWeek] || 0;
 
- const ovr = overrideMap[d] || {};
+    const ovr = overrideMap[d] || {};
 
- days.push({
- dayOfMonth: d,
- dayOfWeek: dayOfWeek,
- dayName: HEBREW_DAYS_NAME[dayOfWeek],
- dateStr: dateStr,
- isHoliday: isHoliday,
- holidayName: holidayName,
- isFieldDay: isFieldDay,
- fixedHours: fixedHours,
- absenceHours: ovr.absence || 0,
- absenceReason: ovr.absenceReason || '',
- overtimeHours: ovr.overtime || 0,
- originalOvertime: ovr.originalOvertime || (ovr.supervisorEdited ? ovr.originalOvertime : ovr.overtime || 0),
- overtimeReason: ovr.overtimeReason || '',
- gradeClass: ovr.grade || '',
- description: ovr.desc || '',
- supervisorEdited: ovr.supervisorEdited || false,
- editNote: ovr.editNote || ''
- });
- }
+    days.push({
+      dayOfMonth: d,
+      dayOfWeek: dayOfWeek,
+      dayName: HEBREW_DAYS_NAME[dayOfWeek],
+      dateStr: dateStr,
+      isHoliday: isHoliday,
+      holidayName: holidayName,
+      isFieldDay: isFieldDay,
+      fixedHours: fixedHours,
+      absenceHours: ovr.absence || 0,
+      absenceReason: ovr.absenceReason || '',
+      overtimeHours: ovr.overtime || 0,
+      originalOvertime: ovr.originalOvertime || (ovr.supervisorEdited ? ovr.originalOvertime : ovr.overtime || 0),
+      overtimeReason: ovr.overtimeReason || '',
+      gradeClass: ovr.grade || '',
+      description: ovr.desc !== undefined ? ovr.desc : (scheduleNotes[dayOfWeek] || ''),
+      supervisorEdited: ovr.supervisorEdited || false,
+      editNote: ovr.editNote || ''
+    });
+  }
 
- return days;
+  return days;
 }
 
 // ==========================================================================

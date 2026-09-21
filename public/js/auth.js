@@ -34,7 +34,10 @@ const Auth = {
     // Find matching authorized user
     const found = users.find(u => 
       u.id === cleanUsername && 
-      (u.phone === cleanPassword || u.phone.replace(/[-\s]/g, '') === cleanPassword.replace(/[-\s]/g, ''))
+      (
+        (u.password && u.password === cleanPassword) ||
+        (u.phone && (u.phone === cleanPassword || u.phone.replace(/[-\s]/g, '') === cleanPassword.replace(/[-\s]/g, '')))
+      )
     );
 
     if (!found) {

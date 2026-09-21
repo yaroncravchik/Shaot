@@ -89,6 +89,21 @@
  </div>
 
  <div class="form-group">
+ <label class="form-label" for="prof-password">
+ <span>סיסמה לכניסה למערכת</span>
+ <span class="required">*</span>
+ </label>
+ <input 
+ type="password" 
+ id="prof-password" 
+ class="form-control" 
+ placeholder="הזן סיסמה חדשה / עדכן סיסמה" 
+ autocomplete="new-password"
+ >
+ <span class="form-text">הסיסמה המשמשת להזדהות וכניסה למערכת</span>
+ </div>
+
+ <div class="form-group">
  <label class="form-label" for="prof-phone">
  <span>מספר טלפון נייד</span>
  <span class="required">*</span>
@@ -231,7 +246,9 @@
                         <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"></span>
                       </label>
                     </td>
-                    <td><span class="text-muted" style="font-size:0.8125rem;">שעות הוראה בכיתה</span></td>
+                    <td>
+                      <input type="text" id="sched-note-sun" class="form-control cell-input" placeholder="הערות / פירוט כיתות...">
+                    </td>
                   </tr>
                   <tr>
                     <td><strong>יום שני</strong></td>
@@ -244,7 +261,9 @@
                         <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"></span>
                       </label>
                     </td>
-                    <td><span class="text-muted" style="font-size:0.8125rem;">שעות הוראה בכיתה</span></td>
+                    <td>
+                      <input type="text" id="sched-note-mon" class="form-control cell-input" placeholder="הערות / פירוט כיתות...">
+                    </td>
                   </tr>
                   <tr>
                     <td><strong>יום שלישי</strong></td>
@@ -257,7 +276,9 @@
                         <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"> יום שדה קבוע</span>
                       </label>
                     </td>
-                    <td><span class="text-muted" style="font-size:0.8125rem;">יציאה לסיורי שדה שכבת ט'</span></td>
+                    <td>
+                      <input type="text" id="sched-note-tue" class="form-control cell-input" placeholder="הערות / פירוט כיתות...">
+                    </td>
                   </tr>
                   <tr>
                     <td><strong>יום רביעי</strong></td>
@@ -270,7 +291,9 @@
                         <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"></span>
                       </label>
                     </td>
-                    <td><span class="text-muted" style="font-size:0.8125rem;">שעות הוראה בכיתה</span></td>
+                    <td>
+                      <input type="text" id="sched-note-wed" class="form-control cell-input" placeholder="הערות / פירוט כיתות...">
+                    </td>
                   </tr>
                   <tr>
                     <td><strong>יום חמישי</strong></td>
@@ -283,7 +306,9 @@
                         <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"> יום שדה קבוע</span>
                       </label>
                     </td>
-                    <td><span class="text-muted" style="font-size:0.8125rem;">יציאה לסיורי שדה שכבת י'</span></td>
+                    <td>
+                      <input type="text" id="sched-note-thu" class="form-control cell-input" placeholder="הערות / פירוט כיתות...">
+                    </td>
                   </tr>
                   <tr>
                     <td><strong>יום שישי</strong></td>
@@ -296,7 +321,9 @@
                         <span class="form-check-label" style="font-size:0.875rem; font-weight:600; color:#115e59;"></span>
                       </label>
                     </td>
-                    <td><span class="text-muted" style="font-size:0.8125rem;">יום חופשי / ללא הוראה</span></td>
+                    <td>
+                      <input type="text" id="sched-note-fri" class="form-control cell-input" placeholder="הערות / פירוט כיתות...">
+                    </td>
                   </tr>
                 </tbody>
                 <tfoot>
@@ -354,8 +381,8 @@
  <!-- Universal Footer Mount -->
  <div id="gov-footer-mount"></div>
 
-  <script src="js/api.js?v=202609211450"></script>
-  <script src="js/auth.js?v=202609211450"></script>
-  <script src="js/profile.js?v=202609211450"></script>
+  <script src="js/api.js?v=202609211945"></script>
+  <script src="js/auth.js?v=202609211945"></script>
+  <script src="js/profile.js?v=202609211945"></script>
 </body>
 </html>

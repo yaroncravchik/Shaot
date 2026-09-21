@@ -239,7 +239,9 @@ function openReportModal(year, month) {
  year,
  month,
  currentTeacher.weeklySchedule || { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 },
- currentTeacher.fieldDays || [2, 4]
+ currentTeacher.fieldDays || [2, 4],
+ [],
+ currentTeacher.scheduleNotes || {}
  );
 
  currentActiveReport = {
