@@ -128,6 +128,19 @@ function renderMasterReportsTable(reports) {
       `;
     }
 
+    const isApproved = r.status === 'approved_paid' || !!r.signatureId;
+    const approveBtnHtml = isApproved
+      ? `<button type="button" class="btn btn-sm btn-success" disabled title="הדוח כבר אושר ונחתם לתשלום" style="padding:4px 10px; font-size:0.8125rem; opacity:0.85; cursor:default;">
+          <span>✓ אושר</span>
+        </button>`
+      : `<button type="button" class="btn btn-sm btn-success" onclick="quickAdminApproveReport('${r.id}')" title="אישור סופי של הדוח לתשלום שכר" style="padding:4px 10px; font-size:0.8125rem;">
+          <span>✓ אישור</span>
+        </button>`;
+
+    const viewBtnHtml = `<button type="button" class="btn btn-sm btn-outline-primary" onclick="openAdminReviewModal('${r.id}')" title="צפייה בפרטי הדוח המלאים" style="padding:4px 10px; font-size:0.8125rem;">
+      <span>👁️ צפייה</span>
+    </button>`;
+
     tr.innerHTML = `
       <td><span style="font-family:monospace; font-size:0.8125rem;">${r.id}</span></td>
       <td>
@@ -144,9 +157,10 @@ function renderMasterReportsTable(reports) {
       <td><strong style="color:var(--primary); font-size:1.05rem;">${r.totalOvertimeHours || 0} שעות</strong></td>
       <td>${sigHtml}</td>
       <td style="text-align:center;">
-        <button type="button" class="btn btn-sm btn-primary" onclick="openAdminReviewModal('${r.id}')">
-          <span>בדוק ואשר</span>
-        </button>
+        <div class="flex items-center justify-center gap-xs" style="gap:6px; flex-wrap:nowrap;">
+          ${approveBtnHtml}
+          ${viewBtnHtml}
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
@@ -604,6 +618,28 @@ function exportMasterReports() {
   exportReportsToExcel(allReportsList, 'shalah_master_center_district_reports_2026.csv');
 }
 
+function quickAdminApproveReport(reportId) {
+  const report = API.getReportById(reportId);
+  if (!report) return;
+
+  if (report.status === 'approved_paid' || report.signatureId) {
+    showToast('הדוח כבר אושר ונחתם לתשלום', 'info');
+    return;
+  }
+
+  const monthStr = formatMonthYear(report.year, report.month);
+  if (confirm(`האם לאשר סופית לתשלום שכר את דוח השעות של המורה ${report.teacherName || 'מורה'} (${monthStr})?`)) {
+    try {
+      const adminUser = currentAdmin || (typeof Auth !== 'undefined' && typeof Auth.getCurrentUser === 'function' ? Auth.getCurrentUser() : null) || { name: 'רונן ממונה מחוז מרכז', role: 'admin' };
+      const approvedReport = API.adminFinalApprove(reportId, adminUser);
+      showToast(`הדוח של ${report.teacherName || 'המורה'} לחודש ${monthStr} אושר סופית לתשלום! מזהה חתימה: ${approvedReport.signatureId}`, 'success', 'דוח אושר לתשלום');
+      loadMasterAdminData();
+    } catch (err) {
+      showToast(err.message || 'שגיאה באישור הדוח', 'error');
+    }
+  }
+}
+
 // Global window bindings for inline HTML event handlers
 window.openAddTeacherModal = openAddTeacherModal;
 window.openAddSupervisorModal = openAddSupervisorModal;
@@ -613,6 +649,7 @@ window.openEditUserModal = openEditUserModal;
 window.handleEditUserSubmit = handleEditUserSubmit;
 window.openAdminReviewModal = openAdminReviewModal;
 window.handleAdminFinalApprove = handleAdminFinalApprove;
+window.quickAdminApproveReport = quickAdminApproveReport;
 window.openAdminReturnModal = openAdminReturnModal;
 window.handleAdminReturnConfirm = handleAdminReturnConfirm;
 window.exportMasterReports = exportMasterReports;

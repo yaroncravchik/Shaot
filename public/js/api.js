@@ -674,7 +674,7 @@ const API = {
  report.auditHistory = report.auditHistory || [];
  report.auditHistory.push({
  date: formatDateTime(new Date()),
- user: `${adminUser.name} (ממונה ארצי)`,
+      user: `${(adminUser && adminUser.name) || 'רונן ממונה מחוז מרכז'} (ממונה ארצי)`,
  action: `אישור סופי לתשלום והנפקת חתימה דיגיטלית מאובטחת (${sigId})`
  });
 
