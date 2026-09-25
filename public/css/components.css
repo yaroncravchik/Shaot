@@ -76,6 +76,23 @@
   transform: translateY(-1px);
 }
 
+.btn-approved {
+  background-color: #e8f5e9 !important;
+  color: #1b5e20 !important;
+  border: 1px solid #a5d6a7 !important;
+  cursor: default !important;
+  font-weight: 600;
+  opacity: 1 !important;
+}
+
+.btn-approved:hover {
+  background-color: #e8f5e9 !important;
+  color: #1b5e20 !important;
+  border-color: #a5d6a7 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 .btn-danger {
   background-color: var(--error);
   color: #ffffff;

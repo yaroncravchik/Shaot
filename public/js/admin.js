@@ -126,7 +126,7 @@ function renderMasterReportsTable(reports) {
 
     const isApproved = r.status === 'approved_paid' || !!r.signatureId;
     const approveBtnHtml = isApproved
-      ? `<button type="button" class="btn btn-sm btn-success" disabled title="הדוח כבר אושר ונחתם לתשלום" style="padding:3px 8px; font-size:0.75rem; opacity:0.85; cursor:default;">
+      ? `<button type="button" class="btn btn-sm btn-approved" disabled title="הדוח כבר אושר ונחתם לתשלום" style="padding:3px 8px; font-size:0.75rem;">
           <span>✓ אושר</span>
         </button>`
       : `<button type="button" class="btn btn-sm btn-success" onclick="quickAdminApproveReport('${r.id}')" title="אישור סופי של הדוח לתשלום שכר" style="padding:3px 8px; font-size:0.75rem;">
@@ -547,10 +547,12 @@ function openAdminReviewModal(reportId) {
     const isApproved = report.status === 'approved_paid' || !!report.signatureId;
     if (isApproved) {
       btnApprove.disabled = true;
+      btnApprove.className = 'btn btn-lg btn-approved';
       btnApprove.innerHTML = '<span>✓ אושר ונחתם לתשלום</span>';
-      btnApprove.style.opacity = '0.8';
+      btnApprove.style.opacity = '1';
     } else {
       btnApprove.disabled = false;
+      btnApprove.className = 'btn btn-lg btn-success';
       btnApprove.innerHTML = '<span>✓ אישור סופי לתשלום שכר</span>';
       btnApprove.style.opacity = '1';
     }
