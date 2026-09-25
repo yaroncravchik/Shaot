@@ -530,8 +530,18 @@ function openAdminReviewModal(reportId) {
     });
   }
 
-  if (adminSigPad) {
-    adminSigPad.clear();
+  const btnApprove = document.getElementById('admin-btn-approve-payment');
+  if (btnApprove) {
+    const isApproved = report.status === 'approved_paid' || !!report.signatureId;
+    if (isApproved) {
+      btnApprove.disabled = true;
+      btnApprove.innerHTML = '<span>✓ אושר ונחתם לתשלום</span>';
+      btnApprove.style.opacity = '0.8';
+    } else {
+      btnApprove.disabled = false;
+      btnApprove.innerHTML = '<span>✓ אישור סופי לתשלום שכר</span>';
+      btnApprove.style.opacity = '1';
+    }
   }
 
   openModal('admin-review-modal');
@@ -539,6 +549,7 @@ function openAdminReviewModal(reportId) {
 
 function renderAdminDaysTable(days) {
   const tbody = document.getElementById('admin-m-days-tbody');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   days.forEach(day => {
@@ -579,17 +590,22 @@ function handleAdminFinalApprove() {
   if (!activeAdminReviewReport) return;
 
   const btnApprove = document.getElementById('admin-btn-approve-payment');
-  btnApprove.disabled = true;
-  btnApprove.innerHTML = '<div class="spinner"></div><span>מאשר לתשלום...</span>';
+  if (btnApprove) {
+    btnApprove.disabled = true;
+    btnApprove.innerHTML = '<div class="spinner"></div><span>מאשר לתשלום...</span>';
+  }
 
   setTimeout(() => {
-    const approvedReport = API.adminFinalApprove(activeAdminReviewReport.id, currentAdmin);
+    const adminUser = currentAdmin || (typeof Auth !== 'undefined' && typeof Auth.getCurrentUser === 'function' ? Auth.getCurrentUser() : null) || { name: 'רונן ממונה מחוז מרכז', role: 'admin' };
+    const approvedReport = API.adminFinalApprove(activeAdminReviewReport.id, adminUser);
     closeModal('admin-review-modal');
     showToast(`הדוח אושר סופית לתשלום שכר! הונפקה חתימה מאובטחת: ${approvedReport.signatureId}`, 'success', 'אושר לתשלום');
 
     loadMasterAdminData();
-    btnApprove.disabled = false;
-    btnApprove.innerHTML = '<span>אישור סופי לתשלום שכר</span>';
+    if (btnApprove) {
+      btnApprove.disabled = false;
+      btnApprove.innerHTML = '<span>אישור סופי לתשלום שכר</span>';
+    }
   }, 600);
 }
 
