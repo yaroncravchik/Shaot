@@ -7,9 +7,49 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=202609211330">
-  <link rel="stylesheet" href="css/components.css?v=202609211330">
+  <link rel="stylesheet" href="css/style.css?v=202609252150">
+  <link rel="stylesheet" href="css/components.css?v=202609252150">
   <style>
+    .admin-container {
+      max-width: 1240px;
+    }
+    .table-compact {
+      font-size: 0.8125rem;
+    }
+    .table-compact th {
+      padding: 6px 8px;
+      font-size: 0.78125rem;
+      white-space: nowrap;
+      text-align: right;
+    }
+    .table-compact td {
+      padding: 6px 8px;
+      font-size: 0.8125rem;
+      vertical-align: middle;
+      text-align: right;
+    }
+    .table-compact .badge {
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      white-space: nowrap;
+    }
+    .table-compact .rsa-badge {
+      font-size: 0.71875rem;
+      padding: 2px 6px;
+      white-space: nowrap;
+    }
+    .table-compact .btn-sm {
+      padding: 3px 8px;
+      font-size: 0.78125rem;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .table-compact .cell-truncate {
+      max-width: 125px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .timeline-list {
       display: flex;
       flex-direction: column;
@@ -57,7 +97,7 @@
   <!-- Top Gov Header Mount -->
   <div id="gov-header-mount"></div>
 
-  <main class="container mb-4">
+  <main class="container admin-container mb-4">
     <!-- District Admin Header Banner -->
     <div class="page-header">
       <div class="page-header-content">
@@ -71,12 +111,6 @@
           <p class="page-subtitle">צפייה מרוכזת בדוחות השעות, אישור סופי לתשלום וניהול צוות המורים והמנחים במחוז</p>
         </div>
         <div class="flex gap-sm flex-wrap">
-          <button type="button" id="btn-open-add-teacher" class="btn btn-primary" onclick="openAddTeacherModal()">
-            <span>➕ הוספת מורה חדש</span>
-          </button>
-          <button type="button" id="btn-open-add-supervisor" class="btn btn-secondary" style="background:#ffffff; color:#0c3058; border:1px solid #c8c8c8;" onclick="openAddSupervisorModal()">
-            <span>➕ הוספת מנחה חדש</span>
-          </button>
           <button type="button" class="btn btn-secondary" onclick="exportMasterReports()">
             <span>ייצוא דוחות מחוז מרכז לאקסל</span>
           </button>
@@ -146,19 +180,19 @@
 
       <div class="card-body" style="padding:0;">
         <div class="table-responsive" style="margin:0;">
-          <table class="gov-table">
+          <table class="gov-table table-compact">
             <thead>
               <tr>
-                <th>מזהה דוח</th>
+                <th style="width:75px;">מזהה</th>
                 <th>שם המורה</th>
-                <th>מחוז</th>
+                <th style="width:50px;">מחוז</th>
                 <th>בית ספר</th>
                 <th>מנחה מחוזי</th>
-                <th>חודש דיווח</th>
+                <th style="width:85px;">חודש</th>
                 <th>סטטוס</th>
-                <th>שעות נוספות</th>
-                <th>חתימה דיגיטלית</th>
-                <th style="text-align:center; min-width:145px;">צפייה ואישור</th>
+                <th style="width:75px;">שעות נוספות</th>
+                <th style="width:115px;">חתימה</th>
+                <th style="text-align:center; width:130px;">צפייה ואישור</th>
               </tr>
             </thead>
             <tbody id="admin-reports-tbody">
@@ -190,17 +224,17 @@
 
       <div class="card-body" style="padding:0;">
         <div class="table-responsive" style="margin:0;">
-          <table class="gov-table">
+          <table class="gov-table table-compact">
             <thead>
               <tr>
                 <th>שם מלא</th>
-                <th>תפקיד</th>
-                <th>שם משתמש</th>
-                <th>שיוך למנחה מחוזי</th>
+                <th style="width:85px;">תפקיד</th>
+                <th style="width:90px;">שם משתמש</th>
+                <th>שיוך למנחה</th>
                 <th>מוסד לימודים</th>
-                <th>מחוז</th>
-                <th>סטטוס רישום</th>
-                <th style="text-align:center;">פעולות</th>
+                <th style="width:50px;">מחוז</th>
+                <th style="width:85px;">סטטוס</th>
+                <th style="text-align:center; width:75px;">פעולות</th>
               </tr>
             </thead>
             <tbody id="admin-users-tbody">
@@ -608,8 +642,8 @@
   <!-- Universal Footer Mount -->
   <div id="gov-footer-mount"></div>
 
-  <script src="js/api.js?v=202609252130"></script>
-  <script src="js/auth.js?v=202609252130"></script>
-  <script src="js/admin.js?v=202609252130"></script>
+  <script src="js/api.js?v=202609252150"></script>
+  <script src="js/auth.js?v=202609252150"></script>
+  <script src="js/admin.js?v=202609252150"></script>
 </body>
 </html>

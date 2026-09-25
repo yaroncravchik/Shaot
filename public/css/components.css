@@ -643,6 +643,39 @@
   vertical-align: middle;
 }
 
+/* Compact Table Layout for Dashboards & Complex Tables */
+.gov-table.table-compact {
+  font-size: 0.8125rem;
+}
+
+.gov-table.table-compact th {
+  padding: 6px 8px;
+  font-size: 0.78125rem;
+}
+
+.gov-table.table-compact td {
+  padding: 6px 8px;
+  font-size: 0.8125rem;
+}
+
+.gov-table.table-compact .badge {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+}
+
+.gov-table.table-compact .btn-sm {
+  padding: 3px 8px;
+  font-size: 0.78125rem;
+  line-height: 1.2;
+}
+
+.gov-table.table-compact .cell-truncate {
+  max-width: 125px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .gov-table tbody tr:hover {
   background-color: var(--surface-container-low);
 }

@@ -25,36 +25,25 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupModalButtons() {
-  const teacherBtns = [
-    document.getElementById('btn-open-add-teacher'),
-    document.getElementById('btn-roster-add-teacher')
-  ];
-  teacherBtns.forEach(btn => {
-    if (btn) {
-      btn.onclick = function(e) {
-        if (e) e.preventDefault();
-        openAddTeacherModal();
-      };
-    }
-  });
+  const teacherBtn = document.getElementById('btn-roster-add-teacher');
+  if (teacherBtn) {
+    teacherBtn.onclick = function(e) {
+      if (e) e.preventDefault();
+      openAddTeacherModal();
+    };
+  }
 
-  const supervisorBtns = [
-    document.getElementById('btn-open-add-supervisor'),
-    document.getElementById('btn-roster-add-supervisor')
-  ];
-  supervisorBtns.forEach(btn => {
-    if (btn) {
-      btn.onclick = function(e) {
-        if (e) e.preventDefault();
-        openAddSupervisorModal();
-      };
-    }
-  });
+  const supervisorBtn = document.getElementById('btn-roster-add-supervisor');
+  if (supervisorBtn) {
+    supervisorBtn.onclick = function(e) {
+      if (e) e.preventDefault();
+      openAddSupervisorModal();
+    };
+  }
 }
 
-
 function loadMasterAdminData() {
-  allReportsList = API.getReports().filter(r => !r.district || r.district === 'מרכז');
+  allReportsList = (API && typeof API.getReports === 'function') ? API.getReports().filter(r => !r.district || r.district === 'מרכז') : [];
   renderMasterReportsTable(allReportsList);
   updateMasterKpis(allReportsList);
 }
@@ -69,15 +58,21 @@ function updateMasterKpis(reports) {
     totalApprovedOvertimeHours += parseFloat(r.totalOvertimeHours || 0);
   });
 
-  document.getElementById('admin-stat-total-reports').textContent = totalCount;
-  document.getElementById('admin-stat-pending-admin').textContent = pendingAdminCount;
-  document.getElementById('admin-stat-signed').textContent = signedCount;
-  document.getElementById('admin-stat-total-hours').textContent = totalApprovedOvertimeHours;
+  const elTotal = document.getElementById('admin-stat-total-reports');
+  const elPending = document.getElementById('admin-stat-pending-admin');
+  const elSigned = document.getElementById('admin-stat-signed');
+  const elHours = document.getElementById('admin-stat-total-hours');
+
+  if (elTotal) elTotal.textContent = totalCount;
+  if (elPending) elPending.textContent = pendingAdminCount;
+  if (elSigned) elSigned.textContent = signedCount;
+  if (elHours) elHours.textContent = totalApprovedOvertimeHours;
 }
 
 function setupAdminFilters() {
   const searchInput = document.getElementById('admin-search');
   const statusFilter = document.getElementById('admin-status-filter');
+  if (!searchInput || !statusFilter) return;
 
   function applyMasterFilters() {
     const q = searchInput.value.trim().toLowerCase();
@@ -92,10 +87,10 @@ function setupAdminFilters() {
     if (q) {
       filtered = filtered.filter(r =>
         (r.teacherName && r.teacherName.toLowerCase().includes(q)) ||
-        (r.teacherId && r.teacherId.includes(q)) ||
+        (r.teacherId && String(r.teacherId).includes(q)) ||
         (r.schoolName && r.schoolName.toLowerCase().includes(q)) ||
         (r.supervisorName && r.supervisorName.toLowerCase().includes(q)) ||
-        (r.id && r.id.toLowerCase().includes(q))
+        (r.id && String(r.id).toLowerCase().includes(q))
       );
     }
 
@@ -108,6 +103,7 @@ function setupAdminFilters() {
 
 function renderMasterReportsTable(reports) {
   const tbody = document.getElementById('admin-reports-tbody');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   if (reports.length === 0) {
@@ -119,10 +115,10 @@ function renderMasterReportsTable(reports) {
     const st = REPORT_STATUSES[r.status] || { label: r.status, badgeClass: 'badge-draft' };
     const tr = document.createElement('tr');
 
-    let sigHtml = '<span class="text-muted">ממתין לחתימה</span>';
+    let sigHtml = '<span class="text-muted" style="font-size:0.75rem;">ממתין לחתימה</span>';
     if (r.signatureId || r.status === 'approved_paid') {
       sigHtml = `
-        <span class="rsa-badge" style="background:#d4edda; color:#155724; border-color:#c3e6cb;">
+        <span class="rsa-badge" style="background:#d4edda; color:#155724; border-color:#c3e6cb; font-size:0.71875rem; padding:2px 6px;">
           אושר ונחתם לתשלום
         </span>
       `;
@@ -130,34 +126,34 @@ function renderMasterReportsTable(reports) {
 
     const isApproved = r.status === 'approved_paid' || !!r.signatureId;
     const approveBtnHtml = isApproved
-      ? `<button type="button" class="btn btn-sm btn-success" disabled title="הדוח כבר אושר ונחתם לתשלום" style="padding:4px 10px; font-size:0.8125rem; opacity:0.85; cursor:default;">
+      ? `<button type="button" class="btn btn-sm btn-success" disabled title="הדוח כבר אושר ונחתם לתשלום" style="padding:3px 8px; font-size:0.75rem; opacity:0.85; cursor:default;">
           <span>✓ אושר</span>
         </button>`
-      : `<button type="button" class="btn btn-sm btn-success" onclick="quickAdminApproveReport('${r.id}')" title="אישור סופי של הדוח לתשלום שכר" style="padding:4px 10px; font-size:0.8125rem;">
+      : `<button type="button" class="btn btn-sm btn-success" onclick="quickAdminApproveReport('${r.id}')" title="אישור סופי של הדוח לתשלום שכר" style="padding:3px 8px; font-size:0.75rem;">
           <span>✓ אישור</span>
         </button>`;
 
-    const viewBtnHtml = `<button type="button" class="btn btn-sm btn-outline-primary" onclick="openAdminReviewModal('${r.id}')" title="צפייה בפרטי הדוח המלאים" style="padding:4px 10px; font-size:0.8125rem;">
+    const viewBtnHtml = `<button type="button" class="btn btn-sm btn-outline-primary" onclick="openAdminReviewModal('${r.id}')" title="צפייה בפרטי הדוח המלאים" style="padding:3px 8px; font-size:0.75rem;">
       <span>👁️ צפייה</span>
     </button>`;
 
     tr.innerHTML = `
-      <td><span style="font-family:monospace; font-size:0.8125rem;">${r.id}</span></td>
+      <td><span style="font-family:monospace; font-size:0.75rem;">${r.id}</span></td>
       <td>
-        <a href="javascript:void(0)" class="clickable-teacher-name" onclick="openTeacherProfileModal('${r.teacherId || r.teacherName}')" title="לחץ לצפייה בפרופיל המורה ובמערכת השעות">
+        <a href="javascript:void(0)" class="clickable-teacher-name" onclick="openTeacherProfileModal('${r.teacherId || r.teacherName}')" title="לחץ לצפייה בפרופיל המורה ובמערכת השעות" style="font-size:0.8125rem;">
           <strong>${r.teacherName || ''}</strong>
           <span class="teacher-info-icon">👤</span>
         </a>
       </td>
-      <td><span class="badge" style="background:#eef2f7; color:#0c3058;">${r.district || 'מרכז'}</span></td>
-      <td>${r.schoolName || ''}</td>
-      <td>${r.supervisorName || 'אברהם מנחה'}</td>
-      <td>${formatMonthYear(r.year, r.month)}</td>
-      <td><span class="badge ${st.badgeClass}">${st.label}</span></td>
-      <td><strong style="color:var(--primary); font-size:1.05rem;">${r.totalOvertimeHours || 0} שעות</strong></td>
-      <td>${sigHtml}</td>
-      <td style="text-align:center;">
-        <div class="flex items-center justify-center gap-xs" style="gap:6px; flex-wrap:nowrap;">
+      <td><span class="badge" style="background:#eef2f7; color:#0c3058; font-size:0.75rem; padding:2px 6px;">${r.district || 'מרכז'}</span></td>
+      <td class="cell-truncate" title="${r.schoolName || ''}">${r.schoolName || ''}</td>
+      <td class="cell-truncate" title="${r.supervisorName || 'אברהם מנחה'}">${r.supervisorName || 'אברהם מנחה'}</td>
+      <td style="white-space:nowrap; font-size:0.78125rem;">${formatMonthYear(r.year, r.month)}</td>
+      <td><span class="badge ${st.badgeClass}" style="font-size:0.75rem; padding:2px 6px;">${st.label}</span></td>
+      <td style="white-space:nowrap;"><strong style="color:var(--primary); font-size:0.875rem;">${r.totalOvertimeHours || 0} ש'</strong></td>
+      <td style="white-space:nowrap;">${sigHtml}</td>
+      <td style="text-align:center; white-space:nowrap;">
+        <div class="flex items-center justify-center gap-xs" style="gap:4px; flex-wrap:nowrap;">
           ${approveBtnHtml}
           ${viewBtnHtml}
         </div>
@@ -176,7 +172,7 @@ function loadRosterUsers() {
   const tbody = document.getElementById('admin-users-tbody');
   if (!tbody) return;
 
-  const users = API.getAdminUsers();
+  const users = (API && typeof API.getAdminUsers === 'function') ? API.getAdminUsers() : [];
   tbody.innerHTML = '';
 
   if (!users || users.length === 0) {
@@ -187,27 +183,27 @@ function loadRosterUsers() {
   users.forEach(u => {
     const isTeacher = u.role === 'teacher';
     const roleBadge = isTeacher
-      ? '<span class="badge" style="background:#e3f2fd; color:#0d47a1; font-weight:600;">מורה של"ח</span>'
-      : '<span class="badge" style="background:#ede7f6; color:#4a148c; font-weight:600;">מנחה מחוזי</span>';
+      ? '<span class="badge" style="background:#e3f2fd; color:#0d47a1; font-weight:600; font-size:0.75rem; padding:2px 6px;">מורה של"ח</span>'
+      : '<span class="badge" style="background:#ede7f6; color:#4a148c; font-weight:600; font-size:0.75rem; padding:2px 6px;">מנחה מחוזי</span>';
 
     const nameCellHtml = isTeacher
-      ? `<a href="javascript:void(0)" class="clickable-teacher-name" onclick="openTeacherProfileModal('${u.id}')" title="לחץ לצפייה בפרופיל המורה ובמערכת השעות">
+      ? `<a href="javascript:void(0)" class="clickable-teacher-name" onclick="openTeacherProfileModal('${u.id}')" title="לחץ לצפייה בפרופיל המורה ובמערכת השעות" style="font-size:0.8125rem;">
           <strong>${u.name || u.full_name || ''}</strong>
           <span class="teacher-info-icon">👤</span>
         </a>`
-      : `<strong>${u.name || u.full_name || ''}</strong>`;
+      : `<strong style="font-size:0.8125rem;">${u.name || u.full_name || ''}</strong>`;
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${nameCellHtml}</td>
       <td>${roleBadge}</td>
-      <td><span style="font-family:monospace; font-size:0.875rem;">${u.id || u.id_number || ''}</span></td>
-      <td>${isTeacher ? (u.supervisorName || 'אברהם מנחה') : '<span class="text-muted">— (מנחה)</span>'}</td>
-      <td>${u.schoolName || u.school_name || (isTeacher ? 'תיכון מחוזי מרכז' : 'פיקוח מחוז מרכז')}</td>
-      <td><span class="badge" style="background:#f1f3f5; color:#0c3058;">${u.district || 'מרכז'}</span></td>
-      <td><span class="badge badge-success">פעיל במערכת</span></td>
-      <td style="text-align:center;">
-        <button type="button" class="btn btn-sm btn-outline-primary" onclick="openEditUserModal('${u.id}')" style="padding:3px 10px; font-size:0.8125rem;">
+      <td><span style="font-family:monospace; font-size:0.75rem;">${u.id || u.id_number || ''}</span></td>
+      <td class="cell-truncate" title="${isTeacher ? (u.supervisorName || 'אברהם מנחה') : '—'}">${isTeacher ? (u.supervisorName || 'אברהם מנחה') : '<span class="text-muted">—</span>'}</td>
+      <td class="cell-truncate" title="${u.schoolName || u.school_name || (isTeacher ? 'תיכון מחוזי מרכז' : 'פיקוח מחוז מרכז')}">${u.schoolName || u.school_name || (isTeacher ? 'תיכון מחוזי מרכז' : 'פיקוח מחוז מרכז')}</td>
+      <td><span class="badge" style="background:#f1f3f5; color:#0c3058; font-size:0.75rem; padding:2px 6px;">${u.district || 'מרכז'}</span></td>
+      <td><span class="badge badge-success" style="font-size:0.75rem; padding:2px 6px;">פעיל</span></td>
+      <td style="text-align:center; white-space:nowrap;">
+        <button type="button" class="btn btn-sm btn-outline-primary" onclick="openEditUserModal('${u.id}')" style="padding:3px 8px; font-size:0.75rem;">
           ✏️ עריכה
         </button>
       </td>
@@ -217,54 +213,70 @@ function loadRosterUsers() {
 }
 
 function openEditUserModal(userId) {
-  const users = API.getUsers();
-  const user = users.find(u => u.id === userId);
+  const users = (API && typeof API.getUsers === 'function') ? API.getUsers() : [];
+  const user = users.find(u => String(u.id) === String(userId) || (u.id_number && String(u.id_number) === String(userId)));
   if (!user) {
     showToast('משתמש לא נמצא', 'error');
     return;
   }
 
-  const parts = (user.name || '').trim().split(/\s+/);
+  const parts = (user.name || user.full_name || '').trim().split(/\s+/);
   const firstName = parts[0] || '';
   const lastName = parts.slice(1).join(' ') || '';
 
-  document.getElementById('edit-user-id').value = user.id;
-  document.getElementById('edit-user-role').value = user.role;
-  document.getElementById('edit-user-first-name').value = firstName;
-  document.getElementById('edit-user-last-name').value = lastName;
-  document.getElementById('edit-user-username').value = user.id;
-  document.getElementById('edit-user-password').value = user.phone || '';
-  document.getElementById('edit-user-email').value = user.email || '';
-  document.getElementById('edit-user-district').value = user.district || 'מרכז';
+  const idEl = document.getElementById('edit-user-id');
+  const roleEl = document.getElementById('edit-user-role');
+  const fnEl = document.getElementById('edit-user-first-name');
+  const lnEl = document.getElementById('edit-user-last-name');
+  const unEl = document.getElementById('edit-user-username');
+  const pwEl = document.getElementById('edit-user-password');
+  const emEl = document.getElementById('edit-user-email');
+  const distEl = document.getElementById('edit-user-district');
+
+  if (idEl) idEl.value = user.id;
+  if (roleEl) roleEl.value = user.role;
+  if (fnEl) fnEl.value = firstName;
+  if (lnEl) lnEl.value = lastName;
+  if (unEl) unEl.value = user.id;
+  if (pwEl) pwEl.value = user.phone || user.password || '';
+  if (emEl) emEl.value = user.email || '';
+  if (distEl) distEl.value = user.district || 'מרכז';
 
   const teacherFields = document.getElementById('edit-teacher-fields');
   const titleEl = document.getElementById('admin-edit-user-title');
 
   if (user.role === 'teacher') {
     if (teacherFields) teacherFields.style.display = 'block';
-    if (titleEl) titleEl.textContent = `עריכת פרטי מורה – ${user.name}`;
+    if (titleEl) titleEl.textContent = `עריכת פרטי מורה – ${user.name || user.full_name || ''}`;
 
     // Populate supervisor dropdown
     const supSelect = document.getElementById('edit-teacher-supervisor');
     if (supSelect) {
-      const supervisors = API.getSupervisors();
+      const supervisors = (API && typeof API.getSupervisors === 'function') ? API.getSupervisors() : [];
       supSelect.innerHTML = '<option value="">-- בחר מנחה מחוזי מתוך הרשימה --</option>';
+      let selectedFound = false;
       supervisors.forEach(s => {
         const opt = document.createElement('option');
         opt.value = s.id;
-        opt.textContent = `${s.name} (${s.district || 'מרכז'})`;
-        if (s.id === user.supervisorId || s.name === user.supervisorName) {
+        opt.textContent = `${s.name || s.full_name} (${s.district || 'מרכז'})`;
+        if (String(s.id) === String(user.supervisorId) || s.name === user.supervisorName) {
           opt.selected = true;
+          selectedFound = true;
         }
         supSelect.appendChild(opt);
       });
+      if (!selectedFound && supervisors.length > 0) {
+        supSelect.selectedIndex = 1;
+      }
     }
 
-    document.getElementById('edit-teacher-school-name').value = user.schoolName || '';
-    document.getElementById('edit-teacher-school-code').value = user.schoolCode || '';
+    const schoolNameEl = document.getElementById('edit-teacher-school-name');
+    const schoolCodeEl = document.getElementById('edit-teacher-school-code');
+    if (schoolNameEl) schoolNameEl.value = user.schoolName || user.school_name || '';
+    if (schoolCodeEl) schoolCodeEl.value = user.schoolCode || user.school_code || '';
   } else {
     if (teacherFields) teacherFields.style.display = 'none';
-    if (titleEl) titleEl.textContent = `עריכת פרטי מנחה – ${user.name}`;
+    if (titleEl) titleEl.textContent = `עריכת פרטי מנחה – ${user.name || user.full_name || ''}`;
   }
 
   openModal('admin-edit-user-modal');

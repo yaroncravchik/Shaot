@@ -718,11 +718,11 @@ const API = {
     const cleanPassword = String(password).trim();
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
-    if (users.some(u => u.id === cleanUsername)) {
+    if (users.some(u => String(u.id) === cleanUsername)) {
       throw new Error('משתמש עם שם משתמש זה כבר קיים במערכת');
     }
 
-    const supervisor = users.find(u => u.id === supervisorId) || { name: 'אברהם מנחה' };
+    const supervisor = users.find(u => String(u.id) === String(supervisorId) || (u.id_number && String(u.id_number) === String(supervisorId))) || { name: 'אברהם מנחה' };
 
     const newTeacher = {
       id: cleanUsername,
@@ -756,7 +756,7 @@ const API = {
     const cleanPassword = String(password).trim();
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
-    if (users.some(u => u.id === cleanUsername)) {
+    if (users.some(u => String(u.id) === cleanUsername)) {
       throw new Error('משתמש עם שם משתמש זה כבר קיים במערכת');
     }
 
@@ -889,7 +889,7 @@ const API = {
   updateUser(userId, updateData, performedByUser = null) {
     initStorage();
     const users = this.getUsers();
-    const userIndex = users.findIndex(u => u.id === userId);
+    const userIndex = users.findIndex(u => String(u.id) === String(userId) || (u.id_number && String(u.id_number) === String(userId)));
     if (userIndex < 0) {
       throw new Error('משתמש לא נמצא במערכת');
     }
