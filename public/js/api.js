@@ -842,6 +842,107 @@ const API = {
     return newTeacher;
   },
 
+  importTeachersBatch(teachersList, performedByUser = null) {
+    initStorage();
+    const users = this.getUsers();
+    const supervisors = this.getSupervisors();
+
+    const results = {
+      added: [],
+      skipped: [],
+      errors: []
+    };
+
+    if (!Array.isArray(teachersList) || teachersList.length === 0) {
+      return results;
+    }
+
+    teachersList.forEach((t, index) => {
+      const cleanUsername = String(t.username || '').trim();
+      const cleanPassword = String(t.password || '').trim();
+      const firstName = String(t.firstName || '').trim();
+      const lastName = String(t.lastName || '').trim();
+      const fullName = `${firstName} ${lastName}`.trim() || cleanUsername;
+      const rawSupervisor = String(t.supervisor || t.supervisorName || t.supervisorId || '').trim();
+
+      if (!cleanUsername || !cleanPassword || !firstName) {
+        results.errors.push({
+          row: index + 1,
+          username: cleanUsername,
+          name: fullName,
+          reason: 'חסרים שדות חובה (שם פרטי, שם משתמש או סיסמה)'
+        });
+        return;
+      }
+
+      if (users.some(u => String(u.id) === cleanUsername || (u.id_number && String(u.id_number) === cleanUsername))) {
+        results.skipped.push({
+          row: index + 1,
+          username: cleanUsername,
+          name: fullName,
+          reason: 'שם משתמש כבר קיים במערכת'
+        });
+        return;
+      }
+
+      // Match supervisor
+      let matchedSup = null;
+      if (rawSupervisor) {
+        matchedSup = supervisors.find(s => 
+          String(s.id) === rawSupervisor ||
+          s.name === rawSupervisor ||
+          s.name.includes(rawSupervisor) ||
+          rawSupervisor.includes(s.name) ||
+          (s.full_name && (s.full_name === rawSupervisor || s.full_name.includes(rawSupervisor)))
+        );
+      }
+      if (!matchedSup && supervisors.length > 0) {
+        matchedSup = supervisors[0];
+      }
+      const supervisorId = matchedSup ? matchedSup.id : '011111111';
+      const supervisorName = matchedSup ? (matchedSup.name || matchedSup.full_name) : (rawSupervisor || 'אברהם מנחה');
+      const district = matchedSup && matchedSup.district ? matchedSup.district : (t.district || 'מרכז');
+
+      const newTeacher = {
+        id: cleanUsername,
+        phone: cleanPassword,
+        name: fullName,
+        role: 'teacher',
+        email: t.email ? t.email.trim() : `${cleanUsername}@education.gov.il`,
+        schoolName: t.schoolName ? t.schoolName.trim() : 'תיכון מחוזי',
+        schoolCode: t.schoolCode ? t.schoolCode.trim() : '123456',
+        district: district,
+        municipality: t.municipality ? t.municipality.trim() : district,
+        supervisorName: supervisorName,
+        supervisorId: supervisorId,
+        principalName: 'מנהל/ת מוסד',
+        principalEmail: 'principal@school.gov.il',
+        jobScope: 100,
+        consentSigned: true,
+        weeklySchedule: { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 },
+        fieldDays: [2, 4]
+      };
+
+      users.push(newTeacher);
+      results.added.push(newTeacher);
+    });
+
+    if (results.added.length > 0) {
+      this.saveUsers(users);
+
+      // Audit Log
+      const audit = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS) || '[]');
+      audit.push({
+        date: formatDateTime(new Date()),
+        user: performedByUser ? `${performedByUser.name || performedByUser.id} (מנהל אתר)` : 'מנהל אתר',
+        action: `ייבוא מרוכז מקובץ CSV: נקלטו ${results.added.length} מורים חדשים בהצלחה (דולגו ${results.skipped.length}, שגיאות ${results.errors.length})`
+      });
+      localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(audit));
+    }
+
+    return results;
+  },
+
   deleteReport(reportId, performedByUser = null) {
     initStorage();
     const reports = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS) || '[]');

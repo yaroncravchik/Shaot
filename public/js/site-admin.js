@@ -717,6 +717,357 @@ function handleEditUserSubmit(e) {
 }
 
 // ============================================================================
+// BULK CSV TEACHER IMPORT (ייבוא מורים מקובץ CSV)
+// ============================================================================
+let parsedCsvTeachers = [];
+
+function openImportTeachersCsvModal() {
+  const fileInput = document.getElementById('csv-teacher-file-input');
+  if (fileInput) fileInput.value = '';
+
+  parsedCsvTeachers = [];
+  
+  const summaryEl = document.getElementById('csv-import-summary');
+  if (summaryEl) {
+    summaryEl.style.display = 'none';
+    summaryEl.innerHTML = '';
+  }
+
+  const previewContainer = document.getElementById('csv-preview-container');
+  if (previewContainer) previewContainer.style.display = 'none';
+
+  const tbody = document.getElementById('csv-preview-tbody');
+  if (tbody) tbody.innerHTML = '';
+
+  const btnConfirm = document.getElementById('btn-confirm-import-csv');
+  if (btnConfirm) {
+    btnConfirm.disabled = true;
+    btnConfirm.innerHTML = '<span>קלוט והוסף מורים (0)</span>';
+  }
+
+  openModal('modal-import-teachers-csv');
+}
+
+function downloadTeachersCsvTemplate() {
+  const headers = ['שם פרטי', 'שם משפחה', 'שיוך למנחה', 'שם משתמש', 'סיסמא'];
+  const sampleRows = [
+    ['ישראל', 'ישראלי', 'אברהם מנחה', '012345678', '0501234567'],
+    ['מיכל', 'לוי', 'אברהם מנחה', '023456789', '0523456789'],
+    ['דנה', 'כהן', 'דוד שרון', '034567890', '0533456789']
+  ];
+
+  const csvContent = '\uFEFF' + [
+    headers.join(','),
+    ...sampleRows.map(r => r.join(','))
+  ].join('\r\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'תבנית_ייבוא_מורים_שלח.csv');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function parseCsvLine(line, delimiter = ',') {
+  const values = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === delimiter && !inQuotes) {
+      values.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  values.push(current.trim());
+  return values;
+}
+
+function parseTeachersCsvText(text) {
+  if (!text) return [];
+
+  // Remove BOM if present
+  let cleanText = text.replace(/^\uFEFF/, '').trim();
+  const rawLines = cleanText.split(/\r\n|\n|\r/).filter(l => l.trim().length > 0);
+
+  if (rawLines.length === 0) return [];
+
+  // Detect delimiter: comma, semicolon, or tab
+  const firstLine = rawLines[0];
+  let delimiter = ',';
+  if (firstLine.includes(';') && (firstLine.split(';').length > firstLine.split(',').length)) {
+    delimiter = ';';
+  } else if (firstLine.includes('\t') && (firstLine.split('\t').length > firstLine.split(',').length)) {
+    delimiter = '\t';
+  }
+
+  const headerValues = parseCsvLine(firstLine, delimiter).map(h => h.replace(/^["']|["']$/g, '').trim().toLowerCase());
+
+  // Check if first line is a header
+  let colIndexMap = {
+    firstName: -1,
+    lastName: -1,
+    supervisor: -1,
+    username: -1,
+    password: -1
+  };
+
+  headerValues.forEach((h, idx) => {
+    if (h.includes('פרטי') || h === 'first' || h === 'firstname' || h === 'name') colIndexMap.firstName = idx;
+    else if (h.includes('משפחה') || h === 'last' || h === 'lastname') colIndexMap.lastName = idx;
+    else if (h.includes('מנחה') || h.includes('שיוך') || h === 'supervisor') colIndexMap.supervisor = idx;
+    else if (h.includes('משתמש') || h.includes('ת"ז') || h.includes('ת.ז') || h.includes('זהות') || h === 'id' || h === 'username') colIndexMap.username = idx;
+    else if (h.includes('סיסמ') || h.includes('סיסמה') || h.includes('טלפון') || h.includes('נייד') || h === 'pass' || h === 'password' || h === 'phone') colIndexMap.password = idx;
+  });
+
+  const hasRecognizedHeader = colIndexMap.firstName >= 0 || colIndexMap.username >= 0;
+  const dataLines = hasRecognizedHeader ? rawLines.slice(1) : rawLines;
+
+  // Fallback default index positions if not recognized
+  if (!hasRecognizedHeader) {
+    colIndexMap = {
+      firstName: 0,
+      lastName: 1,
+      supervisor: 2,
+      username: 3,
+      password: 4
+    };
+  } else {
+    // If some columns were not found in header, set sensible defaults
+    if (colIndexMap.firstName < 0) colIndexMap.firstName = 0;
+    if (colIndexMap.lastName < 0) colIndexMap.lastName = 1;
+    if (colIndexMap.supervisor < 0) colIndexMap.supervisor = 2;
+    if (colIndexMap.username < 0) colIndexMap.username = 3;
+    if (colIndexMap.password < 0) colIndexMap.password = 4;
+  }
+
+  const parsedRows = [];
+  dataLines.forEach((line, idx) => {
+    const cols = parseCsvLine(line, delimiter).map(c => c.replace(/^["']|["']$/g, '').trim());
+    if (cols.every(c => c === '')) return;
+
+    parsedRows.push({
+      rowNumber: (hasRecognizedHeader ? idx + 2 : idx + 1),
+      firstName: cols[colIndexMap.firstName] || '',
+      lastName: cols[colIndexMap.lastName] || '',
+      supervisor: cols[colIndexMap.supervisor] || '',
+      username: cols[colIndexMap.username] || '',
+      password: cols[colIndexMap.password] || ''
+    });
+  });
+
+  return parsedRows;
+}
+
+function handleCsvFileSelected(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      const text = evt.target.result;
+      const rows = parseTeachersCsvText(text);
+
+      if (!rows || rows.length === 0) {
+        showToast('הקובץ שנבחר ריק או שאינו מכיל שורות נתונים', 'warning');
+        return;
+      }
+
+      renderCsvPreview(rows);
+    } catch (err) {
+      console.error('Error reading CSV file:', err);
+      showToast('שגיאה בקריאת קובץ ה-CSV. ודא שהקובץ תקין.', 'error');
+    }
+  };
+
+  reader.onerror = function() {
+    showToast('שגיאה בטעינת הקובץ מהמחשב', 'error');
+  };
+
+  reader.readAsText(file, 'UTF-8');
+}
+
+function renderCsvPreview(rows) {
+  const existingUsers = API.getUsers();
+  const supervisors = API.getSupervisors();
+
+  parsedCsvTeachers = [];
+  const tbody = document.getElementById('csv-preview-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  let validCount = 0;
+  let skippedCount = 0;
+  let errorCount = 0;
+
+  const seenUsernamesInFile = new Set();
+
+  rows.forEach(r => {
+    const cleanUsername = String(r.username || '').trim();
+    const cleanPassword = String(r.password || '').trim();
+    const cleanFirstName = String(r.firstName || '').trim();
+    const cleanLastName = String(r.lastName || '').trim();
+    const fullName = `${cleanFirstName} ${cleanLastName}`.trim() || '—';
+    const rawSupervisor = String(r.supervisor || '').trim();
+
+    let statusType = 'valid';
+    let statusText = 'תקין להוספה';
+    let statusClass = 'badge-success';
+
+    // 1. Check required fields
+    if (!cleanFirstName || !cleanUsername || !cleanPassword) {
+      statusType = 'error';
+      statusText = 'חסרים שדות חובה';
+      statusClass = 'badge-danger';
+      errorCount++;
+    } 
+    // 2. Check duplicate in DB
+    else if (existingUsers.some(u => String(u.id) === cleanUsername || (u.id_number && String(u.id_number) === cleanUsername))) {
+      statusType = 'duplicate_db';
+      statusText = 'שם משתמש כבר קיים במערכת';
+      statusClass = 'badge-warning';
+      skippedCount++;
+    }
+    // 3. Check duplicate in file
+    else if (seenUsernamesInFile.has(cleanUsername)) {
+      statusType = 'duplicate_file';
+      statusText = 'כפילות שם משתמש בקובץ';
+      statusClass = 'badge-warning';
+      skippedCount++;
+    } else {
+      validCount++;
+      seenUsernamesInFile.add(cleanUsername);
+    }
+
+    // Match supervisor
+    let matchedSup = null;
+    if (rawSupervisor) {
+      matchedSup = supervisors.find(s => 
+        String(s.id) === rawSupervisor ||
+        s.name === rawSupervisor ||
+        s.name.includes(rawSupervisor) ||
+        rawSupervisor.includes(s.name) ||
+        (s.full_name && (s.full_name === rawSupervisor || s.full_name.includes(rawSupervisor)))
+      );
+    }
+    if (!matchedSup && supervisors.length > 0) {
+      matchedSup = supervisors[0];
+    }
+    const supDisplay = matchedSup 
+      ? `<span class="badge" style="background:#ede7f6; color:#4a148c;">${matchedSup.name} (${matchedSup.district || 'מרכז'})</span>`
+      : `<span class="text-muted">${rawSupervisor || 'אברהם מנחה'}</span>`;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align:center; font-weight:600;">${r.rowNumber}</td>
+      <td><strong>${fullName}</strong></td>
+      <td><span style="font-family:monospace;">${cleanUsername || '—'}</span></td>
+      <td><span style="font-family:monospace;">${cleanPassword ? '••••••' : '—'}</span></td>
+      <td>${supDisplay}</td>
+      <td style="text-align:center;">
+        <span class="badge ${statusClass}">${statusText}</span>
+      </td>
+    `;
+    tbody.appendChild(tr);
+
+    parsedCsvTeachers.push({
+      ...r,
+      isValid: statusType === 'valid',
+      statusText,
+      matchedSupervisorId: matchedSup ? matchedSup.id : '011111111',
+      matchedSupervisorName: matchedSup ? (matchedSup.name || matchedSup.full_name) : (rawSupervisor || 'אברהם מנחה'),
+      district: matchedSup && matchedSup.district ? matchedSup.district : 'מרכז'
+    });
+  });
+
+  // Display summary banner
+  const summaryEl = document.getElementById('csv-import-summary');
+  if (summaryEl) {
+    summaryEl.style.display = 'block';
+    if (validCount > 0) {
+      summaryEl.className = 'alert alert-info mb-3';
+      summaryEl.innerHTML = `
+        <strong>סיכום פענוח הקובץ:</strong> זוהו <strong>${rows.length}</strong> שורות. מתוכן <strong>${validCount}</strong> מורים תקינים ומוכנים לקליטה${skippedCount > 0 ? `, <strong>${skippedCount}</strong> שורות יידלגו (כפילויות)` : ''}${errorCount > 0 ? `, <strong>${errorCount}</strong> שגיאות` : ''}.
+      `;
+    } else {
+      summaryEl.className = 'alert alert-danger mb-3';
+      summaryEl.innerHTML = `
+        <strong>לא נמצאו שורות תקינות לקליטה:</strong> כל <strong>${rows.length}</strong> השורות שנבדקו מכילות שגיאות או ששמות המשתמש כבר קיימים במערכת.
+      `;
+    }
+  }
+
+  const previewContainer = document.getElementById('csv-preview-container');
+  if (previewContainer) previewContainer.style.display = 'block';
+
+  const btnConfirm = document.getElementById('btn-confirm-import-csv');
+  if (btnConfirm) {
+    btnConfirm.disabled = validCount === 0;
+    btnConfirm.innerHTML = `<span>קלוט והוסף ${validCount} מורים</span>`;
+  }
+}
+
+function handleConfirmCsvImport() {
+  const validTeachers = parsedCsvTeachers.filter(t => t.isValid);
+  if (validTeachers.length === 0) {
+    showToast('אין מורים תקינים לקליטה', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btn-confirm-import-csv');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div><span>קולט מורים...</span>';
+  }
+
+  setTimeout(() => {
+    try {
+      const payload = validTeachers.map(t => ({
+        firstName: t.firstName,
+        lastName: t.lastName,
+        username: t.username,
+        password: t.password,
+        supervisorId: t.matchedSupervisorId,
+        supervisorName: t.matchedSupervisorName,
+        district: t.district,
+        schoolName: 'תיכון מחוזי',
+        schoolCode: '123456'
+      }));
+
+      const result = API.importTeachersBatch(payload, currentSiteAdmin);
+
+      closeModal('modal-import-teachers-csv');
+      showToast(`נקלטו בהצלחה ${result.added.length} מורי של"ח חדשים למערכת!`, 'success', 'ייבוא מורים הצליח');
+
+      loadInitialData();
+      renderAuditLogs();
+    } catch (err) {
+      showToast(err.message || 'שגיאה בקליטת המורים מקובץ CSV', 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<span>קלוט והוסף מורים</span>';
+      }
+    }
+  }, 500);
+}
+
+// ============================================================================
 // AUDIT LOGS
 // ============================================================================
 function renderAuditLogs() {
@@ -749,7 +1100,7 @@ function setupEventListeners() {
   // Modal background clicks & Esc
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      ['modal-add-admin', 'modal-add-supervisor', 'modal-add-teacher', 'modal-delete-report', 'modal-delete-user', 'modal-view-report', 'modal-edit-user'].forEach(closeModal);
+      ['modal-add-admin', 'modal-add-supervisor', 'modal-add-teacher', 'modal-delete-report', 'modal-delete-user', 'modal-view-report', 'modal-edit-user', 'modal-import-teachers-csv'].forEach(closeModal);
     }
   });
 }
@@ -775,3 +1126,10 @@ window.updateTeacherModalSupervisors = updateTeacherModalSupervisors;
 window.openEditUserModal = openEditUserModal;
 window.updateEditTeacherSupervisors = updateEditTeacherSupervisors;
 window.handleEditUserSubmit = handleEditUserSubmit;
+window.openImportTeachersCsvModal = openImportTeachersCsvModal;
+window.downloadTeachersCsvTemplate = downloadTeachersCsvTemplate;
+window.handleCsvFileSelected = handleCsvFileSelected;
+window.handleConfirmCsvImport = handleConfirmCsvImport;
+window.parseTeachersCsvText = parseTeachersCsvText;
+window.renderAuditLogs = renderAuditLogs;
+window.renderCsvPreview = renderCsvPreview;

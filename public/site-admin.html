@@ -115,6 +115,9 @@
         <button type="button" class="btn btn-primary" onclick="openAddTeacherModal()">
           <span>➕ הוסף מורה</span>
         </button>
+        <button type="button" class="btn btn-secondary" style="background:#ffffff; color:#0c3058; border:1px solid #c8c8c8;" onclick="openImportTeachersCsvModal()">
+          <span>📥 ייבוא מורים מ-CSV</span>
+        </button>
       </div>
     </div>
 
@@ -862,12 +865,89 @@
     </div>
   </div>
 
+  <!-- ==========================================================================
+       MODAL 5: BULK CSV TEACHER IMPORT (ייבוא מורים מקובץ CSV)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="modal-import-teachers-csv">
+    <div class="modal-container modal-lg">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">ייבוא מורי של"ח מקובץ CSV</h3>
+          <span class="text-muted" style="font-size:0.8125rem;">קליטה והוספה מרוכזת של מורים חדשים ושיוכם למנחים מחוזיים</span>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modal-import-teachers-csv')">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Instructions & Template download banner -->
+        <div class="card p-3 mb-3" style="background:#f0f9fa; border:1px solid #b8daff;">
+          <div class="flex justify-between items-center flex-wrap gap-sm">
+            <div>
+              <div style="font-weight:700; color:#0c3058; margin-bottom:4px;">
+                📋 עמודות נדרשות בקובץ ה-CSV:
+              </div>
+              <div style="font-size:0.875rem; color:var(--on-surface-variant);">
+                <strong>שם פרטי</strong>, <strong>שם משפחה</strong>, <strong>שיוך למנחה</strong>, <strong>שם משתמש</strong>, <strong>סיסמא</strong>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-secondary" style="background:#ffffff; border:1px solid #007bff; color:#007bff;" onclick="downloadTeachersCsvTemplate()">
+              <span>📥 הורד קובץ תבנית לדוגמה (CSV)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- File Upload Area -->
+        <div class="form-group mb-3">
+          <label class="form-label" for="csv-teacher-file-input">
+            <span>בחר קובץ CSV לטעינה:</span>
+            <span class="required">*</span>
+          </label>
+          <input type="file" id="csv-teacher-file-input" class="form-control" accept=".csv,text/csv,text/plain" onchange="handleCsvFileSelected(event)">
+          <small class="text-muted" style="display:block; margin-top:4px;">
+            ניתן לייצא קובץ מ-Excel ולשמור כ-CSV (UTF-8).
+          </small>
+        </div>
+
+        <!-- Real-time Validation / Summary Badge -->
+        <div id="csv-import-summary" class="alert alert-info mb-3" style="display:none; font-size:0.875rem;">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Preview Table -->
+        <div id="csv-preview-container" style="display:none; max-height:260px; overflow-y:auto; border:1px solid var(--outline); border-radius:6px;" class="mb-3">
+          <table class="gov-table table-compact" style="margin:0; font-size:0.8125rem;">
+            <thead style="position:sticky; top:0; background:var(--surface-container-high); z-index:2;">
+              <tr>
+                <th style="width:40px; text-align:center;">#</th>
+                <th>שם מלא</th>
+                <th>שם משתמש</th>
+                <th>סיסמה</th>
+                <th>שיוך למנחה</th>
+                <th style="text-align:center;">סטטוס תקינות</th>
+              </tr>
+            </thead>
+            <tbody id="csv-preview-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer flex justify-between">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-import-teachers-csv')">ביטול</button>
+        <button type="button" id="btn-confirm-import-csv" class="btn btn-primary" onclick="handleConfirmCsvImport()" disabled>
+          <span>קלוט והוסף מורים (0)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Universal Footer Mount -->
   <div id="gov-footer-mount"></div>
 
   <!-- Scripts -->
-  <script src="js/api.js?v=202609212130"></script>
-  <script src="js/auth.js?v=202609212130"></script>
-  <script src="js/site-admin.js?v=202609212130"></script>
+  <script src="js/api.js?v=202609271330"></script>
+  <script src="js/auth.js?v=202609271330"></script>
+  <script src="js/site-admin.js?v=202609271330"></script>
 </body>
 </html>
