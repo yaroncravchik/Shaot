@@ -338,6 +338,31 @@ router.post('/:id/submit', (req, res) => {
       });
     }
 
+    // Submission window validation:
+    // Reporting for current month allowed starting from the 15th. Past months allowed anytime.
+    const nowDate = new Date();
+    const curYear = nowDate.getFullYear();
+    const curMonth = nowDate.getMonth() + 1;
+    const curDay = nowDate.getDate();
+
+    const isPastMonth = (report.year < curYear) || (report.year === curYear && report.month < curMonth);
+    const isCurrentMonth = (report.year === curYear && report.month === curMonth);
+
+    if (!isPastMonth) {
+      if (isCurrentMonth && curDay < 15) {
+        return res.status(400).json({
+          success: false,
+          error: 'הגשת דוח שעות לחודש הנוכחי מתאפשרת החל מה-15 לחודש. באפשרותך לשמור את הנתונים כטיוטה בינתיים.'
+        });
+      }
+      if (!isCurrentMonth) {
+        return res.status(400).json({
+          success: false,
+          error: 'לא ניתן להגיש דוח עבור חודש עתידי. הגשת הדוח תתאפשר החל מה-15 באותו חודש.'
+        });
+      }
+    }
+
     const days = db.prepare('SELECT * FROM report_days WHERE report_id = ? ORDER BY day_number ASC').all(id);
 
     if (!days || days.length === 0) {

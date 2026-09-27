@@ -225,71 +225,112 @@ function setupReportFormHandlers() {
  });
 }
 
+function checkReportSubmissionEligibility(year, month, checkDate = new Date()) {
+  const curYear = checkDate.getFullYear();
+  const curMonth = checkDate.getMonth() + 1;
+  const curDay = checkDate.getDate();
+
+  const isPast = (year < curYear) || (year === curYear && month < curMonth);
+  const isCurrent = (year === curYear && month === curMonth);
+
+  if (isPast) {
+    return { allowed: true };
+  }
+  if (isCurrent) {
+    if (curDay >= 15) {
+      return { allowed: true };
+    }
+    return {
+      allowed: false,
+      reason: `הגשת דוח שעות לחודש הנוכחי מתאפשרת החל מה-15 לחודש (היום ה-${curDay} לחודש). ניתן לשמור את הדיווח כטיוטה בינתיים.`
+    };
+  }
+  return {
+    allowed: false,
+    reason: 'לא ניתן להגיש דוח עבור חודש עתידי. הגשת הדוח תתאפשר החל מה-15 באותו חודש (ניתן לשמור כטיוטה בינתיים).'
+  };
+}
+
 function openReportModal(year, month) {
- selectedYear = year;
- selectedMonth = month;
+  selectedYear = year;
+  selectedMonth = month;
 
- const existingReport = API.getReports({ teacherId: currentTeacher.id, year, month })[0];
+  const existingReport = API.getReports({ teacherId: currentTeacher.id, year, month })[0];
 
- if (existingReport) {
- currentActiveReport = JSON.parse(JSON.stringify(existingReport));
- } else {
- // Generate new draft
- const generatedDays = generateSampleDaysData(
- year,
- month,
- currentTeacher.weeklySchedule || { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 },
- currentTeacher.fieldDays || [2, 4],
- [],
- currentTeacher.scheduleNotes || {}
- );
+  if (existingReport) {
+    currentActiveReport = JSON.parse(JSON.stringify(existingReport));
+  } else {
+    // Generate new draft
+    const generatedDays = generateSampleDaysData(
+      year,
+      month,
+      currentTeacher.weeklySchedule || { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 },
+      currentTeacher.fieldDays || [2, 4],
+      [],
+      currentTeacher.scheduleNotes || {}
+    );
 
- currentActiveReport = {
- id: null,
- teacherId: currentTeacher.id,
- teacherName: currentTeacher.name,
- schoolName: currentTeacher.schoolName,
- schoolCode: currentTeacher.schoolCode,
- district: currentTeacher.district,
- municipality: currentTeacher.municipality,
- supervisorName: currentTeacher.supervisorName,
- principalName: currentTeacher.principalName,
- year: year,
- month: month,
- status: 'draft',
- daysData: generatedDays,
- attachments: []
- };
- }
+    currentActiveReport = {
+      id: null,
+      teacherId: currentTeacher.id,
+      teacherName: currentTeacher.name,
+      schoolName: currentTeacher.schoolName,
+      schoolCode: currentTeacher.schoolCode,
+      district: currentTeacher.district,
+      municipality: currentTeacher.municipality,
+      supervisorName: currentTeacher.supervisorName,
+      principalName: currentTeacher.principalName,
+      year: year,
+      month: month,
+      status: 'draft',
+      daysData: generatedDays,
+      attachments: []
+    };
+  }
 
- document.getElementById('report-modal-title').textContent = `דוח שעות פעילות של"ח – ${HEBREW_MONTHS_NAME[month - 1]} ${year}`;
+  document.getElementById('report-modal-title').textContent = `דוח שעות פעילות של"ח – ${HEBREW_MONTHS_NAME[month - 1]} ${year}`;
 
- const isReadOnly = currentActiveReport.status !== 'draft' && currentActiveReport.status !== 'returned';
+  const isReadOnly = currentActiveReport.status !== 'draft' && currentActiveReport.status !== 'returned';
 
- // Modal remarks banner
- const remarksBanner = document.getElementById('modal-remarks-banner');
- if (currentActiveReport.supervisorRemarks || currentActiveReport.principalRemarks) {
- remarksBanner.style.display = 'block';
- remarksBanner.className = 'report-remarks-card';
- remarksBanner.innerHTML = `
- <div style="font-weight:700; color:#856404; margin-bottom:4px;">הערות מגורם מאשר:</div>
- <div>${currentActiveReport.supervisorRemarks || currentActiveReport.principalRemarks}</div>
- `;
- } else {
- remarksBanner.style.display = 'none';
- }
+  // Modal remarks banner
+  const remarksBanner = document.getElementById('modal-remarks-banner');
+  if (currentActiveReport.supervisorRemarks || currentActiveReport.principalRemarks) {
+    remarksBanner.style.display = 'block';
+    remarksBanner.className = 'report-remarks-card';
+    remarksBanner.innerHTML = `
+      <div style="font-weight:700; color:#856404; margin-bottom:4px;">הערות מגורם מאשר:</div>
+      <div>${currentActiveReport.supervisorRemarks || currentActiveReport.principalRemarks}</div>
+    `;
+  } else {
+    remarksBanner.style.display = 'none';
+  }
 
   // Buttons state
   const btnSaveDraft = document.getElementById('btn-save-draft');
   const btnSubmit = document.getElementById('btn-submit-report');
   const btnModalPdf = document.getElementById('btn-download-modal-pdf');
+  const submissionNoteEl = document.getElementById('submission-eligibility-note');
+
+  const eligibility = checkReportSubmissionEligibility(year, month);
 
   if (isReadOnly) {
     btnSaveDraft.style.display = 'none';
     btnSubmit.style.display = 'none';
+    if (submissionNoteEl) submissionNoteEl.style.display = 'none';
   } else {
     btnSaveDraft.style.display = 'inline-flex';
     btnSubmit.style.display = 'inline-flex';
+
+    if (submissionNoteEl) {
+      if (!eligibility.allowed) {
+        submissionNoteEl.style.display = 'block';
+        submissionNoteEl.innerHTML = `ℹ️ <strong>שימו לב:</strong> ${eligibility.reason}`;
+        btnSubmit.title = eligibility.reason;
+      } else {
+        submissionNoteEl.style.display = 'none';
+        btnSubmit.removeAttribute('title');
+      }
+    }
   }
 
   // Show PDF download button in modal if report is approved by supervisor
@@ -303,19 +344,19 @@ function openReportModal(year, month) {
     }
   }
 
- renderReportGrid(currentActiveReport, isReadOnly);
- renderAttachmentsList(currentActiveReport, isReadOnly);
- calculateGridTotals();
+  renderReportGrid(currentActiveReport, isReadOnly);
+  renderAttachmentsList(currentActiveReport, isReadOnly);
+  calculateGridTotals();
 
- // Start 30s auto-save timer
- clearInterval(autoSaveInterval);
- if (!isReadOnly) {
- autoSaveInterval = setInterval(() => {
- saveCurrentReportDraft(false);
- }, 30000);
- }
+  // Start 30s auto-save timer
+  clearInterval(autoSaveInterval);
+  if (!isReadOnly) {
+    autoSaveInterval = setInterval(() => {
+      saveCurrentReportDraft(false);
+    }, 30000);
+  }
 
- openModal('monthly-report-modal');
+  openModal('monthly-report-modal');
 }
 
 function isDailyHoursExceeded(day) {
@@ -617,35 +658,46 @@ function saveCurrentReportDraft(showFeedback = true) {
 }
 
 function submitCurrentReport() {
- const declaration = document.getElementById('report-submit-declaration');
- if (!declaration.checked) {
- showToast('חובה לאשר את הצהרת הנכונות לפני הגשת הדוח', 'warning');
- return;
- }
+  const eligibility = checkReportSubmissionEligibility(selectedYear, selectedMonth);
+  if (!eligibility.allowed) {
+    showToast(eligibility.reason, 'warning');
+    return;
+  }
 
- // PRD Business Rule 5.2: Flexible Field Day rule warning
- const missingFieldDayReports = currentActiveReport.daysData.filter(d => d.isFieldDay && (!d.overtimeHours || d.overtimeHours === 0) && !d.description);
- if (missingFieldDayReports.length > 0) {
- const confirmSubmit = confirm(`לתשומת לבך: סומנו ${missingFieldDayReports.length} ימי שדה קבועים ללא דיווח שעות נוספות או פירוט פעילות. האם להגיש את הדוח בכל זאת?`);
- if (!confirmSubmit) return;
- }
+  const declaration = document.getElementById('report-submit-declaration');
+  if (!declaration.checked) {
+    showToast('חובה לאשר את הצהרת הנכונות לפני הגשת הדוח', 'warning');
+    return;
+  }
 
- const submitBtn = document.getElementById('btn-submit-report');
- submitBtn.disabled = true;
- submitBtn.innerHTML = '<div class="spinner"></div><span>מגיש דוח ונועל...</span>';
+  // PRD Business Rule 5.2: Flexible Field Day rule warning
+  const missingFieldDayReports = currentActiveReport.daysData.filter(d => d.isFieldDay && (!d.overtimeHours || d.overtimeHours === 0) && !d.description);
+  if (missingFieldDayReports.length > 0) {
+    const confirmSubmit = confirm(`לתשומת לבך: סומנו ${missingFieldDayReports.length} ימי שדה קבועים ללא דיווח שעות נוספות או פירוט פעילות. האם להגיש את הדוח בכל זאת?`);
+    if (!confirmSubmit) return;
+  }
 
- // Save report and submit to principal
- setTimeout(() => {
- const saved = API.saveReport(currentActiveReport);
- API.submitReportToPrincipal(saved.id, currentTeacher);
+  const submitBtn = document.getElementById('btn-submit-report');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<div class="spinner"></div><span>מגיש דוח ונועל...</span>';
 
- clearInterval(autoSaveInterval);
- closeModal('monthly-report-modal');
- showToast('הדוח הוגש וננעל בהצלחה! קישור נשלח לאישור מנהל/ת בית הספר.', 'success');
- loadTeacherDashboardData();
- submitBtn.disabled = false;
- submitBtn.innerHTML = '<span> הגשת דוח לאישור מנהל/ת</span>';
- }, 700);
+  // Save report and submit to principal
+  setTimeout(() => {
+    try {
+      const saved = API.saveReport(currentActiveReport);
+      API.submitReportToPrincipal(saved.id, currentTeacher);
+
+      clearInterval(autoSaveInterval);
+      closeModal('monthly-report-modal');
+      showToast('הדוח הוגש וננעל בהצלחה! קישור נשלח לאישור מנהל/ת בית הספר.', 'success');
+      loadTeacherDashboardData();
+    } catch (err) {
+      showToast(err.message || 'שגיאה בעת הגשת הדוח', 'error');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>🚀 הגשת דוח לאישור מנהל/ת</span>';
+    }
+  }, 700);
 }
 
 function downloadReportPDF(reportId) {
@@ -659,6 +711,7 @@ function downloadReportPDF(reportId) {
 
 // Global window bindings
 if (typeof window !== 'undefined') {
+  window.checkReportSubmissionEligibility = checkReportSubmissionEligibility;
   window.isDailyHoursExceeded = isDailyHoursExceeded;
   window.updateDayThresholdWarning = updateDayThresholdWarning;
   window.renderReportGrid = renderReportGrid;

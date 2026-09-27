@@ -566,17 +566,50 @@ const API = {
  return report;
  },
 
+ canSubmitReport(year, month, checkDate = new Date()) {
+ const curYear = checkDate.getFullYear();
+ const curMonth = checkDate.getMonth() + 1;
+ const curDay = checkDate.getDate();
+
+ const isPast = (year < curYear) || (year === curYear && month < curMonth);
+ const isCurrent = (year === curYear && month === curMonth);
+
+ if (isPast) {
+ return { allowed: true };
+ }
+ if (isCurrent) {
+ if (curDay >= 15) {
+ return { allowed: true };
+ }
+ return {
+ allowed: false,
+ reason: 'הגשת דוח שעות לחודש הנוכחי מתאפשרת החל מה-15 לחודש. ניתן לשמור את הדיווח כטיוטה בינתיים.'
+ };
+ }
+ return {
+ allowed: false,
+ reason: 'לא ניתן להגיש דוח עבור חודש עתידי. הגשת הדוח תתאפשר החל מה-15 באותו חודש.'
+ };
+ },
+
  // Workflow Actions
- submitReportToPrincipal(reportId, user) {
+ submitReportToPrincipal(reportId, user, checkDate = new Date()) {
  const report = this.getReportById(reportId);
  if (!report) throw new Error('דוח לא נמצא');
+
+ if (report.year && report.month) {
+ const eligibility = this.canSubmitReport(report.year, report.month, checkDate);
+ if (!eligibility.allowed) {
+ throw new Error(eligibility.reason);
+ }
+ }
 
  report.status = 'pending_principal';
  report.submittedAt = new Date().toISOString();
  report.auditHistory = report.auditHistory || [];
  report.auditHistory.push({
  date: formatDateTime(new Date()),
- user: `${user.name} (מורה)`,
+ user: `${user ? user.name : 'מורה'} (מורה)`,
  action: 'הגשת הדוח לאישור מנהל/ת בית הספר'
  });
 
