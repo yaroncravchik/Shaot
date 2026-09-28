@@ -220,33 +220,6 @@ const Auth = {
         </div>
       </div>
 
-      <!-- Formal Testing Role Switcher Bar -->
-      <div class="role-switcher-bar" style="background:#0c3058; border-bottom:1px solid #1a4971; padding:8px 0; color:#ffffff;">
-        <div class="container flex justify-between items-center flex-wrap gap-sm">
-          <div class="flex items-center gap-xs" style="font-size:0.8125rem; font-weight:600; color:#8dcdff;">
-            <svg style="width:16px; height:16px; fill:#8dcdff;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
-            <span>החלפת תפקיד לבדיקה:</span>
-          </div>
-          <div class="flex items-center gap-xs flex-wrap">
-            <button type="button" class="btn btn-sm ${currentRole === 'teacher' && window.location.pathname.includes('teacher.html') ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('teacher')">
-              מורה: ישראל
-            </button>
-            <button type="button" class="btn btn-sm ${currentRole === 'principal' ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('principal')">
-              מנהלת: שרה (קישור ישיר)
-            </button>
-            <button type="button" class="btn btn-sm ${currentRole === 'supervisor' ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('supervisor')">
-              מנחה: אברהם (מרכז)
-            </button>
-            <button type="button" class="btn btn-sm ${currentRole === 'admin' ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px;" onclick="Auth.switchRole('admin')">
-              ממונה: רונן (מרכז)
-            </button>
-            <button type="button" class="btn btn-sm ${currentRole === 'site_admin' || currentRole === 'superadmin' ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px; font-size:0.75rem; border-radius:4px; font-weight:700; border-color:#8dcdff;" onclick="Auth.switchRole('site_admin')">
-              ⚙️ מנהל אתר
-            </button>
-          </div>
-        </div>
-      </div>
-
       <!-- Main Navigation Header -->
       <header class="main-header">
         <div class="container header-container">
