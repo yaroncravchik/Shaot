@@ -142,7 +142,7 @@ function renderTeachersList(teachers) {
   tbody.innerHTML = '';
 
   if (!teachers || teachers.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted p-4">לא נמצאו מורי של"ח משויכים התואמים את החיפוש</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted p-4">לא נמצאו מורי של"ח משויכים התואמים את החיפוש</td></tr>`;
     return;
   }
 
@@ -195,11 +195,6 @@ function renderTeachersList(teachers) {
       </td>
       <td>
         ${fieldDaysHtml}
-      </td>
-      <td style="text-align:center;">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="openTeacherProfileModal('${t.id}')" title="צפייה במערכת השעות ופרטי המורה">
-          👁️ צפה בפרופיל
-        </button>
       </td>
     `;
     tbody.appendChild(tr);
