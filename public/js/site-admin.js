@@ -319,6 +319,8 @@ function renderUsersTable(users) {
         </a>`
       : (u.name || '—');
 
+    const userPassword = u.password || u.phone || '—';
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="text-align:center; font-weight:600; color:var(--on-surface-variant);">${index + 1}</td>
@@ -327,6 +329,7 @@ function renderUsersTable(users) {
         <div style="font-size:0.75rem; color:var(--on-surface-variant);">${u.email || ''}</div>
       </td>
       <td><code>${u.id}</code></td>
+      <td><code style="background:#f8f9fa; border:1px solid #dee2e6; color:#0c3058; padding:2px 6px; border-radius:4px; font-weight:600;">${userPassword}</code></td>
       <td><span class="badge ${roleMeta.cls}">${roleMeta.label}</span></td>
       <td><span class="badge" style="background:#f0f4f8; color:#0c3058;">${u.district || 'מרכז'}</span></td>
       <td>
@@ -334,9 +337,6 @@ function renderUsersTable(users) {
         ${u.schoolCode ? `<div style="font-size:0.75rem; color:var(--on-surface-variant);">סמל: ${u.schoolCode}</div>` : ''}
       </td>
       <td>${u.supervisorName || '<span class="text-muted">—</span>'}</td>
-      <td style="font-size:0.8125rem;">
-        <div>📞 ${u.phone || '—'}</div>
-      </td>
       <td style="text-align:center;">
         <div class="flex items-center justify-center gap-xs">
           <button type="button" class="btn btn-sm btn-outline-primary" title="עריכת משתמש" onclick="openEditUserModal('${u.id}')" style="padding:3px 8px; font-size:0.75rem;">
@@ -607,7 +607,7 @@ function openEditUserModal(userId) {
   document.getElementById('site-edit-last-name').value = lastName;
   document.getElementById('site-edit-district').value = user.district || 'מרכז';
   document.getElementById('site-edit-username').value = user.id;
-  document.getElementById('site-edit-password').value = user.phone || '';
+  document.getElementById('site-edit-password').value = user.password || user.phone || '';
   document.getElementById('site-edit-email').value = user.email || '';
   document.getElementById('site-edit-phone').value = user.phone || '';
 
