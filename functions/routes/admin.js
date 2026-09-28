@@ -477,6 +477,7 @@ router.post('/create-user', (req, res) => {
       last_name,
       username,
       password,
+      phone,
       supervisor_id,
       school_name,
       school_code,
@@ -512,12 +513,13 @@ router.post('/create-user', (req, res) => {
 
     const cleanUsername = username.trim();
     const cleanPassword = password.trim();
+    const cleanPhone = phone ? phone.trim() : '';
     const fullName = `${first_name.trim()} ${last_name.trim()}`;
 
     // Check if user with this username already exists
-    const existing = db.prepare('SELECT id FROM users WHERE id_number = ? OR phone = ?').get(cleanUsername, cleanPassword);
+    const existing = db.prepare('SELECT id FROM users WHERE id_number = ?').get(cleanUsername);
     if (existing) {
-      return res.status(400).json({ success: false, error: 'קיים כבר משתמש עם שם משתמש או פרטי הזדהות אלו במערכת.' });
+      return res.status(400).json({ success: false, error: 'קיים כבר משתמש עם שם משתמש זה במערכת.' });
     }
 
     const newUserId = `usr_${role}_${Date.now()}_${crypto.randomUUID().substring(0, 6)}`;
@@ -533,7 +535,7 @@ router.post('/create-user', (req, res) => {
 
     db.prepare(`
       INSERT INTO users (
-        id, role, id_number, phone, full_name, email,
+        id, role, id_number, phone, password, full_name, email,
         school_code, school_name, district, municipality,
         job_percentage, consent_signed, consent_timestamp,
         principal_id, principal_name, principal_email, supervisor_id, created_at
@@ -542,6 +544,7 @@ router.post('/create-user', (req, res) => {
       newUserId,
       role,
       cleanUsername,
+      cleanPhone,
       cleanPassword,
       fullName,
       userEmail,
@@ -706,7 +709,8 @@ router.put('/users/:id', (req, res) => {
       newFullName = full_name.trim();
     }
 
-    const newPhone = password ? String(password).trim() : (phone ? String(phone).trim() : user.phone);
+    const newPhone = phone !== undefined ? (phone ? String(phone).trim() : '') : user.phone;
+    const newPassword = password !== undefined && String(password).trim() !== '' ? String(password).trim() : (user.password || user.phone);
     const newEmail = email !== undefined ? (email ? email.trim() : null) : user.email;
     const newSchoolCode = school_code !== undefined ? (school_code ? school_code.trim() : null) : user.school_code;
     const newSchoolName = school_name !== undefined ? (school_name ? school_name.trim() : null) : user.school_name;
@@ -719,6 +723,7 @@ router.put('/users/:id', (req, res) => {
       UPDATE users SET
         full_name = ?,
         phone = ?,
+        password = ?,
         email = ?,
         school_code = ?,
         school_name = ?,
@@ -730,6 +735,7 @@ router.put('/users/:id', (req, res) => {
     `).run(
       newFullName,
       newPhone,
+      newPassword,
       newEmail,
       newSchoolCode,
       newSchoolName,

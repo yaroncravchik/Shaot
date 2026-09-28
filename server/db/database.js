@@ -89,6 +89,7 @@ function initSchema() {
       role TEXT NOT NULL CHECK(role IN ('teacher', 'principal', 'supervisor', 'admin', 'site_admin', 'superadmin')),
       id_number TEXT UNIQUE NOT NULL,
       phone TEXT NOT NULL,
+      password TEXT,
       full_name TEXT NOT NULL,
       email TEXT NOT NULL,
       school_code TEXT,
@@ -189,6 +190,12 @@ function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_report_days_report_id ON report_days(report_id);
     CREATE INDEX IF NOT EXISTS idx_audit_logs_report_id ON audit_logs(report_id);
   `);
+
+  try {
+    dbWrapper.exec('ALTER TABLE users ADD COLUMN password TEXT;');
+  } catch (e) {
+    // Column already exists
+  }
 }
 
 // Initialize tables

@@ -32,13 +32,19 @@ const Auth = {
 
     const users = API.getUsers();
     // Find matching authorized user
-    const found = users.find(u => 
-      u.id === cleanUsername && 
-      (
-        (u.password && u.password === cleanPassword) ||
-        (u.phone && (u.phone === cleanPassword || u.phone.replace(/[-\s]/g, '') === cleanPassword.replace(/[-\s]/g, '')))
-      )
-    );
+    const found = users.find(u => {
+      const matchUsername = (String(u.id) === cleanUsername || (u.id_number && String(u.id_number) === cleanUsername));
+      if (!matchUsername) return false;
+
+      if (u.password) {
+        return u.password === cleanPassword;
+      }
+      // Fallback for legacy records without a password field
+      if (u.phone) {
+        return u.phone === cleanPassword || u.phone.replace(/[-\s]/g, '') === cleanPassword.replace(/[-\s]/g, '');
+      }
+      return false;
+    });
 
     if (!found) {
       throw new Error('שם המשתמש או הסיסמה שגויים. נא לפנות למנחה המחוזי.');
@@ -82,7 +88,7 @@ const Auth = {
       case 'superadmin':
         targetUser = users.find(u => u.role === 'site_admin' || u.role === 'superadmin') || {
           id: 'admin',
-          phone: 'Yaron111',
+          phone: '0500000000',
           password: 'Yaron111',
           name: 'מנהל אתר ראשי',
           role: 'site_admin',
@@ -148,7 +154,7 @@ const Auth = {
       if (window.location.pathname.includes('site-admin.html')) {
         user = users.find(u => u.role === 'site_admin') || {
           id: 'admin',
-          phone: 'Yaron111',
+          phone: '0500000000',
           password: 'Yaron111',
           name: 'מנהל אתר ראשי',
           role: 'site_admin',

@@ -131,12 +131,13 @@ function setupEventListeners(currentUser) {
     if (document.getElementById('field-fri').checked) updatedFieldDays.push(5);
 
     const passwordVal = document.getElementById('prof-password').value.trim();
+    const phoneVal = document.getElementById('prof-phone').value.trim();
 
     const updatedUser = {
       ...currentUser,
       name: document.getElementById('prof-name').value.trim(),
-      password: passwordVal || currentUser.password || currentUser.phone,
-      phone: document.getElementById('prof-phone').value.trim(),
+      password: passwordVal ? passwordVal : (currentUser.password || currentUser.phone || ''),
+      phone: phoneVal,
       email: document.getElementById('prof-email').value.trim(),
       jobScope: parseFloat(document.getElementById('prof-job-scope').value) || 100,
       address: document.getElementById('prof-address').value.trim(),

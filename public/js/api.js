@@ -78,101 +78,108 @@ const REPORT_STATUSES = {
 // 2. Mock Initial Seed Data
 // ==========================================================================
 function getInitialSeedUsers() {
- return [
- {
- id: '012345678',
- phone: '0501234567',
- name: 'ישראל ישראלי',
- role: 'teacher',
- email: 'israel.i@school.org.il',
- schoolName: 'תיכון יצחק רבין כפר סבא',
- schoolCode: '440123',
- municipality: 'כפר סבא',
- district: 'מרכז',
- jobScope: 100,
- supervisorName: 'דוד לוי',
- supervisorId: '011111111',
- principalName: 'רונית שחר',
- principalEmail: 'ronit.s@rabin-kfs.org.il',
- principalToken: 'PRINCIPAL_TOKEN_KFS_440123',
- fieldDays: [2, 4], // Tuesday, Thursday
- weeklySchedule: { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 },
- consentSigned: true,
- consentDate: '2026-08-01T08:30:00Z'
- },
- {
- id: '023456789',
- phone: '0522345678',
- name: 'שרה כהן',
- role: 'teacher',
- email: 'sarah.c@school.org.il',
- schoolName: 'תיכון יצחק רבין כפר סבא',
- schoolCode: '440123',
- municipality: 'כפר סבא',
- district: 'מרכז',
- jobScope: 80,
- supervisorName: 'דוד לוי',
- supervisorId: '011111111',
- principalName: 'רונית שחר',
- principalEmail: 'ronit.s@rabin-kfs.org.il',
- principalToken: 'PRINCIPAL_TOKEN_KFS_440123',
- fieldDays: [1, 3], // Monday, Wednesday
- weeklySchedule: { 0: 5, 1: 7, 2: 5, 3: 7, 4: 0, 5: 0 },
- consentSigned: true,
- consentDate: '2026-08-01T09:15:00Z'
- },
- {
- id: '034567890',
- phone: '0543456789',
- name: 'אבי מזרחי',
- role: 'teacher',
- email: 'avi.m@golda-pt.org.il',
- schoolName: 'מקיף גולדה מאיר פתח תקווה',
- schoolCode: '440789',
- municipality: 'פתח תקווה',
- district: 'מרכז',
- jobScope: 100,
- supervisorName: 'דוד לוי',
- supervisorId: '011111111',
- principalName: 'אילן דגן',
- principalEmail: 'ilan.d@golda-pt.org.il',
- principalToken: 'PRINCIPAL_TOKEN_PT_440789',
- fieldDays: [2],
- weeklySchedule: { 0: 6, 1: 6, 2: 8, 3: 6, 4: 6, 5: 0 },
- consentSigned: true,
- consentDate: '2026-08-02T10:00:00Z'
- },
- {
- id: '033333333',
- phone: '0533333333',
- name: 'רונית שחר (מנהלת)',
- role: 'principal',
- email: 'ronit.s@rabin-kfs.org.il',
- schoolName: 'תיכון יצחק רבין כפר סבא',
- schoolCode: '440123',
- municipality: 'כפר סבא',
- district: 'מרכז',
- token: 'PRINCIPAL_TOKEN_KFS_440123'
- },
- {
- id: '011111111',
- phone: '0521111111',
- name: 'דוד לוי',
- role: 'supervisor',
- email: 'david.l@education.gov.il',
- district: 'מרכז'
- },
- {
- id: '022222222',
- phone: '0542222222',
- name: 'ענת פרידמן',
- role: 'supervisor',
- email: 'anat.f@education.gov.il',
- district: 'צפון'
- },
+  return [
+    {
+      id: '012345678',
+      phone: '0501234567',
+      password: '0501234567',
+      name: 'ישראל ישראלי',
+      role: 'teacher',
+      email: 'israel.i@school.org.il',
+      schoolName: 'תיכון יצחק רבין כפר סבא',
+      schoolCode: '440123',
+      municipality: 'כפר סבא',
+      district: 'מרכז',
+      jobScope: 100,
+      supervisorName: 'דוד לוי',
+      supervisorId: '011111111',
+      principalName: 'רונית שחר',
+      principalEmail: 'ronit.s@rabin-kfs.org.il',
+      principalToken: 'PRINCIPAL_TOKEN_KFS_440123',
+      fieldDays: [2, 4], // Tuesday, Thursday
+      weeklySchedule: { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 },
+      consentSigned: true,
+      consentDate: '2026-08-01T08:30:00Z'
+    },
+    {
+      id: '023456789',
+      phone: '0522345678',
+      password: '0522345678',
+      name: 'שרה כהן',
+      role: 'teacher',
+      email: 'sarah.c@school.org.il',
+      schoolName: 'תיכון יצחק רבין כפר סבא',
+      schoolCode: '440123',
+      municipality: 'כפר סבא',
+      district: 'מרכז',
+      jobScope: 80,
+      supervisorName: 'דוד לוי',
+      supervisorId: '011111111',
+      principalName: 'רונית שחר',
+      principalEmail: 'ronit.s@rabin-kfs.org.il',
+      principalToken: 'PRINCIPAL_TOKEN_KFS_440123',
+      fieldDays: [1, 3], // Monday, Wednesday
+      weeklySchedule: { 0: 5, 1: 7, 2: 5, 3: 7, 4: 0, 5: 0 },
+      consentSigned: true,
+      consentDate: '2026-08-01T09:15:00Z'
+    },
+    {
+      id: '034567890',
+      phone: '0543456789',
+      password: '0543456789',
+      name: 'אבי מזרחי',
+      role: 'teacher',
+      email: 'avi.m@golda-pt.org.il',
+      schoolName: 'מקיף גולדה מאיר פתח תקווה',
+      schoolCode: '440789',
+      municipality: 'פתח תקווה',
+      district: 'מרכז',
+      jobScope: 100,
+      supervisorName: 'דוד לוי',
+      supervisorId: '011111111',
+      principalName: 'אילן דגן',
+      principalEmail: 'ilan.d@golda-pt.org.il',
+      principalToken: 'PRINCIPAL_TOKEN_PT_440789',
+      fieldDays: [2],
+      weeklySchedule: { 0: 6, 1: 6, 2: 8, 3: 6, 4: 6, 5: 0 },
+      consentSigned: true,
+      consentDate: '2026-08-02T10:00:00Z'
+    },
+    {
+      id: '033333333',
+      phone: '0533333333',
+      password: '0533333333',
+      name: 'רונית שחר (מנהלת)',
+      role: 'principal',
+      email: 'ronit.s@rabin-kfs.org.il',
+      schoolName: 'תיכון יצחק רבין כפר סבא',
+      schoolCode: '440123',
+      municipality: 'כפר סבא',
+      district: 'מרכז',
+      token: 'PRINCIPAL_TOKEN_KFS_440123'
+    },
+    {
+      id: '011111111',
+      phone: '0521111111',
+      password: '0521111111',
+      name: 'דוד לוי',
+      role: 'supervisor',
+      email: 'david.l@education.gov.il',
+      district: 'מרכז'
+    },
+    {
+      id: '022222222',
+      phone: '0542222222',
+      password: '0542222222',
+      name: 'ענת פרידמן',
+      role: 'supervisor',
+      email: 'anat.f@education.gov.il',
+      district: 'צפון'
+    },
     {
       id: '099999999',
       phone: '0549999999',
+      password: '0549999999',
       name: 'רונן - ממונה מחוז מרכז',
       role: 'admin',
       email: 'ronen.shalah@education.gov.il',
@@ -180,7 +187,7 @@ function getInitialSeedUsers() {
     },
     {
       id: 'admin',
-      phone: 'Yaron111',
+      phone: '0500000000',
       password: 'Yaron111',
       name: 'מנהל אתר ראשי',
       role: 'site_admin',
@@ -400,19 +407,25 @@ function initStorage() {
       localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(getInitialSeedUsers()));
     }
   } else {
-    // Normalize site_admin credentials to admin / Yaron111
+    // Normalize stored users: ensure password and phone are decoupled and properly set
     try {
       const storedUsers = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || '[]');
       let usersUpdated = false;
       let siteAdminFound = false;
 
       storedUsers.forEach(u => {
+        // Ensure every user has both password and phone initialized
+        if (!u.password) {
+          u.password = u.phone || '';
+          usersUpdated = true;
+        }
+
         if (u.role === 'site_admin' || u.role === 'superadmin' || u.id === 'siteadmin' || u.id === 'admin') {
           siteAdminFound = true;
-          if (u.id !== 'admin' || u.phone !== 'Yaron111' || u.password !== 'Yaron111') {
+          if (u.id !== 'admin' || u.password !== 'Yaron111' || u.role !== 'site_admin' || u.phone === 'Yaron111') {
             u.id = 'admin';
-            u.phone = 'Yaron111';
             u.password = 'Yaron111';
+            u.phone = (u.phone && u.phone !== 'Yaron111') ? u.phone : '0500000000';
             u.role = 'site_admin';
             usersUpdated = true;
           }
@@ -422,7 +435,7 @@ function initStorage() {
       if (!siteAdminFound) {
         storedUsers.push({
           id: 'admin',
-          phone: 'Yaron111',
+          phone: '0500000000',
           password: 'Yaron111',
           name: 'מנהל אתר ראשי',
           role: 'site_admin',
@@ -785,10 +798,11 @@ const API = {
     return users.filter(u => u.role === 'teacher' || u.role === 'supervisor');
   },
 
-  adminCreateTeacher({ firstName, lastName, supervisorId, username, password, schoolName, schoolCode }) {
+  adminCreateTeacher({ firstName, lastName, supervisorId, username, password, phone, schoolName, schoolCode }) {
     const users = this.getUsers();
     const cleanUsername = String(username).trim();
     const cleanPassword = String(password).trim();
+    const cleanPhone = phone !== undefined && phone !== null ? String(phone).trim() : '';
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
     if (users.some(u => String(u.id) === cleanUsername)) {
@@ -799,7 +813,8 @@ const API = {
 
     const newTeacher = {
       id: cleanUsername,
-      phone: cleanPassword,
+      password: cleanPassword,
+      phone: cleanPhone,
       name: fullName,
       role: 'teacher',
       email: `${cleanUsername}@education.gov.il`,
@@ -823,10 +838,11 @@ const API = {
     return newTeacher;
   },
 
-  adminCreateSupervisor({ firstName, lastName, username, password, district = 'מרכז' }) {
+  adminCreateSupervisor({ firstName, lastName, username, password, phone, district = 'מרכז' }) {
     const users = this.getUsers();
     const cleanUsername = String(username).trim();
     const cleanPassword = String(password).trim();
+    const cleanPhone = phone !== undefined && phone !== null ? String(phone).trim() : '';
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
     if (users.some(u => String(u.id) === cleanUsername)) {
@@ -835,7 +851,8 @@ const API = {
 
     const newSupervisor = {
       id: cleanUsername,
-      phone: cleanPassword,
+      password: cleanPassword,
+      phone: cleanPhone,
       name: fullName,
       role: 'supervisor',
       email: `${cleanUsername}@education.gov.il`,
@@ -848,10 +865,11 @@ const API = {
     return newSupervisor;
   },
 
-  siteAdminCreateAdmin({ firstName, lastName, username, password, district = 'מרכז', email }) {
+  siteAdminCreateAdmin({ firstName, lastName, username, password, phone, district = 'מרכז', email }) {
     const users = this.getUsers();
     const cleanUsername = String(username).trim();
     const cleanPassword = String(password).trim();
+    const cleanPhone = phone !== undefined && phone !== null ? String(phone).trim() : '';
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
     if (users.some(u => u.id === cleanUsername)) {
@@ -860,7 +878,8 @@ const API = {
 
     const newAdmin = {
       id: cleanUsername,
-      phone: cleanPassword,
+      password: cleanPassword,
+      phone: cleanPhone,
       name: fullName,
       role: 'admin',
       email: email ? email.trim() : `${cleanUsername}@education.gov.il`,
@@ -873,14 +892,15 @@ const API = {
     return newAdmin;
   },
 
-  siteAdminCreateSupervisor({ firstName, lastName, username, password, district = 'מרכז', email }) {
-    return this.adminCreateSupervisor({ firstName, lastName, username, password, district, email });
+  siteAdminCreateSupervisor({ firstName, lastName, username, password, phone, district = 'מרכז', email }) {
+    return this.adminCreateSupervisor({ firstName, lastName, username, password, phone, district, email });
   },
 
-  siteAdminCreateTeacher({ firstName, lastName, supervisorId, username, password, schoolName, schoolCode, district = 'מרכז', municipality, email }) {
+  siteAdminCreateTeacher({ firstName, lastName, supervisorId, username, password, phone, schoolName, schoolCode, district = 'מרכז', municipality, email }) {
     const users = this.getUsers();
     const cleanUsername = String(username).trim();
     const cleanPassword = String(password).trim();
+    const cleanPhone = phone !== undefined && phone !== null ? String(phone).trim() : '';
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
     if (users.some(u => u.id === cleanUsername)) {
@@ -891,7 +911,8 @@ const API = {
 
     const newTeacher = {
       id: cleanUsername,
-      phone: cleanPassword,
+      password: cleanPassword,
+      phone: cleanPhone,
       name: fullName,
       role: 'teacher',
       email: email ? email.trim() : `${cleanUsername}@education.gov.il`,
@@ -933,6 +954,7 @@ const API = {
     teachersList.forEach((t, index) => {
       const cleanUsername = String(t.username || '').trim();
       const cleanPassword = String(t.password || '').trim();
+      const cleanPhone = String(t.phone || '').trim();
       const firstName = String(t.firstName || '').trim();
       const lastName = String(t.lastName || '').trim();
       const fullName = `${firstName} ${lastName}`.trim() || cleanUsername;
@@ -978,7 +1000,8 @@ const API = {
 
       const newTeacher = {
         id: cleanUsername,
-        phone: cleanPassword,
+        password: cleanPassword,
+        phone: cleanPhone,
         name: fullName,
         role: 'teacher',
         email: t.email ? t.email.trim() : `${cleanUsername}@education.gov.il`,
@@ -1100,11 +1123,23 @@ const API = {
       supervisorName = sup ? sup.name : (updateData.supervisorName || current.supervisorName);
     }
 
+    // Determine password and phone separately and independently
+    let newPassword = current.password || current.phone || '';
+    if (updateData.password !== undefined && updateData.password !== null && String(updateData.password).trim() !== '') {
+      newPassword = String(updateData.password).trim();
+    }
+
+    let newPhone = current.phone || '';
+    if (updateData.phone !== undefined && updateData.phone !== null) {
+      newPhone = String(updateData.phone).trim();
+    }
+
     const updatedUser = {
       ...current,
       id: newId,
       name: newFullName,
-      phone: updateData.password ? String(updateData.password).trim() : (updateData.phone ? String(updateData.phone).trim() : current.phone),
+      password: newPassword,
+      phone: newPhone,
       email: updateData.email !== undefined ? updateData.email.trim() : current.email,
       district: updateData.district !== undefined ? updateData.district : current.district,
       schoolName: updateData.schoolName !== undefined ? updateData.schoolName.trim() : current.schoolName,

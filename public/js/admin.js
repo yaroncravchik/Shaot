@@ -230,6 +230,7 @@ function openEditUserModal(userId) {
   const lnEl = document.getElementById('edit-user-last-name');
   const unEl = document.getElementById('edit-user-username');
   const pwEl = document.getElementById('edit-user-password');
+  const phEl = document.getElementById('edit-user-phone');
   const emEl = document.getElementById('edit-user-email');
   const distEl = document.getElementById('edit-user-district');
 
@@ -238,7 +239,8 @@ function openEditUserModal(userId) {
   if (fnEl) fnEl.value = firstName;
   if (lnEl) lnEl.value = lastName;
   if (unEl) unEl.value = user.id;
-  if (pwEl) pwEl.value = user.phone || user.password || '';
+  if (pwEl) pwEl.value = user.password || user.phone || '';
+  if (phEl) phEl.value = user.phone || '';
   if (emEl) emEl.value = user.email || '';
   if (distEl) distEl.value = user.district || 'מרכז';
 
@@ -291,6 +293,8 @@ function handleEditUserSubmit(e) {
   const lastName = document.getElementById('edit-user-last-name').value.trim();
   const username = document.getElementById('edit-user-username').value.trim();
   const password = document.getElementById('edit-user-password').value.trim();
+  const phoneEl = document.getElementById('edit-user-phone');
+  const phone = phoneEl ? phoneEl.value.trim() : '';
   const email = document.getElementById('edit-user-email').value.trim();
 
   if (!firstName || !lastName || !username || !password) {
@@ -303,6 +307,7 @@ function handleEditUserSubmit(e) {
     lastName,
     username,
     password,
+    phone,
     email,
     district: 'מרכז'
   };

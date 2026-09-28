@@ -435,7 +435,8 @@ function handleAddAdminSubmit(e) {
         firstName,
         lastName,
         username,
-        password: phone || password,
+        password,
+        phone,
         district,
         email
       });
@@ -487,7 +488,8 @@ function handleAddSupervisorSubmit(e) {
         firstName,
         lastName,
         username,
-        password: phone || password,
+        password,
+        phone,
         district,
         email
       });
@@ -568,7 +570,8 @@ function handleAddTeacherSubmit(e) {
         lastName,
         supervisorId,
         username,
-        password: phone || password,
+        password,
+        phone,
         schoolName,
         schoolCode,
         district,
@@ -677,7 +680,8 @@ function handleEditUserSubmit(e) {
     firstName,
     lastName,
     username,
-    password: phone || password,
+    password,
+    phone,
     email,
     district
   };
