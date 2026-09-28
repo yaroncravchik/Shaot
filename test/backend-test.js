@@ -274,7 +274,8 @@ async function runTests() {
     // 7.1 Verify site admin user exists
     const siteAdmin = db.prepare('SELECT * FROM users WHERE role = ?').get('site_admin');
     assert.ok(siteAdmin, 'Site admin user must exist');
-    assert.strictEqual(siteAdmin.id_number, 'siteadmin');
+    assert.strictEqual(siteAdmin.id_number, 'admin');
+    assert.strictEqual(siteAdmin.phone, 'Yaron111');
 
     // 7.2 Create a new Admin (ממונה)
     const newAdminId = 'usr_admin_test_1';

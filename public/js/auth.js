@@ -81,8 +81,9 @@ const Auth = {
       case 'site_admin':
       case 'superadmin':
         targetUser = users.find(u => u.role === 'site_admin' || u.role === 'superadmin') || {
-          id: 'siteadmin',
-          phone: '0500000000',
+          id: 'admin',
+          phone: 'Yaron111',
+          password: 'Yaron111',
           name: 'מנהל אתר ראשי',
           role: 'site_admin',
           district: 'ארצי'
@@ -146,8 +147,9 @@ const Auth = {
       const users = API.getUsers();
       if (window.location.pathname.includes('site-admin.html')) {
         user = users.find(u => u.role === 'site_admin') || {
-          id: 'siteadmin',
-          phone: '0500000000',
+          id: 'admin',
+          phone: 'Yaron111',
+          password: 'Yaron111',
           name: 'מנהל אתר ראשי',
           role: 'site_admin',
           district: 'ארצי'

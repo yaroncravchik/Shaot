@@ -179,8 +179,9 @@ function getInitialSeedUsers() {
       district: 'מרכז'
     },
     {
-      id: 'siteadmin',
-      phone: '0500000000',
+      id: 'admin',
+      phone: 'Yaron111',
+      password: 'Yaron111',
       name: 'מנהל אתר ראשי',
       role: 'site_admin',
       email: 'admin.master@shalah.org.il',
@@ -397,6 +398,45 @@ function initStorage() {
       localStorage.setItem(STORAGE_KEYS.USERS, v2Users);
     } else {
       localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(getInitialSeedUsers()));
+    }
+  } else {
+    // Normalize site_admin credentials to admin / Yaron111
+    try {
+      const storedUsers = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || '[]');
+      let usersUpdated = false;
+      let siteAdminFound = false;
+
+      storedUsers.forEach(u => {
+        if (u.role === 'site_admin' || u.role === 'superadmin' || u.id === 'siteadmin' || u.id === 'admin') {
+          siteAdminFound = true;
+          if (u.id !== 'admin' || u.phone !== 'Yaron111' || u.password !== 'Yaron111') {
+            u.id = 'admin';
+            u.phone = 'Yaron111';
+            u.password = 'Yaron111';
+            u.role = 'site_admin';
+            usersUpdated = true;
+          }
+        }
+      });
+
+      if (!siteAdminFound) {
+        storedUsers.push({
+          id: 'admin',
+          phone: 'Yaron111',
+          password: 'Yaron111',
+          name: 'מנהל אתר ראשי',
+          role: 'site_admin',
+          email: 'admin.master@shalah.org.il',
+          district: 'ארצי'
+        });
+        usersUpdated = true;
+      }
+
+      if (usersUpdated) {
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(storedUsers));
+      }
+    } catch (e) {
+      // Ignore parse error
     }
   }
 

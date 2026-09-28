@@ -88,8 +88,8 @@ const initialUsers = [
   {
     id: 'usr_site_admin_1',
     role: 'site_admin',
-    id_number: 'siteadmin',
-    phone: '0500000000',
+    id_number: 'admin',
+    phone: 'Yaron111',
     full_name: 'מנהל אתר ראשי',
     email: 'admin.master@shalah.org.il',
     school_code: null,
