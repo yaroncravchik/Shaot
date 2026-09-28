@@ -9,6 +9,77 @@ const { generateReportsSummaryExcel } = require('../services/excelService');
  * GET /api/supervisor/reports/:supervisorId
  * Get all reports for teachers in supervisor's district / assigned teachers
  */
+/**
+ * GET /api/supervisor/teachers/:supervisorId
+ * Get all teachers assigned to this supervisor with schedules and credentials
+ */
+router.get('/teachers/:supervisorId', (req, res) => {
+  try {
+    const { supervisorId } = req.params;
+    const supervisor = db.prepare('SELECT * FROM users WHERE id = ?').get(supervisorId);
+    if (!supervisor) {
+      return res.status(404).json({ success: false, error: 'מנחה לא נמצא.' });
+    }
+
+    const teachers = db.prepare(`
+      SELECT 
+        u.id,
+        u.role,
+        u.id_number,
+        u.phone,
+        COALESCE(u.password, u.phone) as password,
+        u.full_name as name,
+        u.email,
+        u.school_code as schoolCode,
+        u.school_name as schoolName,
+        u.district,
+        u.municipality,
+        u.job_percentage as jobScope,
+        u.principal_name as principalName,
+        u.principal_email as principalEmail,
+        u.supervisor_id as supervisorId,
+        sup.full_name as supervisorName
+      FROM users u
+      LEFT JOIN users sup ON u.supervisor_id = sup.id
+      WHERE u.role = 'teacher' AND (u.supervisor_id = ? OR u.district = ?)
+      ORDER BY u.full_name ASC
+    `).all(supervisorId, supervisor.district);
+
+    const getSchedule = db.prepare('SELECT day_of_week, regular_hours, is_field_day FROM teacher_schedules WHERE user_id = ?');
+
+    const result = teachers.map(t => {
+      const sched = getSchedule.all(t.id);
+      const weeklySchedule = {};
+      const fieldDays = [];
+      sched.forEach(s => {
+        weeklySchedule[s.day_of_week] = s.regular_hours;
+        if (s.is_field_day) {
+          fieldDays.push(s.day_of_week);
+        }
+      });
+
+      return {
+        ...t,
+        weeklySchedule,
+        fieldDays
+      };
+    });
+
+    return res.json({
+      success: true,
+      supervisor: {
+        id: supervisor.id,
+        name: supervisor.full_name,
+        district: supervisor.district
+      },
+      teachers: result
+    });
+  } catch (err) {
+    console.error('Supervisor teachers error:', err);
+    return res.status(500).json({ success: false, error: 'שגיאה בטעינת מורי המנחה.' });
+  }
+});
+
 router.get('/reports/:supervisorId', (req, res) => {
   try {
     const { supervisorId } = req.params;

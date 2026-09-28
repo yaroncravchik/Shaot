@@ -76,7 +76,50 @@
  </div>
 
  <!-- District Teachers Reports Filter & List Card -->
- <div class="card mb-4">
+   <!-- Assigned Teachers Card (מורי של"ח משויכים למנחה) -->
+  <div class="card mb-4" id="sup-teachers-card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title" style="display:flex; align-items:center; gap:8px; margin:0;">
+          <span>👥</span>
+          <span>מורי של"ח משויכים למנחה</span>
+          <span class="badge badge-primary" id="sup-teachers-count-badge" style="font-size:0.8125rem;">0 מורים</span>
+        </h3>
+        <p class="text-muted" style="font-size:0.8125rem; margin:4px 0 0 0;">
+          רשימת המורים המשויכים להנחייתך, פרטי התקשרות, מוסד חינוכי, ימי שדה קבועים ופרטי התחברות (שם משתמש וסיסמה)
+        </p>
+      </div>
+      <div class="flex items-center gap-sm flex-wrap">
+        <input type="text" id="sup-teachers-search" class="form-control" placeholder="חיפוש לפי שם מורה, שם משתמש, סיסמה או בי&quot;ס..." style="width: 280px; height: 38px;">
+      </div>
+    </div>
+
+    <div class="card-body" style="padding:0;">
+      <div class="table-responsive" style="margin:0;">
+        <table class="gov-table">
+          <thead>
+            <tr>
+              <th style="width: 40px; text-align: center;">#</th>
+              <th>שם המורה</th>
+              <th>שם משתמש</th>
+              <th>סיסמה</th>
+              <th>טלפון נייד</th>
+              <th>מוסד חינוכי</th>
+              <th>רשות / מחוז</th>
+              <th style="text-align: center;">היקף משרה</th>
+              <th>ימי שדה קבועים</th>
+              <th style="text-align: center;">פעולות</th>
+            </tr>
+          </thead>
+          <tbody id="sup-teachers-tbody">
+            <!-- Loaded via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<div class="card mb-4">
  <div class="card-header">
  <h3 class="card-title">
  <span></span>

@@ -534,6 +534,29 @@ const API = {
  },
 
  // Reports
+
+	getTeachersBySupervisor(supervisor) {
+		if (!supervisor) return [];
+		const users = this.getUsers();
+		const supId = String(typeof supervisor === 'object' ? (supervisor.id || '') : supervisor).trim();
+		const supName = String(typeof supervisor === 'object' ? (supervisor.name || '') : '').trim();
+		const supDistrict = String(typeof supervisor === 'object' ? (supervisor.district || '') : '').trim();
+
+		// 1. Match by supervisorId or supervisorName
+		let teachers = users.filter(u => u.role === 'teacher' && (
+			(supId && String(u.supervisorId || '').trim() === supId) ||
+			(supName && String(u.supervisorName || '').trim() === supName)
+		));
+
+		// 2. Fallback to matching by district if no explicit supervisor ID match
+		if (teachers.length === 0 && supDistrict) {
+			teachers = users.filter(u => u.role === 'teacher' && String(u.district || '').trim() === supDistrict);
+		}
+
+		return teachers;
+	},
+
+
  getReports(filters = {}) {
  initStorage();
  let reports = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS) || '[]');
@@ -1390,9 +1413,17 @@ function ensureTeacherProfileModalDOM() {
           <!-- Card 2: Contact & Principal Details -->
           <div class="card" style="margin:0; box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid var(--outline, #dee2e6); background:#ffffff;">
             <div class="card-header" style="padding:10px 14px; background:#f8fafc; border-bottom:1px solid #edf2f7;">
-              <strong style="color:#0c3058; font-size:0.9rem;">📞 פרטי קשר ומנהל/ת</strong>
+              <strong style="color:#0c3058; font-size:0.9rem;">📞 פרטי התחברות, קשר ומנהל/ת</strong>
             </div>
             <div class="card-body" style="padding:12px 14px; display:flex; flex-direction:column; gap:8px; font-size:0.875rem;">
+              <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding-bottom:4px;">
+                <span class="text-muted">שם משתמש:</span>
+                <span id="tp-username" style="font-family:monospace; font-weight:700; background:#e8f4fd; color:#0c3058; padding:2px 8px; border-radius:4px;">—</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding-bottom:4px;">
+                <span class="text-muted">סיסמה:</span>
+                <span id="tp-password" style="font-family:monospace; font-weight:700; background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:4px; border:1px solid #fde68a;">—</span>
+              </div>
               <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding-bottom:4px;">
                 <span class="text-muted">טלפון נייד:</span>
                 <span id="tp-phone" style="font-family:monospace; font-weight:600;">—</span>
@@ -1537,6 +1568,11 @@ function openTeacherProfileModal(identifier) {
   if (supEl) supEl.textContent = teacher.supervisorName || 'דוד לוי';
 
   // Populate Contact & Principal Info
+  const unEl = document.getElementById('tp-username');
+  if (unEl) unEl.textContent = teacher.id || '—';
+  const pwEl = document.getElementById('tp-password');
+  if (pwEl) pwEl.textContent = teacher.password || teacher.phone || '—';
+
   const phoneEl = document.getElementById('tp-phone');
   if (phoneEl) phoneEl.textContent = teacher.phone || '—';
   const emailEl = document.getElementById('tp-email');
