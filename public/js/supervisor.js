@@ -30,7 +30,25 @@ function loadSupervisorData() {
     : [];
   renderTeachersList(assignedTeachers);
 
-  districtReports = API.getReports({ district: currentSupervisor.district || 'מרכז' });
+  // Filter reports strictly for teachers assigned to this supervisor
+  const assignedTeacherIds = new Set(assignedTeachers.map(t => String(t.id).trim()));
+  const assignedTeacherNames = new Set(assignedTeachers.map(t => String(t.name).trim()));
+  const supId = String(currentSupervisor.id || '').trim();
+  const supName = String(currentSupervisor.name || '').trim();
+
+  const allReports = (typeof API.getReports === 'function') ? API.getReports() : [];
+  districtReports = allReports.filter(r => {
+    const tId = String(r.teacherId || '').trim();
+    const tName = String(r.teacherName || '').trim();
+    const rSupId = String(r.supervisorId || '').trim();
+    const rSupName = String(r.supervisorName || '').trim();
+
+    return assignedTeacherIds.has(tId) ||
+           (tName && assignedTeacherNames.has(tName)) ||
+           (supId && rSupId === supId) ||
+           (supName && rSupName === supName);
+  });
+
   renderReportsList(districtReports);
   updateSupervisorStats(districtReports, assignedTeachers);
 }

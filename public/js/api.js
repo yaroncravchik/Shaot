@@ -540,20 +540,12 @@ const API = {
 		const users = this.getUsers();
 		const supId = String(typeof supervisor === 'object' ? (supervisor.id || '') : supervisor).trim();
 		const supName = String(typeof supervisor === 'object' ? (supervisor.name || '') : '').trim();
-		const supDistrict = String(typeof supervisor === 'object' ? (supervisor.district || '') : '').trim();
 
-		// 1. Match by supervisorId or supervisorName
-		let teachers = users.filter(u => u.role === 'teacher' && (
+		// Match strictly by supervisorId or supervisorName (unassigned teachers appear only for Admin and Site Admin)
+		return users.filter(u => u.role === 'teacher' && (
 			(supId && String(u.supervisorId || '').trim() === supId) ||
 			(supName && String(u.supervisorName || '').trim() === supName)
 		));
-
-		// 2. Fallback to matching by district if no explicit supervisor ID match
-		if (teachers.length === 0 && supDistrict) {
-			teachers = users.filter(u => u.role === 'teacher' && String(u.district || '').trim() === supDistrict);
-		}
-
-		return teachers;
 	},
 
 

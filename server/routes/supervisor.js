@@ -43,7 +43,7 @@ router.get('/teachers/:supervisorId', (req, res) => {
       LEFT JOIN users sup ON u.supervisor_id = sup.id
       WHERE u.role = 'teacher' AND (u.supervisor_id = ? OR u.district = ?)
       ORDER BY u.full_name ASC
-    `).all(supervisorId, supervisor.district);
+    `).all(supervisorId, supervisorId);
 
     const getSchedule = db.prepare('SELECT day_of_week, regular_hours, is_field_day FROM teacher_schedules WHERE user_id = ?');
 
@@ -109,10 +109,10 @@ router.get('/reports/:supervisorId', (req, res) => {
         COALESCE((SELECT COUNT(*) FROM report_attachments WHERE report_id = r.id), 0) as attachments_count
       FROM reports r
       JOIN users u ON r.user_id = u.id
-      WHERE (u.supervisor_id = ? OR u.district = ?)
+      WHERE (u.supervisor_id = ? OR u.supervisor_id = (SELECT id_number FROM users WHERE id = ?))
     `;
 
-    const params = [supervisorId, supervisor.district];
+    const params = [supervisorId, supervisorId];
 
     if (status) {
       sql += ' AND r.status = ?';
@@ -375,9 +375,9 @@ router.get('/reports/export/:supervisorId', async (req, res) => {
         COALESCE((SELECT SUM(overtime_hours) FROM report_days WHERE report_id = r.id), 0) as total_overtime_hours
       FROM reports r
       JOIN users u ON r.user_id = u.id
-      WHERE (u.supervisor_id = ? OR u.district = ?)
+      WHERE (u.supervisor_id = ? OR u.supervisor_id = (SELECT id_number FROM users WHERE id = ?))
     `;
-    const params = [supervisorId, supervisor.district];
+    const params = [supervisorId, supervisorId];
 
     if (year) {
       sql += ' AND r.year = ?';
