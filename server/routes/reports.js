@@ -69,39 +69,4 @@ router.post('/:id/send-principal-email', async (req, res) => {
   }
 });
 
-/**
- * POST /api/reports/test-email
- * Send live test email to any recipient
- */
-router.post('/test-email', async (req, res) => {
-  try {
-    const { targetEmail, principalName } = req.body || {};
-    if (!targetEmail || !targetEmail.includes('@')) {
-      return res.status(400).json({ success: false, error: 'כתובת דוא"ל אינה תקינה' });
-    }
-
-    const info = await sendPrincipalApprovalEmail({
-      to: targetEmail,
-      principalName: principalName || 'מנהל/ת יקר/ה',
-      teacherName: 'בדיקת מערכת של"ח',
-      teacherId: '012345678',
-      monthName: 'אוגוסט',
-      year: 2026,
-      schoolName: 'תיכון יצחק רבין כפר סבא',
-      schoolCode: '440123',
-      totalOvertime: 14,
-      reviewUrl: 'https://shalah-hours-2026.web.app/principal.html?token=PRINCIPAL_TOKEN_KFS_440123&reportId=REP-2026-08-01'
-    });
-
-    return res.json({
-      success: true,
-      message: `מייל בדיקה נשלח בהצלחה אל ${targetEmail}`,
-      messageId: info.messageId
-    });
-  } catch (err) {
-    console.error('Test email error:', err);
-    return res.status(500).json({ success: false, error: 'שגיאה בשליחת מייל בדיקה: ' + (err.message || 'שגיאת שרת') });
-  }
-});
-
 module.exports = router;

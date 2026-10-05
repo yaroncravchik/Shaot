@@ -248,11 +248,7 @@ const Auth = {
                 </div>
               </div>
 
-              ${user.role === 'teacher' ? `
-                <a href="profile.html" class="btn btn-outline-primary btn-sm" style="font-weight:600;" title="עדכון פרטים אישיים ומערכת שעות">
-                  ⚙️ עדכון פרטים אישיים
-                </a>
-              ` : ''}
+
 
               ${user.role === 'site_admin' || user.role === 'superadmin' ? `
                 <a href="site-admin.html" class="btn btn-primary btn-sm" title="לוח בקרה מנהל אתר">
@@ -278,6 +274,7 @@ const Auth = {
   renderFooter() {
     const footerMount = document.getElementById('gov-footer-mount');
     if (!footerMount) return;
+    const user = this.getCurrentUser();
 
     footerMount.innerHTML = `
       <footer class="main-footer">
@@ -289,14 +286,21 @@ const Auth = {
               <p class="text-muted" style="color:#a0aec0; font-size:0.8125rem;">עומד בתקן הנגישות WCAG 2.1 AA ובתקני אבטחת מידע מתקדמים.</p>
             </div>
             <div class="footer-links">
-              <h5>ניווט מהיר</h5>
-              <ul>
-                <li><a href="site-admin.html">לוח בקרה מנהל אתר</a></li>
-                <li><a href="admin.html">לוח בקרה ממונה מחוזי</a></li>
-                <li><a href="supervisor.html">לוח בקרה מנחה מחוזי</a></li>
-                <li><a href="teacher.html">לוח בקרה מורה</a></li>
-                <li><a href="profile.html">הגדרת פרופיל ומערכת שעות</a></li>
-              </ul>
+              ${user ? `
+                <h5>ניווט מהיר</h5>
+                <ul>
+                  ${user.role === 'site_admin' || user.role === 'superadmin' ? '<li><a href="site-admin.html">לוח בקרה מנהל אתר</a></li>' : ''}
+                  ${user.role === 'admin' ? '<li><a href="admin.html">לוח בקרה ממונה מחוזי</a></li>' : ''}
+                  ${user.role === 'supervisor' ? '<li><a href="supervisor.html">לוח בקרה מנחה מחוזי</a></li>' : ''}
+                  ${user.role === 'teacher' ? '<li><a href="teacher.html">לוח בקרה מורה</a></li>' : ''}
+                </ul>
+              ` : `
+                <h5>תמיכה ושירות</h5>
+                <ul>
+                  <li><span style="color:#a0aec0; font-size:0.875rem;">תחום של"ח וידיעת הארץ</span></li>
+                  <li><span style="color:#a0aec0; font-size:0.875rem;">משרד החינוך • מנהל חברה ונוער</span></li>
+                </ul>
+              `}
             </div>
           </div>
           <div class="footer-bottom">

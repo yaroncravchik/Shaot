@@ -342,12 +342,6 @@ function openReportModal(year, month) {
     }
   }
 
-  const emailDisplayEl = document.getElementById('modal-principal-email-display');
-  if (emailDisplayEl) {
-    const pEmail = (currentTeacher && (currentTeacher.principalEmail || currentTeacher.principal_email)) || 'shalah.system.reports@gmail.com';
-    emailDisplayEl.textContent = pEmail;
-  }
-
   renderReportGrid(currentActiveReport, isReadOnly);
   renderAttachmentsList(currentActiveReport, isReadOnly);
   calculateGridTotals();
@@ -678,7 +672,7 @@ function openPrincipalEmailDispatchModal(reportId) {
   const teacherName = teacher ? teacher.name : (report.teacherName || 'מורה של"ח');
   const teacherId = (teacher && (teacher.id || teacher.id_number)) || report.teacherId || '';
   const principalName = (teacher && teacher.principalName) || report.principalName || 'רונית שחר';
-  const principalEmail = (teacher && teacher.principalEmail) || report.principalEmail || 'shalah.system.reports@gmail.com';
+  const principalEmail = (teacher && teacher.principalEmail) || report.principalEmail || 'ronit.s@rabin-kfs.org.il';
 
   const reviewUrl = API.getPrincipalReviewUrl(report, teacher);
 
@@ -819,29 +813,7 @@ function sendDispatchWhatsApp() {
   showToast('נפתח חלון שליחה בוואטסאפ', 'info');
 }
 
-function promptEditPrincipalEmail() {
-  const currentEmail = (currentTeacher && (currentTeacher.principalEmail || currentTeacher.principal_email)) || 'shalah.system.reports@gmail.com';
-  const newEmail = prompt('הזן כתובת דוא"ל של מנהל/ת בית הספר לקבלת הדוח לאישור:', currentEmail);
-  if (newEmail !== null) {
-    const trimmed = newEmail.trim();
-    if (!trimmed || !trimmed.includes('@')) {
-      showToast('נא להזין כתובת דוא"ל תקינה', 'warning');
-      return;
-    }
-    if (currentTeacher) {
-      currentTeacher.principalEmail = trimmed;
-      API.saveUser(currentTeacher);
-      Auth.setCurrentUser(currentTeacher);
-    }
-    const emailDisplayEl = document.getElementById('modal-principal-email-display');
-    if (emailDisplayEl) {
-      emailDisplayEl.textContent = trimmed;
-    }
-    showToast(`כתובת דוא"ל מנהל/ת עודכנה ל: ${trimmed}`, 'success');
-  }
-}
-
-async function submitCurrentReport() {
+function submitCurrentReport() {
   const declaration = document.getElementById('report-submit-declaration');
   if (declaration && !declaration.checked) {
     showToast('חובה לאשר את הצהרת הנכונות לפני הגשת הדוח', 'warning');
@@ -860,35 +832,34 @@ async function submitCurrentReport() {
   const submitBtn = document.getElementById('btn-submit-report');
   if (submitBtn) {
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<div class="spinner"></div><span>שולח מייל למנהל/ת ומגיש דוח...</span>';
+    submitBtn.innerHTML = '<div class="spinner"></div><span>מגיש דוח ושולח מייל למנהל/ת...</span>';
   }
 
-  try {
-    const saved = API.saveReport(currentActiveReport);
-    API.submitReportToPrincipal(saved.id, currentTeacher);
+  // Save report and submit to principal
+  setTimeout(async () => {
+    try {
+      const saved = API.saveReport(currentActiveReport);
+      API.submitReportToPrincipal(saved.id, currentTeacher);
 
-    clearInterval(autoSaveInterval);
-    closeModal('monthly-report-modal');
-    loadTeacherDashboardData();
+      clearInterval(autoSaveInterval);
+      closeModal('monthly-report-modal');
+      loadTeacherDashboardData();
 
-    // Automatically send email notification to principal
-    const emailResult = await API.sendAutomaticPrincipalEmail(saved, currentTeacher);
+      const principalEmail = (currentTeacher && (currentTeacher.principalEmail || currentTeacher.principal_email)) || 'shalah.system.reports@gmail.com';
+      
+      // Automatically send email notification to principal
+      await API.sendAutomaticPrincipalEmail(saved, currentTeacher);
 
-    if (emailResult.success) {
-      showToast(`הדוח ננעל והוגש בהצלחה! הודעת אישור נשלחה למייל המנהל/ת (${emailResult.principalEmail})`, 'success');
-      alert(`✅ הדוח ננעל והוגש בהצלחה!\n\nהודעת מייל עם קישור ישיר לאישור נשלחה לכתובת המנהל/ת:\n${emailResult.principalEmail}`);
-    } else {
-      showToast(`הדוח הוגש, אך שליחת הדוא"ל נכשלה: ${emailResult.error}`, 'warning');
-      alert(`⚠️ הדוח ננעל והוגש במערכת, אך חלה שגיאה בשליחת הדוא"ל למנהל/ת:\n${emailResult.error}\n\nבאפשרותך לעדכן את כתובת המייל בעמוד "עדכון פרטים אישיים".`);
+      showToast(`הדוח ננעל והוגש בהצלחה! הודעת אישור נשלחה אוטומטית למייל המנהל/ת (${principalEmail})`, 'success');
+    } catch (err) {
+      showToast(err.message || 'שגיאה בעת הגשת הדוח', 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>🚀 הגשת דוח לאישור מנהל/ת</span>';
+      }
     }
-  } catch (err) {
-    showToast(err.message || 'שגיאה בעת הגשת הדוח', 'error');
-  } finally {
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '<span>🚀 הגשת דוח לאישור מנהל/ת</span>';
-    }
-  }
+  }, 700);
 }
 
 function downloadReportPDF(reportId) {
@@ -910,7 +881,6 @@ if (typeof window !== 'undefined') {
   window.openReportModal = openReportModal;
   window.saveCurrentReportDraft = saveCurrentReportDraft;
   window.submitCurrentReport = submitCurrentReport;
-  window.promptEditPrincipalEmail = promptEditPrincipalEmail;
   window.handleFileUpload = handleFileUpload;
   window.removeAttachment = removeAttachment;
   window.downloadReportPDF = downloadReportPDF;
@@ -919,34 +889,3 @@ if (typeof window !== 'undefined') {
   window.openDispatchMailClient = openDispatchMailClient;
   window.sendDispatchWhatsApp = sendDispatchWhatsApp;
 }
-
-
-async function testSendFromTeacherModal() {
-  const pEmail = (currentTeacher && (currentTeacher.principalEmail || currentTeacher.principal_email)) || 'shalah.system.reports@gmail.com';
-  const pName = (currentTeacher && currentTeacher.principalName) || 'מנהל/ת בית הספר';
-
-  const btn = document.getElementById('btn-modal-test-email');
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner"></div>';
-  }
-
-  try {
-    const res = await API.sendTestEmail(pEmail, pName);
-    if (res.success) {
-      showToast(`מייל בדיקה נשלח בהצלחה אל: ${pEmail}`, 'success');
-      alert(`✅ מייל בדיקה נשלח בהצלחה!\n\nהודעת ניסיון נשלחה לכתובת המנהל/ת:\n${pEmail}\n\nבאפשרותך לבדוק את תיבת הדואר הנכנס כעת.`);
-    } else {
-      showToast(`שגיאה בשליחת מייל בדיקה: ${res.error}`, 'error');
-      alert(`❌ שגיאה בשליחת מייל בדיקה:\n${res.error}`);
-    }
-  } catch (err) {
-    showToast(err.message || 'שגיאה בשליחת בדיקה', 'error');
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = '🧪 שלח בדיקה';
-    }
-  }
-}
-window.testSendFromTeacherModal = testSendFromTeacherModal;

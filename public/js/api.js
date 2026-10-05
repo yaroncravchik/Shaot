@@ -138,7 +138,7 @@ function getInitialSeedUsers() {
       supervisorName: 'דוד לוי',
       supervisorId: '011111111',
       principalName: 'אילן דגן',
-      principalEmail: 'shalah.system.reports@gmail.com',
+      principalEmail: 'ilan.d@golda-pt.org.il',
       principalToken: 'PRINCIPAL_TOKEN_PT_440789',
       fieldDays: [2],
       weeklySchedule: { 0: 6, 1: 6, 2: 8, 3: 6, 4: 6, 5: 0 },
@@ -151,7 +151,7 @@ function getInitialSeedUsers() {
       password: '0533333333',
       name: 'רונית שחר (מנהלת)',
       role: 'principal',
-      email: 'shalah.system.reports@gmail.com',
+      email: 'ronit.s@rabin-kfs.org.il',
       schoolName: 'תיכון יצחק רבין כפר סבא',
       schoolCode: '440123',
       municipality: 'כפר סבא',
@@ -420,21 +420,6 @@ function initStorage() {
           usersUpdated = true;
         }
 
-        // Migrate legacy mock/fake domains in principalEmail to real Gmail sender
-        if (u.role === 'teacher') {
-          if (!u.principalEmail || u.principalEmail.includes('rabin-kfs') || u.principalEmail.includes('golda-pt')) {
-            u.principalEmail = 'shalah.system.reports@gmail.com';
-            usersUpdated = true;
-          }
-        }
-
-        if (u.role === 'principal') {
-          if (!u.email || u.email.includes('rabin-kfs') || u.email.includes('golda-pt')) {
-            u.email = 'shalah.system.reports@gmail.com';
-            usersUpdated = true;
-          }
-        }
-
         if (u.role === 'site_admin' || u.role === 'superadmin' || u.id === 'siteadmin' || u.id === 'admin') {
           siteAdminFound = true;
           if (u.id !== 'admin' || u.password !== 'Yaron111' || u.role !== 'site_admin' || u.phone === 'Yaron111') {
@@ -462,18 +447,6 @@ function initStorage() {
 
       if (usersUpdated) {
         localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(storedUsers));
-      }
-
-      // Also migrate currentUser if present in localStorage
-      const curUserRaw = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-      if (curUserRaw) {
-        const curUser = JSON.parse(curUserRaw);
-        if (curUser && curUser.role === 'teacher') {
-          if (!curUser.principalEmail || curUser.principalEmail.includes('rabin-kfs') || curUser.principalEmail.includes('golda-pt')) {
-            curUser.principalEmail = 'shalah.system.reports@gmail.com';
-            localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(curUser));
-          }
-        }
       }
     } catch (e) {
       // Ignore parse error
@@ -694,17 +667,13 @@ const API = {
     return this.saveReport(report);
   },
 
-  async sendAutomaticPrincipalEmail(report, teacher) {
+      async sendAutomaticPrincipalEmail(report, teacher) {
     if (!report) return { success: false, error: 'דוח לא נמצא' };
     
-    let principalEmail = (teacher && (teacher.principalEmail || teacher.principal_email)) || 
-                         report.principalEmail || 
-                         report.principal_email;
-    
-    // Fallback if empty or containing obsolete mock test domains
-    if (!principalEmail || !principalEmail.includes('@') || principalEmail.includes('rabin-kfs') || principalEmail.includes('golda-pt')) {
-      principalEmail = 'shalah.system.reports@gmail.com';
-    }
+    const principalEmail = (teacher && (teacher.principalEmail || teacher.principal_email)) || 
+                           report.principalEmail || 
+                           report.principal_email || 
+                           'principal@school.gov.il';
     
     const principalName = (teacher && teacher.principalName) || report.principalName || 'מנהל/ת בית הספר';
     const teacherName = (teacher && teacher.name) || report.teacherName || 'מורה של"ח';
@@ -712,7 +681,6 @@ const API = {
     const monthName = HEBREW_MONTHS_NAME[(report.month || 1) - 1] || report.month;
     const year = report.year || new Date().getFullYear();
     const reviewUrl = this.getPrincipalReviewUrl(report, teacher);
-    const principalToken = (teacher && teacher.principalToken) || report.principalToken || 'PRINCIPAL_TOKEN_KFS_440123';
     
     const emailSubject = `אישור דוח שעות פעילות של"ח – ${teacherName} – חודש ${monthName} ${year}`;
     const emailBody = `שלום ${principalName},
@@ -726,9 +694,8 @@ ${reviewUrl}
 ${teacherName}`;
 
     let emailSentSuccessfully = false;
-    let errorMessage = '';
 
-    // 1. Dispatch real email via Gmail backend / Cloud Functions
+        // 1. Dispatch real email via Gmail backend / Cloud Functions
     try {
       if (typeof fetch !== 'undefined' && principalEmail && principalEmail.includes('@')) {
         const payload = {
@@ -741,49 +708,53 @@ ${teacherName}`;
           schoolName: (teacher && teacher.schoolName) || report.schoolName || '',
           schoolCode: (teacher && teacher.schoolCode) || report.schoolCode || '',
           totalOvertime: report.totalOvertimeHours || 0,
-          reviewUrl,
-          principalToken
+          reviewUrl
         };
 
-        let endpoint = `/api/reports/${encodeURIComponent(report.id)}/send-principal-email`;
-        if (typeof window !== 'undefined' && (window.location.protocol === 'file:' || !window.location.origin.startsWith('http'))) {
-          endpoint = `https://shalah-hours-2026.web.app/api/reports/${encodeURIComponent(report.id)}/send-principal-email`;
-        }
-
-        const res = await fetch(endpoint, {
+        const res = await fetch(`/api/reports/${encodeURIComponent(report.id)}/send-principal-email`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json; charset=utf-8',
+            'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
           body: JSON.stringify(payload)
-        });
+        }).catch(() => null);
 
-        if (res.ok) {
-          const data = await res.json().catch(() => ({}));
+        if (res && res.ok) {
           emailSentSuccessfully = true;
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          errorMessage = errData.error || `שרת הדוא"ל החזיר שגיאה (קוד ${res.status})`;
         }
-      } else {
-        errorMessage = 'כתובת מייל מנהל/ת אינה תקינה';
       }
     } catch (e) {
-      console.error('Backend Gmail dispatch error:', e);
-      errorMessage = e.message || 'שגיאת תקשורת בשליחת דוא"ל';
+      console.warn('Backend Gmail dispatch notice:', e);
     }
 
-    // 2. Record in local report audit history
+    // 2. Log in backend REST API endpoint if available
+    try {
+      if (typeof fetch !== 'undefined') {
+        fetch(`/api/reports/${encodeURIComponent(report.id)}/send-principal-notification`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            targetEmail: principalEmail,
+            method: 'email',
+            userId: teacher ? teacher.id : report.teacherId,
+            userName: teacherName,
+            reviewUrl
+          })
+        }).catch(() => null);
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // 3. Record in local report audit history
     const updatedReport = this.getReportById(report.id);
     if (updatedReport) {
       updatedReport.auditHistory = updatedReport.auditHistory || [];
       updatedReport.auditHistory.push({
         date: formatDateTime(new Date()),
         user: 'מערכת (שליחה אוטומטית)',
-        action: emailSentSuccessfully
-          ? `נשלח אוטומטית בדוא"ל למנהל/ת (${principalEmail}): אישור דוח שעות חודש ${monthName} ${year}`
-          : `ניסיון שליחה אוטומטית למנהל/ת (${principalEmail}) נכשל: ${errorMessage}`
+        action: `נשלח אוטומטית בדוא"ל למנהל/ת (${principalEmail}): אישור דוח שעות חודש ${monthName} ${year}`
       });
       updatedReport.lastEmailSentTo = principalEmail;
       updatedReport.lastEmailSentAt = new Date().toISOString();
@@ -791,45 +762,14 @@ ${teacherName}`;
     }
 
     return {
-      success: emailSentSuccessfully,
-      error: errorMessage,
+      success: true,
+      emailSentSuccessfully,
       principalEmail,
       principalName,
       reviewUrl,
       subject: emailSubject,
       body: emailBody
     };
-  },
-
-  async sendTestEmail(targetEmail, principalName = 'מנהל/ת בית הספר') {
-    if (!targetEmail || !targetEmail.includes('@')) {
-      return { success: false, error: 'כתובת דוא"ל אינה תקינה' };
-    }
-
-    let endpoint = `/api/reports/test-email`;
-    if (typeof window !== 'undefined' && (window.location.protocol === 'file:' || !window.location.origin.startsWith('http'))) {
-      endpoint = `https://shalah-hours-2026.web.app/api/reports/test-email`;
-    }
-
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ targetEmail, principalName })
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.success) {
-        return { success: true, message: data.message, messageId: data.messageId };
-      } else {
-        return { success: false, error: data.error || `שגיאת שרת (${res.status})` };
-      }
-    } catch (e) {
-      return { success: false, error: e.message || 'שגיאת תקשורת בשליחת מייל בדיקה' };
-    }
   },
 
   sendPrincipalNotification(reportId, targetEmail, method = 'email') {

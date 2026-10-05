@@ -60,7 +60,6 @@ app.use((err, req, res, next) => {
 
 // Export Cloud Function v2
 exports.api = onRequest({
-  region: 'me-west1',
   cors: true,
   invoker: 'public',
   maxInstances: 10,
