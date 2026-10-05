@@ -193,18 +193,11 @@ function renderHistoryTable(reports) {
 
     const isApproved = API.isReportSupervisorApproved(r);
 
-    const canSendToPrincipal = r.status === 'pending_principal' || r.status === 'returned';
-
     const actionButtons = `
       <div style="display:inline-flex; gap:6px; align-items:center; justify-content:center; flex-wrap:wrap;">
         <button class="btn btn-secondary btn-sm" onclick="openReportModal(${r.year}, ${r.month})">
           ${r.status === 'draft' || r.status === 'returned' ? '✏️ עריכה' : '👁️ צפייה'}
         </button>
-        ${canSendToPrincipal ? `
-          <button class="btn btn-outline-primary btn-sm" onclick="openPrincipalEmailDispatchModal('${r.id}')" title="שליחה ואישור מנהל/ת בית הספר">
-            <span>📧 שלח למנהל/ת</span>
-          </button>
-        ` : ''}
         ${isApproved ? `
           <button class="btn btn-outline-primary btn-sm" onclick="downloadReportPDF('${r.id}')" title="הורדת דוח מאושר בקובץ PDF">
             <span>📄 הורדת PDF</span>
@@ -852,7 +845,7 @@ function submitCurrentReport() {
       closeModal('monthly-report-modal');
       loadTeacherDashboardData();
 
-      const principalEmail = (currentTeacher && (currentTeacher.principalEmail || currentTeacher.principal_email)) || 'ronit.s@rabin-kfs.org.il';
+      const principalEmail = (currentTeacher && (currentTeacher.principalEmail || currentTeacher.principal_email)) || 'shalah.system.reports@gmail.com';
       
       // Automatically send email notification to principal
       await API.sendAutomaticPrincipalEmail(saved, currentTeacher);

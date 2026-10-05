@@ -1,12 +1,12 @@
-const { sendPrincipalApprovalEmail } = require('../services/emailService');
-const express = require('express');
-const router = express.Router();
-const crypto = require('crypto');
-const { db } = require('../db/database');
-const { getAvailableMonths, generateMonthDays, HEBREW_DAY_NAMES, HEBREW_MONTH_NAMES } = require('../services/calendarService');
-const { generateSingleReportExcel } = require('../services/excelService');
+const fs = require('fs');
+const path = require('path');
 
-/**
+const routeFiles = [
+  path.join(__dirname, '..', 'server', 'routes', 'reports.js'),
+  path.join(__dirname, '..', 'functions', 'routes', 'reports.js')
+];
+
+const newRouteCode = `/**
  * POST /api/reports/:id/send-principal-email
  * Send real email via Gmail to school principal
  */
@@ -34,7 +34,7 @@ router.post('/:id/send-principal-email', async (req, res) => {
     const pName = principalName || (teacher && teacher.principal_name) || 'מנהל/ת בית הספר';
     const sName = schoolName || (teacher && teacher.school_name) || 'בית הספר';
     const sCode = schoolCode || (teacher && teacher.school_code) || '';
-    const link = reviewUrl || `https://shalah-hours-2026.web.app/principal.html?token=${principalToken || (report && report.principal_token) || 'PRINCIPAL_TOKEN_KFS_440123'}&reportId=${id}`;
+    const link = reviewUrl || \`https://shalah-hours-2026.web.app/principal.html?token=\${principalToken || (report && report.principal_token) || 'PRINCIPAL_TOKEN_KFS_440123'}&reportId=\${id}\`;
 
     // Send the real email via Gmail
     const info = await sendPrincipalApprovalEmail({
@@ -52,15 +52,15 @@ router.post('/:id/send-principal-email', async (req, res) => {
 
     try {
       const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-      db.prepare(`
+      db.prepare(\`
         INSERT INTO audit_logs (id, report_id, action, performed_by_user_id, performed_by_name, details, timestamp)
         VALUES (?, ?, 'sent_principal_email', ?, ?, ?, ?)
-      `).run(`aud_${crypto.randomUUID()}`, id, (teacher && teacher.id) || id, tName, `שליחה אוטומטית של מייל אישור מנהל/ת אל ${recipient} (Message ID: ${info.messageId})`, now);
+      \`).run(\`aud_\${crypto.randomUUID()}\`, id, (teacher && teacher.id) || id, tName, \`שליחה אוטומטית של מייל אישור מנהל/ת אל \${recipient} (Message ID: \${info.messageId})\`, now);
     } catch (e) {}
 
     return res.json({
       success: true,
-      message: `דוא"ל אישור נשלח בהצלחה אל ${recipient}`,
+      message: \`דוא"ל אישור נשלח בהצלחה אל \${recipient}\`,
       messageId: info.messageId
     });
   } catch (err) {
@@ -69,4 +69,16 @@ router.post('/:id/send-principal-email', async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = router;`;
+
+routeFiles.forEach(rf => {
+  let content = fs.readFileSync(rf, 'utf8');
+  const targetRegex = /\/\*\*[\s\S]*?POST \/api\/reports\/:id\/send-principal-email[\s\S]*?module\.exports = router;/;
+  if (targetRegex.test(content)) {
+    content = content.replace(targetRegex, newRouteCode);
+    fs.writeFileSync(rf, content, 'utf8');
+    console.log(`Updated ${rf}`);
+  } else {
+    console.error(`targetRegex not found in ${rf}`);
+  }
+});
