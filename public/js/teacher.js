@@ -788,12 +788,16 @@ function openDispatchMailClient() {
 
   const mailtoUri = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   
-  // Trigger mailto link via an anchor click
-  const a = document.createElement('a');
-  a.href = mailtoUri;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  // Trigger default mail client
+  try {
+    window.location.href = mailtoUri;
+  } catch (err) {
+    const a = document.createElement('a');
+    a.href = mailtoUri;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 
   showToast('טיוטת הדוא"ל נפתחה בתוכנת הדואר שלך לשליחה למנהל/ת!', 'success');
 }
@@ -817,28 +821,26 @@ function sendDispatchWhatsApp() {
 }
 
 function submitCurrentReport() {
-  const eligibility = checkReportSubmissionEligibility(selectedYear, selectedMonth);
-  if (!eligibility.allowed) {
-    showToast(eligibility.reason, 'warning');
-    return;
-  }
-
   const declaration = document.getElementById('report-submit-declaration');
-  if (!declaration.checked) {
+  if (declaration && !declaration.checked) {
     showToast('חובה לאשר את הצהרת הנכונות לפני הגשת הדוח', 'warning');
     return;
   }
 
   // PRD Business Rule 5.2: Flexible Field Day rule warning
-  const missingFieldDayReports = currentActiveReport.daysData.filter(d => d.isFieldDay && (!d.overtimeHours || d.overtimeHours === 0) && !d.description);
-  if (missingFieldDayReports.length > 0) {
-    const confirmSubmit = confirm(`לתשומת לבך: סומנו ${missingFieldDayReports.length} ימי שדה קבועים ללא דיווח שעות נוספות או פירוט פעילות. האם להגיש את הדוח בכל זאת?`);
-    if (!confirmSubmit) return;
+  if (currentActiveReport && currentActiveReport.daysData) {
+    const missingFieldDayReports = currentActiveReport.daysData.filter(d => d.isFieldDay && (!d.overtimeHours || d.overtimeHours === 0) && !d.description);
+    if (missingFieldDayReports.length > 0) {
+      const confirmSubmit = confirm(`לתשומת לבך: סומנו ${missingFieldDayReports.length} ימי שדה קבועים ללא דיווח שעות נוספות או פירוט פעילות. האם להגיש את הדוח בכל זאת?`);
+      if (!confirmSubmit) return;
+    }
   }
 
   const submitBtn = document.getElementById('btn-submit-report');
-  submitBtn.disabled = true;
-  submitBtn.innerHTML = '<div class="spinner"></div><span>מגיש דוח ונועל...</span>';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="spinner"></div><span>מגיש דוח ושולח מייל...</span>';
+  }
 
   // Save report and submit to principal
   setTimeout(() => {
@@ -849,15 +851,28 @@ function submitCurrentReport() {
       clearInterval(autoSaveInterval);
       closeModal('monthly-report-modal');
       loadTeacherDashboardData();
+
       const principalEmail = (currentTeacher && (currentTeacher.principalEmail || currentTeacher.principal_email)) || 'ronit.s@rabin-kfs.org.il';
+      
       // Automatically send email notification to principal
       API.sendAutomaticPrincipalEmail(saved, currentTeacher);
-      showToast(`הדוח ננעל והוגש בהצלחה! הודעת אישור נשלחה אוטומטית למייל המנהל/ת (${principalEmail})`, 'success');
+      
+      // Open the interactive principal email dispatch modal
+      openPrincipalEmailDispatchModal(saved.id);
+
+      // Trigger default mail client
+      setTimeout(() => {
+        openDispatchMailClient();
+      }, 400);
+
+      showToast(`הדוח ננעל בהצלחה! נפתחה טיוטת דוא"ל לשליחה למנהל/ת (${principalEmail})`, 'success');
     } catch (err) {
       showToast(err.message || 'שגיאה בעת הגשת הדוח', 'error');
     } finally {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '<span>🚀 הגשת דוח לאישור מנהל/ת</span>';
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>🚀 הגשת דוח לאישור מנהל/ת</span>';
+      }
     }
   }, 700);
 }
