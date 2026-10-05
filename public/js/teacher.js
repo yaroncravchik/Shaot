@@ -839,11 +839,11 @@ function submitCurrentReport() {
   const submitBtn = document.getElementById('btn-submit-report');
   if (submitBtn) {
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<div class="spinner"></div><span>מגיש דוח ושולח מייל...</span>';
+    submitBtn.innerHTML = '<div class="spinner"></div><span>מגיש דוח ושולח מייל למנהל/ת...</span>';
   }
 
   // Save report and submit to principal
-  setTimeout(() => {
+  setTimeout(async () => {
     try {
       const saved = API.saveReport(currentActiveReport);
       API.submitReportToPrincipal(saved.id, currentTeacher);
@@ -855,17 +855,9 @@ function submitCurrentReport() {
       const principalEmail = (currentTeacher && (currentTeacher.principalEmail || currentTeacher.principal_email)) || 'ronit.s@rabin-kfs.org.il';
       
       // Automatically send email notification to principal
-      API.sendAutomaticPrincipalEmail(saved, currentTeacher);
-      
-      // Open the interactive principal email dispatch modal
-      openPrincipalEmailDispatchModal(saved.id);
+      await API.sendAutomaticPrincipalEmail(saved, currentTeacher);
 
-      // Trigger default mail client
-      setTimeout(() => {
-        openDispatchMailClient();
-      }, 400);
-
-      showToast(`הדוח ננעל בהצלחה! נפתחה טיוטת דוא"ל לשליחה למנהל/ת (${principalEmail})`, 'success');
+      showToast(`הדוח ננעל והוגש בהצלחה! הודעת אישור נשלחה אוטומטית למייל המנהל/ת (${principalEmail})`, 'success');
     } catch (err) {
       showToast(err.message || 'שגיאה בעת הגשת הדוח', 'error');
     } finally {

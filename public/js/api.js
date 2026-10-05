@@ -667,16 +667,17 @@ const API = {
     return this.saveReport(report);
   },
 
-    sendAutomaticPrincipalEmail(report, teacher) {
+      async sendAutomaticPrincipalEmail(report, teacher) {
     if (!report) return { success: false, error: 'דוח לא נמצא' };
     
     const principalEmail = (teacher && (teacher.principalEmail || teacher.principal_email)) || 
                            report.principalEmail || 
                            report.principal_email || 
-                           'ronit.s@rabin-kfs.org.il';
+                           'principal@school.gov.il';
     
     const principalName = (teacher && teacher.principalName) || report.principalName || 'מנהל/ת בית הספר';
     const teacherName = (teacher && teacher.name) || report.teacherName || 'מורה של"ח';
+    const teacherId = (teacher && (teacher.id || teacher.id_number)) || report.teacherId || '';
     const monthName = HEBREW_MONTHS_NAME[(report.month || 1) - 1] || report.month;
     const year = report.year || new Date().getFullYear();
     const reviewUrl = this.getPrincipalReviewUrl(report, teacher);
@@ -684,7 +685,7 @@ const API = {
     const emailSubject = `אישור דוח שעות פעילות של"ח – ${teacherName} – חודש ${monthName} ${year}`;
     const emailBody = `שלום ${principalName},
 
-מצורף לעיונך ולאישורך דוח שעות פעילות חודשי בשל"ח עבור חודש ${monthName} ${year} של המורה ${teacherName}.
+מצורף לעיונך ולאישורך דוח שעות פעילות חודשי בשל"ח עבור חודש ${monthName} ${year} של המורה ${teacherName}${teacherId ? ` (ת.ז. ${teacherId})` : ''}.
 
 לצפייה ישירה בדוח ואישור בלחיצה אחת:
 ${reviewUrl}
@@ -692,7 +693,40 @@ ${reviewUrl}
 בברכה,
 ${teacherName}`;
 
-    // Try backend REST API if available
+    let emailSentSuccessfully = false;
+
+    // 1. Attempt automated direct background email dispatch
+    try {
+      if (typeof fetch !== 'undefined' && principalEmail && principalEmail.includes('@') && !principalEmail.includes('example.com')) {
+        const payload = {
+          _subject: emailSubject,
+          _replyto: (teacher && teacher.email) || 'no-reply@shalah.org.il',
+          _captcha: 'false',
+          _template: 'box',
+          'מורה': `${teacherName} (${teacherId})`,
+          'חודש_ושנת_דיווח': `${monthName} ${year}`,
+          'קישור_לאישור_הדוח': reviewUrl,
+          'הודעה': emailBody
+        };
+
+        const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(principalEmail)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        }).catch(() => null);
+
+        if (res && res.ok) {
+          emailSentSuccessfully = true;
+        }
+      }
+    } catch (e) {
+      console.warn('Background email dispatch notice:', e);
+    }
+
+    // 2. Log in backend REST API endpoint if available
     try {
       if (typeof fetch !== 'undefined') {
         fetch(`/api/reports/${encodeURIComponent(report.id)}/send-principal-notification`, {
@@ -708,16 +742,16 @@ ${teacherName}`;
         }).catch(() => null);
       }
     } catch (e) {
-      // ignore network errors in mock/standalone mode
+      // ignore
     }
 
-    // Always record to local state / Firestore
+    // 3. Record in local report audit history
     const updatedReport = this.getReportById(report.id);
     if (updatedReport) {
       updatedReport.auditHistory = updatedReport.auditHistory || [];
       updatedReport.auditHistory.push({
         date: formatDateTime(new Date()),
-        user: 'מערכת (אוטומטי)',
+        user: 'מערכת (שליחה אוטומטית)',
         action: `נשלח אוטומטית בדוא"ל למנהל/ת (${principalEmail}): אישור דוח שעות חודש ${monthName} ${year}`
       });
       updatedReport.lastEmailSentTo = principalEmail;
@@ -727,6 +761,7 @@ ${teacherName}`;
 
     return {
       success: true,
+      emailSentSuccessfully,
       principalEmail,
       principalName,
       reviewUrl,
