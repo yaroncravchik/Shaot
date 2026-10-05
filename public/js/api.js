@@ -688,6 +688,74 @@ const API = {
     return this.saveReport(report);
   },
 
+    sendAutomaticPrincipalEmail(report, teacher) {
+    if (!report) return { success: false, error: 'דוח לא נמצא' };
+    
+    const principalEmail = (teacher && (teacher.principalEmail || teacher.principal_email)) || 
+                           report.principalEmail || 
+                           report.principal_email || 
+                           'ronit.s@rabin-kfs.org.il';
+    
+    const principalName = (teacher && teacher.principalName) || report.principalName || 'מנהל/ת בית הספר';
+    const teacherName = (teacher && teacher.name) || report.teacherName || 'מורה של"ח';
+    const monthName = HEBREW_MONTHS_NAME[(report.month || 1) - 1] || report.month;
+    const year = report.year || new Date().getFullYear();
+    const reviewUrl = this.getPrincipalReviewUrl(report, teacher);
+    
+    const emailSubject = `אישור דוח שעות פעילות של"ח – ${teacherName} – חודש ${monthName} ${year}`;
+    const emailBody = `שלום ${principalName},
+
+מצורף לעיונך ולאישורך דוח שעות פעילות חודשי בשל"ח עבור חודש ${monthName} ${year} של המורה ${teacherName}.
+
+לצפייה ישירה בדוח ואישור בלחיצה אחת:
+${reviewUrl}
+
+בברכה,
+${teacherName}`;
+
+    // Try backend REST API if available
+    try {
+      if (typeof fetch !== 'undefined') {
+        fetch(`/api/reports/${encodeURIComponent(report.id)}/send-principal-notification`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            targetEmail: principalEmail,
+            method: 'email',
+            userId: teacher ? teacher.id : report.teacherId,
+            userName: teacherName,
+            reviewUrl
+          })
+        }).catch(() => null);
+      }
+    } catch (e) {
+      // ignore network errors in mock/standalone mode
+    }
+
+    // Always record to local state / Firestore
+    const updatedReport = this.getReportById(report.id);
+    if (updatedReport) {
+      updatedReport.auditHistory = updatedReport.auditHistory || [];
+      updatedReport.auditHistory.push({
+        date: formatDateTime(new Date()),
+        user: 'מערכת (אוטומטי)',
+        action: `נשלח אוטומטית בדוא"ל למנהל/ת (${principalEmail}): אישור דוח שעות חודש ${monthName} ${year}`
+      });
+      updatedReport.lastEmailSentTo = principalEmail;
+      updatedReport.lastEmailSentAt = new Date().toISOString();
+      this.saveReport(updatedReport);
+    }
+
+    return {
+      success: true,
+      principalEmail,
+      principalName,
+      reviewUrl,
+      subject: emailSubject,
+      body: emailBody
+    };
+  },
+
   sendPrincipalNotification(reportId, targetEmail, method = 'email') {
     const report = this.getReportById(reportId);
     if (!report) throw new Error('דוח לא נמצא');

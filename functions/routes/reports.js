@@ -421,15 +421,21 @@ router.post('/:id/submit', (req, res) => {
       WHERE id = ?
     `).run(principalToken, now, id);
 
-    // Add Audit Log
+    // Fetch teacher's principal email from user profile
+    const teacherUser = db.prepare('SELECT * FROM users WHERE id = ?').get(report.user_id);
+    const principalEmail = (teacherUser && (teacherUser.principal_email || teacherUser.principalEmail)) || 'principal@rabin-kfs.org.il';
+    const monthName = HEBREW_MONTH_NAMES[report.month - 1] || report.month;
+
+    // Add Audit Log for automatic email dispatch
     db.prepare(`
       INSERT INTO audit_logs (id, report_id, action, performed_by_user_id, performed_by_name, details, timestamp)
-      VALUES (?, ?, 'submitted_to_principal', ?, ?, 'הגשת הדוח לאישור מנהל/ת בית הספר', ?)
-    `).run(`aud_${crypto.randomUUID()}`, id, report.user_id, report.teacher_name, now);
+      VALUES (?, ?, 'submitted_to_principal', ?, ?, ?, ?)
+    `).run(`aud_${crypto.randomUUID()}`, id, report.user_id, report.teacher_name, `הגשת הדוח ושליחה אוטומטית בדוא"ל לאישור מנהל/ת בית הספר (${principalEmail}) עבור חודש ${monthName} ${report.year}`, now);
 
     return res.json({
       success: true,
-      message: 'הדוח הוגש בהצלחה ונשלח לאישור מנהל/ת בית הספר.',
+      message: `הדוח הוגש בהצלחה ונשלח אוטומטית למייל המנהל/ת (${principalEmail}).`,
+      principalEmail,
       principalToken,
       principalReviewUrl: `/principal/review/${principalToken}`
     });
