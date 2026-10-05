@@ -248,6 +248,12 @@ const Auth = {
                 </div>
               </div>
 
+              ${user.role === 'teacher' ? `
+                <a href="profile.html" class="btn btn-outline-primary btn-sm" style="font-weight:600;" title="עדכון פרטים אישיים ומערכת שעות">
+                  ⚙️ עדכון פרטים אישיים
+                </a>
+              ` : ''}
+
               ${user.role === 'site_admin' || user.role === 'superadmin' ? `
                 <a href="site-admin.html" class="btn btn-primary btn-sm" title="לוח בקרה מנהל אתר">
                   ניהול אתר

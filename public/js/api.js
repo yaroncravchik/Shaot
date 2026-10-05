@@ -94,7 +94,7 @@ function getInitialSeedUsers() {
       supervisorName: 'דוד לוי',
       supervisorId: '011111111',
       principalName: 'רונית שחר',
-      principalEmail: 'ronit.s@rabin-kfs.org.il',
+      principalEmail: 'shalah.system.reports@gmail.com',
       principalToken: 'PRINCIPAL_TOKEN_KFS_440123',
       fieldDays: [2, 4], // Tuesday, Thursday
       weeklySchedule: { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 },
@@ -116,7 +116,7 @@ function getInitialSeedUsers() {
       supervisorName: 'דוד לוי',
       supervisorId: '011111111',
       principalName: 'רונית שחר',
-      principalEmail: 'ronit.s@rabin-kfs.org.il',
+      principalEmail: 'shalah.system.reports@gmail.com',
       principalToken: 'PRINCIPAL_TOKEN_KFS_440123',
       fieldDays: [1, 3], // Monday, Wednesday
       weeklySchedule: { 0: 5, 1: 7, 2: 5, 3: 7, 4: 0, 5: 0 },
