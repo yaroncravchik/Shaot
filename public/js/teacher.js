@@ -253,29 +253,7 @@ function setupReportFormHandlers() {
 }
 
 function checkReportSubmissionEligibility(year, month, checkDate = new Date()) {
-  const curYear = checkDate.getFullYear();
-  const curMonth = checkDate.getMonth() + 1;
-  const curDay = checkDate.getDate();
-
-  const isPast = (year < curYear) || (year === curYear && month < curMonth);
-  const isCurrent = (year === curYear && month === curMonth);
-
-  if (isPast) {
-    return { allowed: true };
-  }
-  if (isCurrent) {
-    if (curDay >= 15) {
-      return { allowed: true };
-    }
-    return {
-      allowed: false,
-      reason: `הגשת דוח שעות לחודש הנוכחי מתאפשרת החל מה-15 לחודש (היום ה-${curDay} לחודש). ניתן לשמור את הדיווח כטיוטה בינתיים.`
-    };
-  }
-  return {
-    allowed: false,
-    reason: 'לא ניתן להגיש דוח עבור חודש עתידי. הגשת הדוח תתאפשר החל מה-15 באותו חודש (ניתן לשמור כטיוטה בינתיים).'
-  };
+  return { allowed: true };
 }
 
 function openReportModal(year, month) {
