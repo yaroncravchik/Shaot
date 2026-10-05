@@ -204,3 +204,42 @@ function calculateWeeklyTotals() {
     }
   }
 }
+
+
+async function testSendPrincipalEmail() {
+  const emailInput = document.getElementById('prof-principal-email');
+  const pNameInput = document.getElementById('prof-principal-name');
+  const email = emailInput ? emailInput.value.trim() : '';
+  const pName = pNameInput ? pNameInput.value.trim() : 'מנהל/ת בית הספר';
+
+  if (!email || !email.includes('@')) {
+    showToast('נא להזין כתובת דוא"ל תקינה של המנהל/ת', 'warning');
+    if (emailInput) emailInput.focus();
+    return;
+  }
+
+  const btn = document.getElementById('btn-test-principal-email');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div><span>שולח...</span>';
+  }
+
+  try {
+    const res = await API.sendTestEmail(email, pName);
+    if (res.success) {
+      showToast(`מייל בדיקה נשלח בהצלחה אל: ${email}`, 'success');
+      alert(`✅ מייל בדיקה נשלח בהצלחה!\n\nנשלחה הודעת ניסיון לכתובת:\n${email}\n\nנא לבדוק את תיבת הדואר הנכנס (והספאם/דואר זבל במידת הצורך).`);
+    } else {
+      showToast(`שגיאה בשליחת מייל בדיקה: ${res.error}`, 'error');
+      alert(`❌ שגיאה בשליחת מייל בדיקה:\n${res.error}`);
+    }
+  } catch (err) {
+    showToast(err.message || 'שגיאה בשליחת בדיקה', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '🧪 שלח מייל בדיקה';
+    }
+  }
+}
+window.testSendPrincipalEmail = testSendPrincipalEmail;

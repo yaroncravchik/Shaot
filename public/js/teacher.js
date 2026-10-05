@@ -919,3 +919,34 @@ if (typeof window !== 'undefined') {
   window.openDispatchMailClient = openDispatchMailClient;
   window.sendDispatchWhatsApp = sendDispatchWhatsApp;
 }
+
+
+async function testSendFromTeacherModal() {
+  const pEmail = (currentTeacher && (currentTeacher.principalEmail || currentTeacher.principal_email)) || 'shalah.system.reports@gmail.com';
+  const pName = (currentTeacher && currentTeacher.principalName) || 'מנהל/ת בית הספר';
+
+  const btn = document.getElementById('btn-modal-test-email');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div>';
+  }
+
+  try {
+    const res = await API.sendTestEmail(pEmail, pName);
+    if (res.success) {
+      showToast(`מייל בדיקה נשלח בהצלחה אל: ${pEmail}`, 'success');
+      alert(`✅ מייל בדיקה נשלח בהצלחה!\n\nהודעת ניסיון נשלחה לכתובת המנהל/ת:\n${pEmail}\n\nבאפשרותך לבדוק את תיבת הדואר הנכנס כעת.`);
+    } else {
+      showToast(`שגיאה בשליחת מייל בדיקה: ${res.error}`, 'error');
+      alert(`❌ שגיאה בשליחת מייל בדיקה:\n${res.error}`);
+    }
+  } catch (err) {
+    showToast(err.message || 'שגיאה בשליחת בדיקה', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '🧪 שלח בדיקה';
+    }
+  }
+}
+window.testSendFromTeacherModal = testSendFromTeacherModal;

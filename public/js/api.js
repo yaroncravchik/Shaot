@@ -422,14 +422,14 @@ function initStorage() {
 
         // Migrate legacy mock/fake domains in principalEmail to real Gmail sender
         if (u.role === 'teacher') {
-          if (!u.principalEmail || u.principalEmail.includes('rabin-kfs') || u.principalEmail.includes('golda-pt') || u.principalEmail.includes('school.gov.il') || u.principalEmail.includes('school.org.il')) {
+          if (!u.principalEmail || u.principalEmail.includes('rabin-kfs') || u.principalEmail.includes('golda-pt')) {
             u.principalEmail = 'shalah.system.reports@gmail.com';
             usersUpdated = true;
           }
         }
 
         if (u.role === 'principal') {
-          if (!u.email || u.email.includes('rabin-kfs') || u.email.includes('golda-pt') || u.email.includes('school.gov.il') || u.email.includes('school.org.il')) {
+          if (!u.email || u.email.includes('rabin-kfs') || u.email.includes('golda-pt')) {
             u.email = 'shalah.system.reports@gmail.com';
             usersUpdated = true;
           }
@@ -469,7 +469,7 @@ function initStorage() {
       if (curUserRaw) {
         const curUser = JSON.parse(curUserRaw);
         if (curUser && curUser.role === 'teacher') {
-          if (!curUser.principalEmail || curUser.principalEmail.includes('rabin-kfs') || curUser.principalEmail.includes('golda-pt') || curUser.principalEmail.includes('school.gov.il') || curUser.principalEmail.includes('school.org.il')) {
+          if (!curUser.principalEmail || curUser.principalEmail.includes('rabin-kfs') || curUser.principalEmail.includes('golda-pt')) {
             curUser.principalEmail = 'shalah.system.reports@gmail.com';
             localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(curUser));
           }
@@ -699,16 +699,11 @@ const API = {
     
     let principalEmail = (teacher && (teacher.principalEmail || teacher.principal_email)) || 
                          report.principalEmail || 
-                         report.principal_email || 
-                         'shalah.system.reports@gmail.com';
+                         report.principal_email;
     
-    // Auto-correct mock/fake test domains to active Gmail address
-    if (principalEmail.includes('rabin-kfs') || principalEmail.includes('golda-pt') || principalEmail.includes('school.gov.il') || principalEmail.includes('school.org.il') || !principalEmail.includes('@')) {
+    // Fallback if empty or containing obsolete mock test domains
+    if (!principalEmail || !principalEmail.includes('@') || principalEmail.includes('rabin-kfs') || principalEmail.includes('golda-pt')) {
       principalEmail = 'shalah.system.reports@gmail.com';
-      if (teacher) {
-        teacher.principalEmail = principalEmail;
-        this.saveUser(teacher);
-      }
     }
     
     const principalName = (teacher && teacher.principalName) || report.principalName || 'מנהל/ת בית הספר';
@@ -750,7 +745,12 @@ ${teacherName}`;
           principalToken
         };
 
-        const res = await fetch(`/api/reports/${encodeURIComponent(report.id)}/send-principal-email`, {
+        let endpoint = `/api/reports/${encodeURIComponent(report.id)}/send-principal-email`;
+        if (typeof window !== 'undefined' && (window.location.protocol === 'file:' || !window.location.origin.startsWith('http'))) {
+          endpoint = `https://shalah-hours-2026.web.app/api/reports/${encodeURIComponent(report.id)}/send-principal-email`;
+        }
+
+        const res = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json; charset=utf-8',
@@ -774,26 +774,7 @@ ${teacherName}`;
       errorMessage = e.message || 'שגיאת תקשורת בשליחת דוא"ל';
     }
 
-    // 2. Log in backend REST API endpoint if available
-    try {
-      if (typeof fetch !== 'undefined') {
-        fetch(`/api/reports/${encodeURIComponent(report.id)}/send-principal-notification`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            targetEmail: principalEmail,
-            method: 'email',
-            userId: teacher ? teacher.id : report.teacherId,
-            userName: teacherName,
-            reviewUrl
-          })
-        }).catch(() => null);
-      }
-    } catch (e) {
-      // ignore
-    }
-
-    // 3. Record in local report audit history
+    // 2. Record in local report audit history
     const updatedReport = this.getReportById(report.id);
     if (updatedReport) {
       updatedReport.auditHistory = updatedReport.auditHistory || [];
@@ -818,6 +799,37 @@ ${teacherName}`;
       subject: emailSubject,
       body: emailBody
     };
+  },
+
+  async sendTestEmail(targetEmail, principalName = 'מנהל/ת בית הספר') {
+    if (!targetEmail || !targetEmail.includes('@')) {
+      return { success: false, error: 'כתובת דוא"ל אינה תקינה' };
+    }
+
+    let endpoint = `/api/reports/test-email`;
+    if (typeof window !== 'undefined' && (window.location.protocol === 'file:' || !window.location.origin.startsWith('http'))) {
+      endpoint = `https://shalah-hours-2026.web.app/api/reports/test-email`;
+    }
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ targetEmail, principalName })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        return { success: true, message: data.message, messageId: data.messageId };
+      } else {
+        return { success: false, error: data.error || `שגיאת שרת (${res.status})` };
+      }
+    } catch (e) {
+      return { success: false, error: e.message || 'שגיאת תקשורת בשליחת מייל בדיקה' };
+    }
   },
 
   sendPrincipalNotification(reportId, targetEmail, method = 'email') {

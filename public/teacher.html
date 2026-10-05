@@ -370,9 +370,14 @@
               </div>
             </div>
             <div>
-              <button type="button" class="btn btn-sm btn-outline-primary" onclick="promptEditPrincipalEmail()" title="שינוי כתובת מייל מנהל/ת לקבלת הדוח">
-                ✏️ עריכת מייל מנהל/ת
-              </button>
+              <div class="flex gap-xs">
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="promptEditPrincipalEmail()" title="שינוי כתובת מייל מנהל/ת לקבלת הדוח">
+                  ✏️ עריכת מייל
+                </button>
+                <button type="button" id="btn-modal-test-email" class="btn btn-sm btn-secondary" onclick="testSendFromTeacherModal()" title="שליחת מייל ניסיון מידי">
+                  🧪 שלח בדיקה
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -409,8 +414,8 @@
   <!-- Universal Footer Mount -->
   <div id="gov-footer-mount"></div>
 
-    <script src="js/api.js?v=1791201924745"></script>
-  <script src="js/auth.js?v=1791201924745"></script>
-  <script src="js/teacher.js?v=1791201924745"></script>
+      <script src="js/api.js?v=1791202366457"></script>
+  <script src="js/auth.js?v=1791202366457"></script>
+  <script src="js/teacher.js?v=1791202366457"></script>
 </body>
 </html>
