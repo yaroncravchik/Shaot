@@ -695,21 +695,23 @@ ${teacherName}`;
 
     let emailSentSuccessfully = false;
 
-    // 1. Attempt automated direct background email dispatch
+        // 1. Dispatch real email via Gmail backend / Cloud Functions
     try {
-      if (typeof fetch !== 'undefined' && principalEmail && principalEmail.includes('@') && !principalEmail.includes('example.com')) {
+      if (typeof fetch !== 'undefined' && principalEmail && principalEmail.includes('@')) {
         const payload = {
-          _subject: emailSubject,
-          _replyto: (teacher && teacher.email) || 'no-reply@shalah.org.il',
-          _captcha: 'false',
-          _template: 'box',
-          'מורה': `${teacherName} (${teacherId})`,
-          'חודש_ושנת_דיווח': `${monthName} ${year}`,
-          'קישור_לאישור_הדוח': reviewUrl,
-          'הודעה': emailBody
+          targetEmail: principalEmail,
+          principalName,
+          teacherName,
+          teacherId,
+          monthName,
+          year,
+          schoolName: (teacher && teacher.schoolName) || report.schoolName || '',
+          schoolCode: (teacher && teacher.schoolCode) || report.schoolCode || '',
+          totalOvertime: report.totalOvertimeHours || 0,
+          reviewUrl
         };
 
-        const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(principalEmail)}`, {
+        const res = await fetch(`/api/reports/${encodeURIComponent(report.id)}/send-principal-email`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -723,7 +725,7 @@ ${teacherName}`;
         }
       }
     } catch (e) {
-      console.warn('Background email dispatch notice:', e);
+      console.warn('Backend Gmail dispatch notice:', e);
     }
 
     // 2. Log in backend REST API endpoint if available
