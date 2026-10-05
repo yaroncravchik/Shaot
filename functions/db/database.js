@@ -22,7 +22,7 @@ const initialUsers = [
     consent_timestamp: '2026-08-01 08:00:00',
     principal_id: 'usr_principal_1',
     principal_name: 'שרה כהן',
-    principal_email: 'principal@rabin-kfs.org.il',
+    principal_email: 'shalah.system.reports@gmail.com',
     supervisor_id: 'usr_supervisor_1',
     created_at: '2026-08-01 08:00:00'
   },
@@ -33,7 +33,7 @@ const initialUsers = [
     phone: '0534567890',
     password: '0534567890',
     full_name: 'שרה כהן (מנהלת)',
-    email: 'principal@rabin-kfs.org.il',
+    email: 'shalah.system.reports@gmail.com',
     school_code: '123456',
     school_name: 'תיכון רבין כפר סבא',
     district: 'מרכז',

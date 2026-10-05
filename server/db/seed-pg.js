@@ -29,10 +29,10 @@ async function seedPostgres() {
 
  console.log('--- Seeding Users ---');
  const users = [
- ['usr-teacher-01', 'teacher', '012345678', '0501234567', 'ישראל ישראלי', 'israel@rabin-kfs.org.il', '123456', 'תיכון רבין', 'מרכז', 'כפר סבא', 100, 1, '2026-08-01 08:00:00+03', 'usr-principal-01', 'שרה כהן', 'principal@rabin-kfs.org.il', 'usr-supervisor-01'],
- ['usr-teacher-02', 'teacher', '023456789', '0523456789', 'מיכל לוי', 'michal@rabin-kfs.org.il', '123456', 'תיכון רבין', 'מרכז', 'כפר סבא', 80, 1, '2026-08-01 08:30:00+03', 'usr-principal-01', 'שרה כהן', 'principal@rabin-kfs.org.il', 'usr-supervisor-01'],
+ ['usr-teacher-01', 'teacher', '012345678', '0501234567', 'ישראל ישראלי', 'israel@rabin-kfs.org.il', '123456', 'תיכון רבין', 'מרכז', 'כפר סבא', 100, 1, '2026-08-01 08:00:00+03', 'usr-principal-01', 'שרה כהן', 'shalah.system.reports@gmail.com', 'usr-supervisor-01'],
+ ['usr-teacher-02', 'teacher', '023456789', '0523456789', 'מיכל לוי', 'michal@rabin-kfs.org.il', '123456', 'תיכון רבין', 'מרכז', 'כפר סבא', 80, 1, '2026-08-01 08:30:00+03', 'usr-principal-01', 'שרה כהן', 'shalah.system.reports@gmail.com', 'usr-supervisor-01'],
  ['usr-teacher-03', 'teacher', '034567812', '0541234567', 'דניאל כהן', 'daniel@ironi-a-tlv.org.il', '654321', 'עירוני א\'', 'תל אביב', 'תל אביב-יפו', 100, 1, '2026-08-01 09:00:00+03', 'usr-principal-02', 'יורם פרידמן', 'principal@ironi-a.org.il', 'usr-supervisor-02'],
- ['usr-principal-01', 'principal', '034567890', '0534567890', 'שרה כהן (מנהלת)', 'principal@rabin-kfs.org.il', '123456', 'תיכון רבין', 'מרכז', 'כפר סבא', 100, 1, '2026-08-01 07:00:00+03', null, null, null, null],
+ ['usr-principal-01', 'principal', '034567890', '0534567890', 'שרה כהן (מנהלת)', 'shalah.system.reports@gmail.com', '123456', 'תיכון רבין', 'מרכז', 'כפר סבא', 100, 1, '2026-08-01 07:00:00+03', null, null, null, null],
  ['usr-principal-02', 'principal', '045678912', '0539876543', 'יורם פרידמן (מנהל)', 'principal@ironi-a.org.il', '654321', 'עירוני א\'', 'תל אביב', 'תל אביב-יפו', 100, 1, '2026-08-01 07:00:00+03', null, null, null, null],
  ['usr-supervisor-01', 'supervisor', '045678901', '0545678901', 'אברהם מנחה (מחוז מרכז)', 'avraham.sup@education.gov.il', null, null, 'מרכז', null, 100, 1, '2026-08-01 07:00:00+03', null, null, null, null],
  ['usr-supervisor-02', 'supervisor', '056789012', '0547654321', 'רחל שלום (מחוז תל אביב)', 'rachel.sup@education.gov.il', null, null, 'תל אביב', null, 100, 1, '2026-08-01 07:00:00+03', null, null, null, null],

@@ -42,7 +42,7 @@ function seed() {
  consent_timestamp: '2026-08-01 08:00:00',
  principal_id: 'usr_principal_1',
  principal_name: 'שרה כהן',
- principal_email: 'sara.cohen@rabin-school.k12.il',
+ principal_email: 'shalah.system.reports@gmail.com',
  supervisor_id: 'usr_supervisor_1'
  },
  {
@@ -61,7 +61,7 @@ function seed() {
  consent_timestamp: '2026-08-01 08:30:00',
  principal_id: 'usr_principal_1',
  principal_name: 'שרה כהן',
- principal_email: 'sara.cohen@rabin-school.k12.il',
+ principal_email: 'shalah.system.reports@gmail.com',
  supervisor_id: 'usr_supervisor_1'
  },
  {
@@ -90,7 +90,7 @@ function seed() {
  id_number: '034567890',
  phone: '0534567890',
  full_name: 'שרה כהן',
- email: 'sara.cohen@rabin-school.k12.il',
+ email: 'shalah.system.reports@gmail.com',
  school_code: '123456',
  school_name: 'תיכון רבין כפר סבא',
  district: 'מרכז',

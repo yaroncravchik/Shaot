@@ -23,8 +23,8 @@ function loadProfileData(user) {
   document.getElementById('prof-municipality').value = user.municipality || 'כפר סבא';
   document.getElementById('prof-district').value = user.district || 'מרכז';
   document.getElementById('prof-supervisor').value = user.supervisorName || 'אברהם מנחה';
-  document.getElementById('prof-principal-name').value = user.principalName || 'שרה כהן';
-  document.getElementById('prof-principal-email').value = user.principalEmail || 'principal@rabin-kfs.org.il';
+  document.getElementById('prof-principal-name').value = user.principalName || 'רונית שחר';
+  document.getElementById('prof-principal-email').value = user.principalEmail || 'shalah.system.reports@gmail.com';
 
   // Schedule
   const sched = user.weeklySchedule || { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 };
