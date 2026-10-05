@@ -10,35 +10,63 @@ let availableReports = [];
 document.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get('token') || 'token-sec-rabin-202608-mlevi';
+  const reportIdParam = urlParams.get('reportId') || urlParams.get('id');
 
   currentPrincipal = API.getUserByToken(token) || Auth.getCurrentUser();
   if (!currentPrincipal || currentPrincipal.role !== 'principal') {
-    currentPrincipal = API.getUsers().find(u => u.role === 'principal');
+    if (reportIdParam) {
+      const rep = API.getReportById(reportIdParam);
+      if (rep && rep.schoolCode) {
+        const matchingPrincipal = API.getUsers().find(u => u.role === 'principal' && u.schoolCode === rep.schoolCode);
+        if (matchingPrincipal) currentPrincipal = matchingPrincipal;
+      }
+    }
+    if (!currentPrincipal || currentPrincipal.role !== 'principal') {
+      currentPrincipal = API.getUsers().find(u => u.role === 'principal');
+    }
     Auth.setCurrentUser(currentPrincipal);
   }
 
   Auth.renderHeader('principal');
   Auth.renderFooter();
 
-  loadPrincipalReports();
+  loadPrincipalReports(reportIdParam);
 });
 
-function loadPrincipalReports() {
+function loadPrincipalReports(targetReportId = null) {
   const allReports = API.getReports();
   // Filter reports matching this principal's school
-  availableReports = allReports.filter(r => r.schoolCode === currentPrincipal.schoolCode);
+  availableReports = allReports.filter(r => currentPrincipal && r.schoolCode === currentPrincipal.schoolCode);
+
+  if (targetReportId) {
+    const targetRep = allReports.find(r => r.id === targetReportId);
+    if (targetRep && !availableReports.some(r => r.id === targetRep.id)) {
+      availableReports.unshift(targetRep);
+    }
+  }
 
   const selectorCard = document.getElementById('p-selector-card');
   const reportSelect = document.getElementById('p-report-select');
 
+  // Determine currentReport
+  let chosenReport = null;
+  if (targetReportId) {
+    chosenReport = availableReports.find(r => r.id === targetReportId) || allReports.find(r => r.id === targetReportId);
+  }
+  if (!chosenReport) {
+    const pendingReport = availableReports.find(r => r.status === 'pending_principal');
+    chosenReport = pendingReport || availableReports[0] || allReports[0];
+  }
+  currentReport = chosenReport;
+
   if (availableReports.length > 1) {
     selectorCard.style.display = 'block';
     reportSelect.innerHTML = '';
-    availableReports.forEach((r, idx) => {
+    availableReports.forEach((r) => {
       const opt = document.createElement('option');
       opt.value = r.id;
       opt.textContent = `${r.teacherName} - ${HEBREW_MONTHS_NAME[r.month - 1] || r.month}/${r.year} (${(REPORT_STATUSES[r.status] && REPORT_STATUSES[r.status].label) || r.status})`;
-      if (idx === 0) opt.selected = true;
+      if (currentReport && r.id === currentReport.id) opt.selected = true;
       reportSelect.appendChild(opt);
     });
 
@@ -47,10 +75,6 @@ function loadPrincipalReports() {
       renderReportDetails(currentReport);
     });
   }
-
-  // Prioritize pending_principal report if available
-  const pendingReport = availableReports.find(r => r.status === 'pending_principal');
-  currentReport = pendingReport || availableReports[0] || allReports[0];
 
   if (currentReport) {
     renderReportDetails(currentReport);
