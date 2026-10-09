@@ -33,5 +33,11 @@ service cloud.firestore {
         allow update, delete: if false; // Audit logs are immutable
       }
     }
+
+    // Firebase Trigger Email Extension collection (firestore-send-email)
+    match /mail/{mailId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
   }
 }
