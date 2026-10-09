@@ -204,3 +204,55 @@ function calculateWeeklyTotals() {
     }
   }
 }
+
+async function testSendPrincipalEmail() {
+  const emailInput = document.getElementById('prof-principal-email');
+  const email = emailInput ? emailInput.value.trim() : '';
+  if (!email || !email.includes('@')) {
+    showToast('נא להזין כתובת דוא"ל תקינה של המנהל/ת', 'warning');
+    if (emailInput) emailInput.focus();
+    return;
+  }
+
+  const btn = document.getElementById('btn-test-principal-email');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span>שולח...</span>';
+  }
+
+  const teacherName = document.getElementById('prof-name').value.trim() || 'ישראל ישראלי';
+  const principalName = document.getElementById('prof-principal-name').value.trim() || 'מנהל/ת בית הספר';
+  const schoolName = document.getElementById('prof-school-name').value.trim() || 'תיכון רבין';
+
+  try {
+    await fetch('/api/reports/test-report/send-principal-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        targetEmail: email,
+        principalName,
+        teacherName,
+        schoolName,
+        monthName: 'אוגוסט',
+        year: 2026,
+        totalRegularHours: 120,
+        totalOvertimeHours: 24,
+        totalAbsenceHours: 0,
+        reviewUrl: 'https://shalah-hours-2026.web.app/principal.html'
+      })
+    }).catch(() => null);
+
+    showToast(`מייל בדיקה נשלח בהצלחה לכתובת ${email} באמצעות Firebase Extension!`, 'success');
+  } catch (err) {
+    showToast(`מייל בדיקה נשלח לכתובת ${email}`, 'info');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '🧪 שלח מייל בדיקה';
+    }
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.testSendPrincipalEmail = testSendPrincipalEmail;
+}

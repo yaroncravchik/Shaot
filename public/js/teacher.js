@@ -3,6 +3,9 @@
  * Teacher Dashboard & Monthly Report Grid Controller
  */
 
+const absenceReasonsList = (typeof ABSENCE_REASONS !== 'undefined' ? ABSENCE_REASONS : (window.ABSENCE_REASONS || ['מחלה', 'מילואים', 'השתלמות', 'חופשה', 'אישי', 'אחר']));
+const overtimeReasonsList = (typeof OVERTIME_REASONS !== 'undefined' ? OVERTIME_REASONS : (window.OVERTIME_REASONS || ['יום שדה', 'גיחה', 'מסע', 'מש"צים', 'אחר']));
+
 let currentTeacher = null;
 let currentActiveReport = null;
 let autoSaveInterval = null;
@@ -10,65 +13,65 @@ let selectedYear = 2026;
 let selectedMonth = 8;
 
 document.addEventListener('DOMContentLoaded', () => {
- currentTeacher = Auth.requireAuth(['teacher']);
- if (!currentTeacher) return;
+  currentTeacher = Auth.requireAuth(['teacher']);
+  if (!currentTeacher) return;
 
- Auth.renderHeader('teacher');
- Auth.renderFooter();
+  Auth.renderHeader('teacher');
+  Auth.renderFooter();
 
- populateTeacherHeader(currentTeacher);
- initMonthSelector();
- loadTeacherDashboardData();
- setupReportFormHandlers();
+  populateTeacherHeader(currentTeacher);
+  initMonthSelector();
+  loadTeacherDashboardData();
+  setupReportFormHandlers();
 });
 
 function populateTeacherHeader(teacher) {
- document.getElementById('teacher-display-name').textContent = teacher.name || 'ישראל ישראלי';
- document.getElementById('prof-disp-id').textContent = teacher.id || '';
- document.getElementById('prof-disp-school').textContent = `${teacher.schoolName || ''} (${teacher.schoolCode || ''})`;
- document.getElementById('prof-disp-district').textContent = `${teacher.district || ''} • ${teacher.municipality || ''}`;
- document.getElementById('prof-disp-supervisor').textContent = teacher.supervisorName || 'דוד לוי';
- document.getElementById('prof-disp-principal').textContent = teacher.principalName || 'רונית שחר';
- document.getElementById('prof-disp-scope').textContent = `${teacher.jobScope || 100}%`;
+  document.getElementById('teacher-display-name').textContent = teacher.name || 'ישראל ישראלי';
+  document.getElementById('prof-disp-id').textContent = teacher.id || '';
+  document.getElementById('prof-disp-school').textContent = `${teacher.schoolName || ''} (${teacher.schoolCode || ''})`;
+  document.getElementById('prof-disp-district').textContent = `${teacher.district || ''} • ${teacher.municipality || ''}`;
+  document.getElementById('prof-disp-supervisor').textContent = teacher.supervisorName || 'דוד לוי';
+  document.getElementById('prof-disp-principal').textContent = teacher.principalName || 'רונית שחר';
+  document.getElementById('prof-disp-scope').textContent = `${teacher.jobScope || 100}%`;
 }
 
 function initMonthSelector() {
- const select = document.getElementById('select-report-month');
- select.innerHTML = '';
+  const select = document.getElementById('select-report-month');
+  select.innerHTML = '';
 
- // Flexible window: 2 months back to 1 month ahead around August 2026
- const options = [
- { year: 2026, month: 9, label: 'ספטמבר 2026 (חודש הבא)' },
- { year: 2026, month: 8, label: 'אוגוסט 2026 (חודש נוכחי)' },
- { year: 2026, month: 7, label: 'יולי 2026' },
- { year: 2026, month: 6, label: 'יוני 2026' }
- ];
+  // Flexible window: 2 months back to 1 month ahead around August 2026
+  const options = [
+    { year: 2026, month: 9, label: 'ספטמבר 2026 (חודש הבא)' },
+    { year: 2026, month: 8, label: 'אוגוסט 2026 (חודש נוכחי)' },
+    { year: 2026, month: 7, label: 'יולי 2026' },
+    { year: 2026, month: 6, label: 'יוני 2026' }
+  ];
 
- options.forEach((opt, idx) => {
- const el = document.createElement('option');
- el.value = `${opt.year}-${opt.month}`;
- el.textContent = opt.label;
- if (idx === 1) el.selected = true; // Default August
- select.appendChild(el);
- });
+  options.forEach((opt, idx) => {
+    const el = document.createElement('option');
+    el.value = `${opt.year}-${opt.month}`;
+    el.textContent = opt.label;
+    if (idx === 1) el.selected = true; // Default August
+    select.appendChild(el);
+  });
 
- select.addEventListener('change', () => {
- const [y, m] = select.value.split('-');
- selectedYear = parseInt(y, 10);
- selectedMonth = parseInt(m, 10);
- loadTeacherDashboardData();
- });
+  select.addEventListener('change', () => {
+    const [y, m] = select.value.split('-');
+    selectedYear = parseInt(y, 10);
+    selectedMonth = parseInt(m, 10);
+    loadTeacherDashboardData();
+  });
 }
 
 function loadTeacherDashboardData() {
- const reports = API.getReports({ teacherId: currentTeacher.id });
- renderHistoryTable(reports);
- renderActiveMonthStatus(reports);
- renderFeedbackBanner(reports);
+  const reports = API.getReports({ teacherId: currentTeacher.id });
+  renderHistoryTable(reports);
+  renderActiveMonthStatus(reports);
+  renderFeedbackBanner(reports);
 }
 
 function renderActiveMonthStatus(reports) {
-  const currentMonthReport = reports.find(r => r.year === selectedYear && r.month === selectedMonth);
+  const currentMonthReport = reports.find(r => Number(r.year) === selectedYear && Number(r.month) === selectedMonth);
   const pillContainer = document.getElementById('current-month-status-pill');
   const btnOpen = document.getElementById('btn-open-report-form');
 
@@ -104,25 +107,19 @@ function renderFeedbackBanner(reports) {
   const feedbackContainer = document.getElementById('teacher-feedback-container');
   feedbackContainer.innerHTML = '';
 
-  // Check if any report is returned, supervisor edited, or pending principal
   const returnedReport = reports.find(r => r.status === 'returned');
   const editedReport = reports.find(r => r.status === 'supervisor_edited');
   const pendingPrincipalReport = reports.find(r => r.status === 'pending_principal');
 
   if (pendingPrincipalReport) {
-    const principalEmail = (currentTeacher && (currentTeacher.principalEmail || currentTeacher.principal_email)) || pendingPrincipalReport.principalEmail || 'ronit.s@rabin-kfs.org.il';
+    const principalEmail = (currentTeacher && (currentTeacher.principalEmail || currentTeacher.principal_email)) || pendingPrincipalReport.principalEmail || 'shalah.system.reports@gmail.com';
     const monthName = HEBREW_MONTHS_NAME[pendingPrincipalReport.month - 1] || pendingPrincipalReport.month;
     feedbackContainer.innerHTML += `
       <div class="banner-alert banner-info animate-fade-in mb-2">
         <div class="banner-alert-icon">📧</div>
-        <div class="banner-alert-content flex justify-between items-center flex-wrap gap-sm">
-          <div>
-            <div class="banner-alert-title">דוח שעות חודש ${monthName} ${pendingPrincipalReport.year} ממתין לאישור מנהל/ת בית הספר:</div>
-            <div>הדוח ננעל והודעה עם קישור ישיר לאישור נשלחה אוטומטית למייל המנהל/ת (<strong>${principalEmail}</strong>).</div>
-          </div>
-          <button class="btn btn-outline-primary btn-sm" onclick="openPrincipalEmailDispatchModal('${pendingPrincipalReport.id}')">
-            🔗 צפייה בפרטי השליחה / העתקת קישור
-          </button>
+        <div class="banner-alert-content">
+          <div class="banner-alert-title">דוח שעות חודש ${monthName} ${pendingPrincipalReport.year} ממתין לאישור מנהל/ת בית הספר:</div>
+          <div>הדוח ננעל והודעת אישור עם קישור ישיר נשלחה אוטומטית למייל המנהל/ת (<strong>${principalEmail}</strong>) באמצעות Firebase Email Extension.</div>
         </div>
       </div>
     `;
@@ -167,55 +164,55 @@ function renderHistoryTable(reports) {
   tbody.innerHTML = '';
 
   if (reports.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted p-3">טרם נוצרו דוחות שעות במערכת</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted p-3">טרם הוגשו דוחות שעות</td></tr>`;
     return;
   }
 
-  reports.forEach(r => {
-    const st = REPORT_STATUSES[r.status] || { label: r.status, badgeClass: 'badge-draft' };
+  // Sort by year and month descending
+  const sorted = [...reports].sort((a, b) => {
+    if (b.year !== a.year) return b.year - a.year;
+    return b.month - a.month;
+  });
+
+  sorted.forEach(r => {
     const tr = document.createElement('tr');
+    const st = REPORT_STATUSES[r.status] || { label: r.status, badgeClass: 'badge-draft' };
 
-    let remarksHtml = '<span class="text-muted">-</span>';
+    let sigCell = '<span class="text-muted">—</span>';
+    const sig = r.signatureId || r.digitalSignatureId;
+    if (sig) {
+      sigCell = `<a href="verify.html?sig=${encodeURIComponent(sig)}" target="_blank" class="signature-badge" title="לחץ לאימות תעודה דיגיטלית">
+        <span>🛡️</span>
+        <span>${sig}</span>
+      </a>`;
+    }
+
+    let remarksCell = '<span class="text-muted">—</span>';
     if (r.supervisorRemarks) {
-      remarksHtml = `<span style="color:#721c24; font-weight:600;" title="${r.supervisorRemarks}">💬 מנחה: ${r.supervisorRemarks.slice(0, 30)}...</span>`;
+      remarksCell = `<span class="badge badge-warning" title="${r.supervisorRemarks}">הערת מנחה</span>`;
     } else if (r.principalRemarks) {
-      remarksHtml = `<span style="color:#004085;" title="${r.principalRemarks}">💬 מנהלת: ${r.principalRemarks.slice(0, 30)}...</span>`;
+      remarksCell = `<span class="badge badge-warning" title="${r.principalRemarks}">הערת מנהל/ת</span>`;
     }
 
-    let sigHtml = '<span class="text-muted">טרם נחתם</span>';
-    if (r.signatureId || r.status === 'approved_paid') {
-      sigHtml = `
-        <span class="rsa-badge" style="background:#e8f5e9; color:#2e7d32; border-color:#c8e6c9;">
-          🛡️ נחתם ומאושר
-        </span>
-      `;
-    }
+    const isSupervisorApproved = API.isReportSupervisorApproved(r);
 
-    const isApproved = API.isReportSupervisorApproved(r);
-
-    const actionButtons = `
-      <div style="display:inline-flex; gap:6px; align-items:center; justify-content:center; flex-wrap:wrap;">
+    tr.innerHTML = `
+      <td><strong>${HEBREW_MONTHS_NAME[r.month - 1]} ${r.year}</strong></td>
+      <td><span class="badge ${st.badgeClass}"><span class="badge-dot"></span> ${st.label}</span></td>
+      <td>${r.submittedAt ? r.submittedAt.slice(0, 10) : '—'}</td>
+      <td><strong>${r.totalOvertimeHours || 0}</strong> שעות</td>
+      <td>${r.totalAbsenceHours || 0} שעות</td>
+      <td>${sigCell}</td>
+      <td>${remarksCell}</td>
+      <td style="text-align: center;">
         <button class="btn btn-secondary btn-sm" onclick="openReportModal(${r.year}, ${r.month})">
           ${r.status === 'draft' || r.status === 'returned' ? '✏️ עריכה' : '👁️ צפייה'}
         </button>
-        ${isApproved ? `
-          <button class="btn btn-outline-primary btn-sm" onclick="downloadReportPDF('${r.id}')" title="הורדת דוח מאושר בקובץ PDF">
-            <span>📄 הורדת PDF</span>
+        ${isSupervisorApproved ? `
+          <button class="btn btn-outline-primary btn-sm" onclick="downloadReportPDF('${r.id}')" title="הורדת דוח מאושר כקובץ PDF" style="margin-right: 4px;">
+            📄 PDF
           </button>
         ` : ''}
-      </div>
-    `;
-
-    tr.innerHTML = `
-      <td><strong>${HEBREW_MONTHS_NAME[r.month - 1] || r.month} ${r.year}</strong></td>
-      <td><span class="badge ${st.badgeClass}"><span class="badge-dot"></span> ${st.label}</span></td>
-      <td>${r.submittedAt ? r.submittedAt.slice(0, 10) : '<span class="text-muted">טיוטה</span>'}</td>
-      <td><strong style="color:var(--primary); font-size:1.05rem;">${r.totalOvertimeHours || 0} שעות</strong></td>
-      <td>${r.totalAbsenceHours || 0}</td>
-      <td>${sigHtml}</td>
-      <td style="max-width:200px;">${remarksHtml}</td>
-      <td style="text-align: center;">
-        ${actionButtons}
       </td>
     `;
     tbody.appendChild(tr);
@@ -226,23 +223,23 @@ function renderHistoryTable(reports) {
 // Monthly Report Grid & Modal Logic
 // ==========================================================================
 function setupReportFormHandlers() {
- document.getElementById('btn-open-report-form').addEventListener('click', () => {
- openReportModal(selectedYear, selectedMonth);
- });
+  document.getElementById('btn-open-report-form').addEventListener('click', () => {
+    openReportModal(selectedYear, selectedMonth);
+  });
 
- document.getElementById('btn-save-draft').addEventListener('click', () => {
- saveCurrentReportDraft(true);
- });
+  document.getElementById('btn-save-draft').addEventListener('click', () => {
+    saveCurrentReportDraft(true);
+  });
 
- document.getElementById('btn-submit-report').addEventListener('click', () => {
- submitCurrentReport();
- });
+  document.getElementById('btn-submit-report').addEventListener('click', () => {
+    submitCurrentReport();
+  });
 
- // Setup file upload simulation
- const fileInput = document.getElementById('file-upload-input');
- fileInput.addEventListener('change', (e) => {
- handleFileUpload(e.target.files);
- });
+  // Setup file upload simulation
+  const fileInput = document.getElementById('file-upload-input');
+  fileInput.addEventListener('change', (e) => {
+    handleFileUpload(e.target.files);
+  });
 }
 
 function checkReportSubmissionEligibility(year, month, checkDate = new Date()) {
@@ -278,6 +275,7 @@ function openReportModal(year, month) {
       municipality: currentTeacher.municipality,
       supervisorName: currentTeacher.supervisorName,
       principalName: currentTeacher.principalName,
+      principalEmail: currentTeacher.principalEmail,
       year: year,
       month: month,
       status: 'draft',
@@ -364,12 +362,12 @@ function isDailyHoursExceeded(day) {
   const reason = (day.overtimeReason || '').trim();
   const total = fixed + overtime;
 
-  // סייג לכלל זה: אם נבחר בסיבת שעות נוספות "גיחה" או "מסע", סף השעות הוא 14 (התראה מעל 14)
+  // סייג לכלל זה: אם נבחר בסיבת שעות נוספות "גיחה" או "מסע", סף השעות הוא 14
   if (reason === 'גיחה' || reason === 'מסע') {
     return total > 14;
   }
 
-  // עבור יתר הסיבות, סף השעות הוא 10 (התראה מעל 10)
+  // עבור יתר הסיבות, סף השעות הוא 10
   return total > 10;
 }
 
@@ -378,169 +376,166 @@ function updateDayThresholdWarning(idx) {
   if (!rep || !rep.daysData || !rep.daysData[idx]) return;
   const day = rep.daysData[idx];
   const isExceeded = isDailyHoursExceeded(day);
-  const inputEl = document.getElementById(`ot-input-${idx}`);
-  const warnEl = document.getElementById(`ot-warning-${idx}`);
 
-  if (inputEl) {
-    if (isExceeded) {
-      inputEl.classList.add('cell-overtime-exceeded');
-    } else {
-      inputEl.classList.remove('cell-overtime-exceeded');
+  const row = document.querySelector(`#report-grid-tbody tr[data-day-idx="${idx}"]`);
+  if (!row) return;
+
+  const inputOt = row.querySelector('.input-overtime');
+  const existingNotice = row.querySelector('.hours-exceeded-badge');
+
+  if (isExceeded) {
+    if (inputOt) inputOt.classList.add('cell-overtime-exceeded');
+    if (!existingNotice) {
+      const cell = inputOt ? inputOt.parentElement : null;
+      if (cell) {
+        const thresholdLimit = (day.overtimeReason === 'גיחה' || day.overtimeReason === 'מסע') ? '14' : '10';
+        const badge = document.createElement('div');
+        badge.className = 'hours-exceeded-badge';
+        badge.innerHTML = `⚠️ חריגה מעל ${thresholdLimit} ש'`;
+        cell.appendChild(badge);
+      }
     }
-  }
-
-  if (warnEl) {
-    warnEl.style.display = isExceeded ? 'block' : 'none';
+  } else {
+    if (inputOt) inputOt.classList.remove('cell-overtime-exceeded');
+    if (existingNotice) existingNotice.remove();
   }
 }
 
 function renderReportGrid(report, isReadOnly) {
-  currentActiveReport = report;
-  if (typeof window !== 'undefined') window.currentActiveReport = report;
   const tbody = document.getElementById('report-grid-tbody');
   tbody.innerHTML = '';
 
-  const absenceReasonOptions = ['מחלה', 'מילואים', 'השתלמות', 'חופשה', 'אישי', 'אחר'];
-  const overtimeReasonOptions = ['יום שדה', 'גיחה', 'מסע', 'מש"צים', 'אחר'];
-
-  report.daysData.forEach((day, index) => {
+  report.daysData.forEach((day, idx) => {
     const tr = document.createElement('tr');
+    tr.setAttribute('data-day-idx', idx);
     if (day.isHoliday) tr.classList.add('row-holiday');
     if (day.isFieldDay) tr.classList.add('row-field-day');
 
     let dayTags = '';
     if (day.isHoliday) {
-      dayTags += `<span class="holiday-tag" title="${day.holidayName}"> ${day.holidayName || 'חג/חופשה'}</span>`;
+      dayTags += `<span class="holiday-tag">🌿 ${day.holidayName || 'חג'}</span>`;
     }
     if (day.isFieldDay) {
-      dayTags += `<span class="field-day-tag"> יום שדה</span>`;
+      dayTags += `<span class="field-day-tag">🌾 יום שדה</span>`;
     }
 
-    // Check if daily threshold is exceeded (>10 hours total daily without exemption)
-    const isExceeded = isDailyHoursExceeded(day);
-
-    // Check if cell was edited by supervisor
-    let overtimeCellClass = 'cell-input';
-    if (day.supervisorEdited) {
-      overtimeCellClass += ' supervisor-edited-cell';
-    }
-    if (isExceeded) {
-      overtimeCellClass += ' cell-overtime-exceeded';
-    }
+    const fixed = parseFloat(day.fixedHours || 0);
+    const overtime = parseFloat(day.overtimeHours || 0);
+    const reason = (day.overtimeReason || '').trim();
+    const isExceeded = (reason === 'גיחה' || reason === 'מסע') ? (fixed + overtime > 14) : (fixed + overtime > 10);
+    const thresholdLimit = (reason === 'גיחה' || reason === 'מסע') ? '14' : '10';
 
     tr.innerHTML = `
-      <td style="text-align: center; font-weight: 700;">${day.dayOfMonth}</td>
+      <td style="text-align:center; font-weight:700;">${day.dayOfMonth}</td>
       <td>
-        <div style="font-weight: 600;">${day.dayName}</div>
+        <div style="font-weight:600;">${day.dayName}</div>
         <div>${dayTags}</div>
       </td>
-      <!-- Fixed hours: Read-only gray background -->
-      <td style="text-align: center;">
-        <input type="text" class="cell-input cell-readonly" value="${day.fixedHours || 0}" readonly>
+      <td style="text-align:center;">
+        <input 
+          type="text" 
+          class="cell-input cell-readonly" 
+          value="${day.fixedHours || 0}" 
+          readonly 
+          title="שעות קבועות ממערכת השעות השבועית"
+        >
       </td>
-      <!-- Absence Hours -->
       <td>
         <input 
           type="number" 
-          class="cell-input" 
-          min="0" 
-          max="12" 
           step="0.5" 
+          min="0" 
+          max="24"
+          class="cell-input input-absence" 
+          data-day-idx="${idx}"
           value="${day.absenceHours || ''}" 
-          data-day-idx="${index}" 
-          data-field="absenceHours"
-          ${isReadOnly ? 'readonly' : ''}
+          placeholder="0"
+          ${isReadOnly ? 'disabled' : ''}
         >
       </td>
-      <!-- Absence Reason -->
       <td>
         <select 
-          class="cell-input cell-input-text" 
-          data-day-idx="${index}" 
-          data-field="absenceReason"
+          class="cell-input select-absence-reason" 
+          data-day-idx="${idx}"
           ${isReadOnly ? 'disabled' : ''}
         >
           <option value="">-- בחר סיבה --</option>
-          ${absenceReasonOptions.map(r => `<option value="${r}" ${day.absenceReason === r ? 'selected' : ''}>${r}</option>`).join('')}
+          ${absenceReasonsList.map(r => `<option value="${r}" ${day.absenceReason === r ? 'selected' : ''}>${r}</option>`).join('')}
         </select>
       </td>
-      <!-- Overtime Hours -->
       <td>
-        <div class="supervisor-edited-wrapper" id="ot-wrapper-${index}">
-          ${day.supervisorEdited ? `<span class="edit-diff-indicator" title="${day.editNote}">עודכן ע"י מנחה</span>` : ''}
+        <div style="position:relative;">
           <input 
             type="number" 
-            class="${overtimeCellClass}" 
-            id="ot-input-${index}"
-            min="0" 
-            max="16" 
             step="0.5" 
+            min="0" 
+            max="24"
+            class="cell-input input-overtime ${isExceeded ? 'cell-overtime-exceeded' : ''}" 
+            data-day-idx="${idx}"
             value="${day.overtimeHours || ''}" 
-            data-day-idx="${index}" 
-            data-field="overtimeHours"
-            ${isReadOnly ? 'readonly' : ''}
+            placeholder="0"
+            ${isReadOnly ? 'disabled' : ''}
           >
-          ${day.supervisorEdited && day.originalOvertime !== undefined ? `<span class="original-value-hint">מקורי: ${day.originalOvertime} שעות</span>` : ''}
-          <div id="ot-warning-${index}" class="overtime-threshold-warning" style="display: ${isExceeded ? 'block' : 'none'};">
-            ⚠️ סך השעות היומי עובר את הסף המותר
-          </div>
+          ${isExceeded ? `<div class="hours-exceeded-badge">⚠️ חריגה מעל ${thresholdLimit} ש'</div>` : ''}
         </div>
       </td>
-      <!-- Overtime Reason -->
       <td>
         <select 
-          class="cell-input cell-input-text" 
-          id="ot-reason-${index}"
-          data-day-idx="${index}" 
-          data-field="overtimeReason"
-          ${isReadOnly ? 'disabled' : ''}
+            class="cell-input select-overtime-reason" 
+            data-day-idx="${idx}"
+            ${isReadOnly ? 'disabled' : ''}
         >
-          <option value="">-- בחר פעילות --</option>
-          ${overtimeReasonOptions.map(r => `<option value="${r}" ${day.overtimeReason === r ? 'selected' : ''}>${r}</option>`).join('')}
+          <option value="">-- בחר סיבה --</option>
+          ${overtimeReasonsList.map(r => `<option value="${r}" ${day.overtimeReason === r ? 'selected' : ''}>${r}</option>`).join('')}
         </select>
       </td>
-      <!-- Grade / Class -->
       <td>
         <input 
           type="text" 
-          class="cell-input cell-input-text" 
-          placeholder="ט'1, י'2..." 
+          class="cell-input input-grade-class" 
+          data-day-idx="${idx}"
           value="${day.gradeClass || ''}" 
-          data-day-idx="${index}" 
-          data-field="gradeClass"
-          ${isReadOnly ? 'readonly' : ''}
+          placeholder="לדוגמה: י'2"
+          ${isReadOnly ? 'disabled' : ''}
         >
       </td>
-      <!-- Activity Description -->
       <td>
         <input 
           type="text" 
-          class="cell-input cell-input-text" 
-          placeholder="פירוט סיור, הדרכה, מסלול..." 
+          class="cell-input input-description" 
+          data-day-idx="${idx}"
           value="${day.description || ''}" 
-          data-day-idx="${index}" 
-          data-field="description"
-          ${isReadOnly ? 'readonly' : ''}
+          placeholder="פירוט הפעילות..."
+          ${isReadOnly ? 'disabled' : ''}
         >
       </td>
     `;
     tbody.appendChild(tr);
   });
 
-  // Attach live input change listeners to recalculate totals & threshold warnings
+  // Attach live calculation events
   if (!isReadOnly) {
-    tbody.querySelectorAll('input, select').forEach(input => {
+    const inputs = tbody.querySelectorAll('input, select');
+    inputs.forEach(input => {
       const handleLiveChange = (e) => {
-        const idx = parseInt(e.target.dataset.dayIdx, 10);
-        const field = e.target.dataset.field;
-        let val = e.target.value;
-        if (field === 'absenceHours' || field === 'overtimeHours') {
-          val = parseFloat(val) || 0;
-        }
-        currentActiveReport.daysData[idx][field] = val;
+        const el = e.target;
+        const dayIdx = parseInt(el.getAttribute('data-day-idx'), 10);
+        if (isNaN(dayIdx)) return;
 
-        if (field === 'overtimeHours' || field === 'overtimeReason') {
-          updateDayThresholdWarning(idx);
+        if (el.classList.contains('input-absence')) {
+          currentActiveReport.daysData[dayIdx].absenceHours = parseFloat(el.value) || 0;
+        } else if (el.classList.contains('select-absence-reason')) {
+          currentActiveReport.daysData[dayIdx].absenceReason = el.value;
+        } else if (el.classList.contains('input-overtime')) {
+          currentActiveReport.daysData[dayIdx].overtimeHours = parseFloat(el.value) || 0;
+          updateDayThresholdWarning(dayIdx);
+        } else if (el.classList.contains('select-overtime-reason')) {
+          currentActiveReport.daysData[dayIdx].overtimeReason = el.value;
+          updateDayThresholdWarning(dayIdx);
+        } else if (el.classList.contains('input-grade-class')) {
+          currentActiveReport.daysData[dayIdx].gradeClass = el.value;
+        } else if (el.classList.contains('input-description')) {
+          currentActiveReport.daysData[dayIdx].description = el.value;
         }
 
         calculateGridTotals();
@@ -572,245 +567,87 @@ function calculateGridTotals() {
 }
 
 function handleFileUpload(files) {
- if (!files || files.length === 0) return;
+  if (!files || files.length === 0) return;
 
- for (let i = 0; i < files.length; i++) {
- const file = files[i];
- if (file.size > 10 * 1024 * 1024) {
- showToast(`הקובץ ${file.name} חורג ממגבלת 10MB`, 'error');
- continue;
- }
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (file.size > 10 * 1024 * 1024) {
+      showToast(`הקובץ ${file.name} חורג ממגבלת 10MB`, 'error');
+      continue;
+    }
 
- const sizeStr = file.size > 1024 * 1024 
- ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` 
- : `${Math.round(file.size / 1024)} KB`;
+    const sizeStr = file.size > 1024 * 1024 
+      ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` 
+      : `${Math.round(file.size / 1024)} KB`;
 
- currentActiveReport.attachments = currentActiveReport.attachments || [];
- currentActiveReport.attachments.push({
- name: file.name,
- size: sizeStr,
- type: file.type || 'application/pdf',
- uploadDate: new Date().toISOString().slice(0, 10)
- });
- }
+    currentActiveReport.attachments = currentActiveReport.attachments || [];
+    currentActiveReport.attachments.push({
+      name: file.name,
+      size: sizeStr,
+      type: file.type || 'application/pdf',
+      uploadDate: new Date().toISOString().slice(0, 10)
+    });
+  }
 
- renderAttachmentsList(currentActiveReport, false);
- showToast('הקבצים צורפו בהצלחה לדוח', 'success');
+  renderAttachmentsList(currentActiveReport, false);
+  showToast('הקבצים צורפו בהצלחה לדוח', 'success');
 }
 
 function renderAttachmentsList(report, isReadOnly) {
- const container = document.getElementById('report-attachments-list');
- container.innerHTML = '';
+  const container = document.getElementById('report-attachments-list');
+  container.innerHTML = '';
 
- const attachments = report.attachments || [];
- if (attachments.length === 0) {
- container.innerHTML = `<span class="text-muted" style="font-size:0.8125rem;">לא צורפו נספחים לדוח זה</span>`;
- return;
- }
+  const attachments = report.attachments || [];
+  if (attachments.length === 0) {
+    container.innerHTML = `<span class="text-muted" style="font-size:0.8125rem;">לא צורפו נספחים לדוח זה</span>`;
+    return;
+  }
 
- attachments.forEach((att, idx) => {
- const item = document.createElement('div');
- item.className = 'attachment-item';
- item.innerHTML = `
- <div class="attachment-info">
- <span class="attachment-icon"></span>
- <div>
- <div class="attachment-name">${att.name}</div>
- <div class="attachment-size">${att.size} • הועלה ב-${att.uploadDate}</div>
- </div>
- </div>
- ${!isReadOnly ? `
- <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeAttachment(${idx})">
- הסר
- </button>
- ` : `
- <span class="badge badge-approved">צורף</span>
- `}
- `;
- container.appendChild(item);
- });
+  attachments.forEach((att, idx) => {
+    const item = document.createElement('div');
+    item.className = 'attachment-item';
+    item.innerHTML = `
+      <div class="attachment-info">
+        <span class="attachment-icon">📁</span>
+        <div>
+          <div class="attachment-name">${att.name}</div>
+          <div class="attachment-size">${att.size} • הועלה ב-${att.uploadDate}</div>
+        </div>
+      </div>
+      ${!isReadOnly ? `
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeAttachment(${idx})">
+          הסר
+        </button>
+      ` : `
+        <span class="badge badge-approved">צורף</span>
+      `}
+    `;
+    container.appendChild(item);
+  });
 }
 
 function removeAttachment(index) {
- if (currentActiveReport && currentActiveReport.attachments) {
- currentActiveReport.attachments.splice(index, 1);
- renderAttachmentsList(currentActiveReport, false);
- }
+  if (currentActiveReport && currentActiveReport.attachments) {
+    currentActiveReport.attachments.splice(index, 1);
+    renderAttachmentsList(currentActiveReport, false);
+  }
 }
 
 function saveCurrentReportDraft(showFeedback = true) {
- if (!currentActiveReport) return;
+  if (!currentActiveReport) return;
 
- const saved = API.saveReport(currentActiveReport);
- currentActiveReport.id = saved.id;
+  const saved = API.saveReport(currentActiveReport);
+  currentActiveReport.id = saved.id;
 
- const autoSaveText = document.getElementById('auto-save-text');
- const now = new Date();
- const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
- autoSaveText.textContent = `נשמר אוטומטית ב-${timeStr}`;
+  const autoSaveText = document.getElementById('auto-save-text');
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  autoSaveText.textContent = `נשמר אוטומטית ב-${timeStr}`;
 
- if (showFeedback) {
- showToast('טיוטת הדוח נשמרה בהצלחה!', 'info');
- loadTeacherDashboardData();
- }
-}
-
-let currentDispatchReport = null;
-
-function openPrincipalEmailDispatchModal(reportId) {
-  const report = API.getReportById(reportId) || currentActiveReport;
-  if (!report) {
-    showToast('דוח לא נמצא במערכת', 'error');
-    return;
+  if (showFeedback) {
+    showToast('טיוטת הדוח נשמרה בהצלחה!', 'info');
+    loadTeacherDashboardData();
   }
-
-  currentDispatchReport = report;
-  const teacher = currentTeacher || API.getUserById(report.teacherId) || Auth.getCurrentUser();
-
-  const monthName = HEBREW_MONTHS_NAME[report.month - 1] || report.month;
-  const year = report.year;
-  const teacherName = teacher ? teacher.name : (report.teacherName || 'מורה של"ח');
-  const teacherId = (teacher && (teacher.id || teacher.id_number)) || report.teacherId || '';
-  const principalName = (teacher && teacher.principalName) || report.principalName || 'רונית שחר';
-  const principalEmail = (teacher && teacher.principalEmail) || report.principalEmail || 'ronit.s@rabin-kfs.org.il';
-
-  const reviewUrl = API.getPrincipalReviewUrl(report, teacher);
-
-  // Set modal elements
-  const modalTitle = document.getElementById('dispatch-modal-title');
-  if (modalTitle) modalTitle.textContent = `שליחה ואישור מנהל/ת המוסד – ${monthName} ${year}`;
-
-  const pNameInput = document.getElementById('dispatch-principal-name');
-  if (pNameInput) pNameInput.value = principalName;
-
-  const pEmailInput = document.getElementById('dispatch-principal-email');
-  if (pEmailInput) pEmailInput.value = principalEmail;
-
-  const pSubjectInput = document.getElementById('dispatch-email-subject');
-  if (pSubjectInput) {
-    pSubjectInput.value = `אישור דוח שעות פעילות של"ח – ${teacherName} – חודש ${monthName} ${year}`;
-  }
-
-  const pBodyInput = document.getElementById('dispatch-email-body');
-  if (pBodyInput) {
-    pBodyInput.value = `שלום ${principalName},
-
-מצורף לעיונך ולאישורך דוח שעות פעילות חודשי בשל"ח עבור חודש ${monthName} ${year} של המורה ${teacherName}${teacherId ? ` (ת.ז. ${teacherId})` : ''}.
-
-לצפייה ישירה בדוח ואישור בלחיצה אחת (ללא צורך בהתחברות):
-${reviewUrl}
-
-בברכה,
-${teacherName}`;
-  }
-
-  const pUrlInput = document.getElementById('dispatch-review-url');
-  if (pUrlInput) pUrlInput.value = reviewUrl;
-
-  const copyBtnText = document.getElementById('copy-btn-text');
-  if (copyBtnText) copyBtnText.textContent = '📋 העתק קישור';
-
-  openModal('modal-principal-email-dispatch');
-}
-
-function copyDispatchReviewUrl() {
-  const urlInput = document.getElementById('dispatch-review-url');
-  if (!urlInput || !urlInput.value) return;
-
-  const url = urlInput.value;
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(url).then(() => {
-      onCopySuccess();
-    }).catch(() => {
-      fallbackCopy(url);
-    });
-  } else {
-    fallbackCopy(url);
-  }
-}
-
-function fallbackCopy(text) {
-  const tempInput = document.createElement('textarea');
-  tempInput.value = text;
-  document.body.appendChild(tempInput);
-  tempInput.select();
-  try {
-    document.execCommand('copy');
-    onCopySuccess();
-  } catch (err) {
-    showToast('נא להעתיק את הקישור ידנית מתוך השדה', 'warning');
-  }
-  document.body.removeChild(tempInput);
-}
-
-function onCopySuccess() {
-  const copyBtnText = document.getElementById('copy-btn-text');
-  if (copyBtnText) {
-    copyBtnText.textContent = '✓ הועתק!';
-    setTimeout(() => {
-      copyBtnText.textContent = '📋 העתק קישור';
-    }, 2500);
-  }
-  showToast('הקישור הישיר הועתק ללוח בהצלחה!', 'success');
-}
-
-function openDispatchMailClient() {
-  const emailInput = document.getElementById('dispatch-principal-email');
-  const subjectInput = document.getElementById('dispatch-email-subject');
-  const bodyInput = document.getElementById('dispatch-email-body');
-
-  const email = emailInput ? emailInput.value.trim() : '';
-  const subject = subjectInput ? subjectInput.value.trim() : '';
-  const body = bodyInput ? bodyInput.value.trim() : '';
-
-  if (!email) {
-    showToast('נא להזין כתובת דוא"ל של מנהל/ת בית הספר', 'warning');
-    if (emailInput) emailInput.focus();
-    return;
-  }
-
-  // Update profile principal email if changed
-  if (currentTeacher && email !== currentTeacher.principalEmail) {
-    currentTeacher.principalEmail = email;
-    API.saveUser(currentTeacher);
-  }
-
-  if (currentDispatchReport) {
-    API.sendPrincipalNotification(currentDispatchReport.id, email, 'email');
-  }
-
-  const mailtoUri = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  
-  // Trigger default mail client
-  try {
-    window.location.href = mailtoUri;
-  } catch (err) {
-    const a = document.createElement('a');
-    a.href = mailtoUri;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-
-  showToast('טיוטת הדוא"ל נפתחה בתוכנת הדואר שלך לשליחה למנהל/ת!', 'success');
-}
-
-function sendDispatchWhatsApp() {
-  const subjectInput = document.getElementById('dispatch-email-subject');
-  const bodyInput = document.getElementById('dispatch-email-body');
-
-  const subject = subjectInput ? subjectInput.value.trim() : '';
-  const body = bodyInput ? bodyInput.value.trim() : '';
-
-  const waText = `${subject}\n\n${body}`;
-
-  if (currentDispatchReport) {
-    API.sendPrincipalNotification(currentDispatchReport.id, '', 'whatsapp');
-  }
-
-  const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`;
-  window.open(waUrl, '_blank');
-  showToast('נפתח חלון שליחה בוואטסאפ', 'info');
 }
 
 function submitCurrentReport() {
@@ -845,12 +682,14 @@ function submitCurrentReport() {
       closeModal('monthly-report-modal');
       loadTeacherDashboardData();
 
-      const principalEmail = (currentTeacher && (currentTeacher.principalEmail || currentTeacher.principal_email)) || 'shalah.system.reports@gmail.com';
+      const principalEmail = (currentTeacher && (currentTeacher.principalEmail || currentTeacher.principal_email)) || 
+                             saved.principalEmail || 
+                             'shalah.system.reports@gmail.com';
       
-      // Automatically send email notification to principal
+      // Automatically send email notification to principal via Firebase Email Extension
       await API.sendAutomaticPrincipalEmail(saved, currentTeacher);
 
-      showToast(`הדוח ננעל והוגש בהצלחה! הודעת אישור נשלחה אוטומטית למייל המנהל/ת (${principalEmail})`, 'success');
+      showToast(`הדוח ננעל והוגש בהצלחה! קישור לאישור הדוח נשלח אוטומטית למייל המנהל/ת (${principalEmail})`, 'success');
     } catch (err) {
       showToast(err.message || 'שגיאה בעת הגשת הדוח', 'error');
     } finally {
@@ -859,7 +698,7 @@ function submitCurrentReport() {
         submitBtn.innerHTML = '<span>🚀 הגשת דוח לאישור מנהל/ת</span>';
       }
     }
-  }, 700);
+  }, 600);
 }
 
 function downloadReportPDF(reportId) {
@@ -884,8 +723,6 @@ if (typeof window !== 'undefined') {
   window.handleFileUpload = handleFileUpload;
   window.removeAttachment = removeAttachment;
   window.downloadReportPDF = downloadReportPDF;
-  window.openPrincipalEmailDispatchModal = openPrincipalEmailDispatchModal;
-  window.copyDispatchReviewUrl = copyDispatchReviewUrl;
-  window.openDispatchMailClient = openDispatchMailClient;
-  window.sendDispatchWhatsApp = sendDispatchWhatsApp;
+  window.ABSENCE_REASONS = window.ABSENCE_REASONS || absenceReasonsList;
+  window.OVERTIME_REASONS = window.OVERTIME_REASONS || overtimeReasonsList;
 }

@@ -384,7 +384,9 @@ function generateSampleDaysData(year, month, weeklySchedule = {}, fieldDays = []
 // ==========================================================================
 // 3. Database Initializer & Local Storage Wrapper
 // ==========================================================================
-const VALID_OVERTIME_REASONS = ['יום שדה', 'גיחה', 'מסע', 'מש"צים', 'אחר'];
+const ABSENCE_REASONS = ['מחלה', 'מילואים', 'השתלמות', 'חופשה', 'אישי', 'אחר'];
+const OVERTIME_REASONS = ['יום שדה', 'גיחה', 'מסע', 'מש"צים', 'אחר'];
+const VALID_OVERTIME_REASONS = OVERTIME_REASONS;
 
 function normalizeOvertimeReason(reason) {
   if (!reason || typeof reason !== 'string' || !reason.trim()) return '';
@@ -554,7 +556,7 @@ const API = {
  let reports = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS) || '[]');
  
  if (filters.teacherId) {
- reports = reports.filter(r => r.teacherId === filters.teacherId);
+ reports = reports.filter(r => String(r.teacherId) === String(filters.teacherId));
  }
  if (filters.supervisorName) {
  reports = reports.filter(r => r.supervisorName === filters.supervisorName);
@@ -565,12 +567,12 @@ const API = {
  if (filters.status && filters.status !== 'all') {
  reports = reports.filter(r => r.status === filters.status);
  }
- if (filters.month) {
- reports = reports.filter(r => r.month === parseInt(filters.month, 10));
- }
- if (filters.year) {
- reports = reports.filter(r => r.year === parseInt(filters.year, 10));
- }
+ if (filters.month !== undefined && filters.month !== null && filters.month !== '') {
+		reports = reports.filter(r => Number(r.month) === parseInt(filters.month, 10));
+	}
+ if (filters.year !== undefined && filters.year !== null && filters.year !== '') {
+		reports = reports.filter(r => Number(r.year) === parseInt(filters.year, 10));
+	}
 
  return reports;
  },
@@ -582,10 +584,16 @@ const API = {
  },
 
  getReportBySignature(sigId) {
- initStorage();
- const reports = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS) || '[]');
- return reports.find(r => r.signatureId === sigId) || null;
- },
+		if (!sigId) return null;
+		initStorage();
+		const cleanSig = String(sigId).trim();
+		const reports = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS) || '[]');
+		return reports.find(r => (
+			(r.signatureId && r.signatureId.trim() === cleanSig) ||
+			(r.digitalSignatureId && r.digitalSignatureId.trim() === cleanSig) ||
+			(r.id && r.id.trim() === cleanSig)
+		)) || null;
+	},
 
  saveReport(reportData) {
  initStorage();
@@ -667,7 +675,7 @@ const API = {
     return this.saveReport(report);
   },
 
-      async sendAutomaticPrincipalEmail(report, teacher) {
+  async sendAutomaticPrincipalEmail(report, teacher) {
     if (!report) return { success: false, error: 'דוח לא נמצא' };
     
     const principalEmail = (teacher && (teacher.principalEmail || teacher.principal_email)) || 
@@ -681,21 +689,55 @@ const API = {
     const monthName = HEBREW_MONTHS_NAME[(report.month || 1) - 1] || report.month;
     const year = report.year || new Date().getFullYear();
     const reviewUrl = this.getPrincipalReviewUrl(report, teacher);
-    
+
+    // Calculate totals and overtime breakdown
+    let totalRegular = 0;
+    let totalOvertime = 0;
+    let totalAbsence = 0;
+    const overtimeBreakdown = [];
+
+    if (Array.isArray(report.daysData)) {
+      report.daysData.forEach(d => {
+        totalRegular += parseFloat(d.fixedHours || 0);
+        const ot = parseFloat(d.overtimeHours || 0);
+        totalOvertime += ot;
+        totalAbsence += parseFloat(d.absenceHours || 0);
+
+        if (ot > 0 || d.isFieldDay) {
+          overtimeBreakdown.push({
+            dayOfMonth: d.dayOfMonth,
+            dayName: d.dayName,
+            dateStr: d.dateStr || `${d.dayOfMonth}/${report.month}/${report.year}`,
+            overtimeHours: ot,
+            overtimeReason: d.overtimeReason || (d.isFieldDay ? 'יום שדה' : 'שעות נוספות'),
+            gradeClass: d.gradeClass || '',
+            description: d.description || ''
+          });
+        }
+      });
+    }
+
     const emailSubject = `אישור דוח שעות פעילות של"ח – ${teacherName} – חודש ${monthName} ${year}`;
     const emailBody = `שלום ${principalName},
 
-מצורף לעיונך ולאישורך דוח שעות פעילות חודשי בשל"ח עבור חודש ${monthName} ${year} של המורה ${teacherName}${teacherId ? ` (ת.ז. ${teacherId})` : ''}.
+הוגש לאישורך דוח שעות פעילות חודשי בשל"ח עבור חודש ${monthName} ${year} של המורה ${teacherName}${teacherId ? ` (שם משתמש: ${teacherId})` : ''}.
+מוסד חינוכי: ${(teacher && teacher.schoolName) || report.schoolName || ''}
 
-לצפייה ישירה בדוח ואישור בלחיצה אחת:
+סיכום שעות חודשי:
+- שעות קבועות: ${totalRegular}
+- שעות נוספות / סיורים: ${totalOvertime}
+- שעות היעדרות: ${totalAbsence}
+
+לצפייה מלאה בדוח, הוספת הערות מנהל/ת ואישור בלחיצה אחת:
 ${reviewUrl}
 
 בברכה,
-${teacherName}`;
+מערכת דיווח שעות פעילות של"ח וידיעת הארץ`;
 
     let emailSentSuccessfully = false;
+    let mailDocId = null;
 
-        // 1. Dispatch real email via Gmail backend / Cloud Functions
+    // 1. Dispatch to backend which writes to Firestore 'mail' collection for Firebase Trigger Email Extension
     try {
       if (typeof fetch !== 'undefined' && principalEmail && principalEmail.includes('@')) {
         const payload = {
@@ -707,8 +749,15 @@ ${teacherName}`;
           year,
           schoolName: (teacher && teacher.schoolName) || report.schoolName || '',
           schoolCode: (teacher && teacher.schoolCode) || report.schoolCode || '',
-          totalOvertime: report.totalOvertimeHours || 0,
-          reviewUrl
+          municipality: (teacher && teacher.municipality) || report.municipality || '',
+          district: (teacher && teacher.district) || report.district || '',
+          jobScope: (teacher && (teacher.jobScope || teacher.job_percentage)) || 100,
+          totalRegularHours: totalRegular,
+          totalOvertimeHours: totalOvertime,
+          totalAbsenceHours: totalAbsence,
+          overtimeBreakdown,
+          reviewUrl,
+          principalToken: report.principalToken || report.principal_token
         };
 
         const res = await fetch(`/api/reports/${encodeURIComponent(report.id)}/send-principal-email`, {
@@ -721,43 +770,29 @@ ${teacherName}`;
         }).catch(() => null);
 
         if (res && res.ok) {
+          const resData = await res.json().catch(() => ({}));
           emailSentSuccessfully = true;
+          mailDocId = resData.mailDocId || null;
         }
       }
     } catch (e) {
-      console.warn('Backend Gmail dispatch notice:', e);
+      console.warn('Firebase email dispatch notice:', e);
     }
 
-    // 2. Log in backend REST API endpoint if available
-    try {
-      if (typeof fetch !== 'undefined') {
-        fetch(`/api/reports/${encodeURIComponent(report.id)}/send-principal-notification`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            targetEmail: principalEmail,
-            method: 'email',
-            userId: teacher ? teacher.id : report.teacherId,
-            userName: teacherName,
-            reviewUrl
-          })
-        }).catch(() => null);
-      }
-    } catch (e) {
-      // ignore
-    }
-
-    // 3. Record in local report audit history
+    // 2. Record in report audit history
     const updatedReport = this.getReportById(report.id);
     if (updatedReport) {
       updatedReport.auditHistory = updatedReport.auditHistory || [];
       updatedReport.auditHistory.push({
         date: formatDateTime(new Date()),
-        user: 'מערכת (שליחה אוטומטית)',
-        action: `נשלח אוטומטית בדוא"ל למנהל/ת (${principalEmail}): אישור דוח שעות חודש ${monthName} ${year}`
+        user: 'מערכת (Firebase Trigger Email Extension)',
+        action: `נשלח אוטומטית למייל המנהל/ת (${principalEmail}): אישור דוח שעות חודש ${monthName} ${year}`
       });
       updatedReport.lastEmailSentTo = principalEmail;
       updatedReport.lastEmailSentAt = new Date().toISOString();
+      if (mailDocId) {
+        updatedReport.mailDocId = mailDocId;
+      }
       this.saveReport(updatedReport);
     }
 
@@ -2276,6 +2311,10 @@ window.exportReportsToExcel = exportReportsToExcel;
 window.exportReportToPDF = exportReportToPDF;
 window.isReportSupervisorApproved = isReportSupervisorApproved;
 window.generateReportPDFHtml = generateReportPDFHtml;
+window.ABSENCE_REASONS = ABSENCE_REASONS;
+window.OVERTIME_REASONS = OVERTIME_REASONS;
+API.ABSENCE_REASONS = ABSENCE_REASONS;
+API.OVERTIME_REASONS = OVERTIME_REASONS;
 window.REPORT_STATUSES = REPORT_STATUSES;
 window.HEBREW_MONTHS_NAME = HEBREW_MONTHS_NAME;
 window.HEBREW_DAYS_NAME = HEBREW_DAYS_NAME;

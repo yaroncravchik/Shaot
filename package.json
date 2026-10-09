@@ -10,6 +10,7 @@
     "seed": "node server/db/seed.js",
     "seed:pg": "node server/db/seed-pg.js",
     "seed:firestore": "node functions/db/seed-firestore.js",
+    "migrate:firebase": "node scripts/migrate-to-firebase.js",
     "test": "node test/backend-test.js",
     "firebase:emulate": "firebase emulators:start",
     "firebase:deploy": "firebase deploy",
