@@ -5,6 +5,7 @@ const { db } = require('../db/database');
 const { getAvailableMonths, generateMonthDays, HEBREW_DAY_NAMES, HEBREW_MONTH_NAMES } = require('../services/calendarService');
 const { generateSingleReportExcel } = require('../services/excelService');
 const { generatePrincipalEmailHtml, generatePrincipalEmailPlainText } = require('../services/emailTemplate');
+const { sendPrincipalEmail } = require('../services/emailService');
 
 /**
  * POST /api/reports/:id/send-principal-email
@@ -91,24 +92,21 @@ router.post('/:id/send-principal-email', async (req, res) => {
       reviewUrl: link
     });
 
-    const mailDocument = {
-      to: [recipient],
-      message: {
-        subject: emailSubject,
-        text: emailPlainText,
-        html: emailHtml
-      },
+    const sendResult = await sendPrincipalEmail({
+      recipient,
+      subject: emailSubject,
+      html: emailHtml,
+      text: emailPlainText,
       reportId: id,
       teacherName: tName,
       teacherId: tId,
       principalName: pName,
-      month: mName,
+      monthName: mName,
       year: y,
-      reviewUrl: link,
-      createdAt: new Date().toISOString()
-    };
+      reviewUrl: link
+    });
 
-    let firestoreDocId = `mail_${Date.now()}`;
+    const firestoreDocId = sendResult.mailDocId;
 
     // Add audit log
     try {
@@ -117,13 +115,14 @@ router.post('/:id/send-principal-email', async (req, res) => {
         db.prepare(`
           INSERT INTO audit_logs (id, report_id, action, performed_by_user_id, performed_by_name, details, timestamp)
           VALUES (?, ?, 'sent_principal_email', ?, ?, ?, ?)
-        `).run(`aud_${crypto.randomUUID()}`, id, (teacher && teacher.id) || id, tName, `שליחה אוטומטית של קישור אישור מנהל/ת אל ${recipient} (Firestore Mail Doc: ${firestoreDocId})`, now);
+        `).run(`aud_${crypto.randomUUID()}`, id, (teacher && teacher.id) || id, tName, `שליחה אוטומטית של קישור אישור מנהל/ת אל ${recipient} (ערוץ: ${sendResult.channel}, Doc: ${firestoreDocId})`, now);
       }
     } catch (e) {}
 
     return res.json({
       success: true,
-      message: `הודעת אישור נשלחה אוטומטית למייל המנהל/ת (${recipient}) באמצעות Firebase Email Extension`,
+      channel: sendResult.channel,
+      message: sendResult.message,
       mailDocId: firestoreDocId
     });
   } catch (err) {
