@@ -3,7 +3,7 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const { db } = require('../db/database');
+const { db, storage } = require('../db/database');
 
 const uploadDir = path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadDir)) {
@@ -55,7 +55,7 @@ router.post('/:reportId', (req, res) => {
     return res.status(500).json({ success: false, error: 'רכיב העלאת קבצים (multer) אינו מותקן.' });
   }
 
-  uploadMiddleware(req, res, err => {
+  uploadMiddleware(req, res, async err => {
     if (err) {
       return res.status(400).json({ success: false, error: err.message || 'שגיאה בהעלאת הקובץ.' });
     }
@@ -110,6 +110,20 @@ router.post('/:reportId', (req, res) => {
         now
       );
 
+      let storageUrl = null;
+      if (storage) {
+        try {
+          const destination = `attachments/${reportId}/${file.filename}`;
+          await storage.upload(file.path, {
+            destination,
+            metadata: { contentType: file.mimetype }
+          });
+          storageUrl = `https://storage.googleapis.com/${storage.name}/${destination}`;
+        } catch (sErr) {
+          console.warn('Firebase Cloud Storage upload notice:', sErr.message);
+        }
+      }
+
       return res.json({
         success: true,
         message: 'הקובץ הועלה בהצלחה.',
@@ -119,7 +133,8 @@ router.post('/:reportId', (req, res) => {
           stored_filename: file.filename,
           file_size: file.size,
           mime_type: file.mimetype,
-          uploaded_at: now
+          uploaded_at: now,
+          storage_url: storageUrl
         }
       });
     } catch (innerErr) {

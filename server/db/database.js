@@ -1,33 +1,55 @@
 const path = require('path');
 const fs = require('fs');
+const admin = require('firebase-admin');
 
-// Ensure data directory exists
-const dataDir = path.join(__dirname, '../../data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+const PROJECT_ID = 'shalah-hours-2026';
+const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || path.join(__dirname, '../../serviceAccountKey.json');
+let firestoreDb = null;
+let storageBucket = null;
+
+if (!admin.apps.length) {
+  try {
+    if (fs.existsSync(serviceAccountPath)) {
+      const serviceAccount = require(serviceAccountPath);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: serviceAccount.project_id || PROJECT_ID,
+        storageBucket: `${serviceAccount.project_id || PROJECT_ID}.firebasestorage.app`
+      });
+      firestoreDb = admin.firestore();
+      storageBucket = admin.storage().bucket();
+      console.log('✓ [Firebase] Connected to Cloud Firestore & Cloud Storage via service account');
+    } else {
+      admin.initializeApp({
+        projectId: PROJECT_ID,
+        storageBucket: `${PROJECT_ID}.firebasestorage.app`
+      });
+      firestoreDb = admin.firestore();
+      storageBucket = admin.storage().bucket();
+    }
+  } catch (e) {
+    console.warn('! [Firebase] Notice on initialization:', e.message);
+  }
+} else {
+  firestoreDb = admin.firestore();
+  try { storageBucket = admin.storage().bucket(); } catch (e) {}
 }
 
-const dbPath = path.join(dataDir, 'shalah.db');
-
 let db = null;
-let isNodeSqlite = false;
+let isNodeSqlite = true;
 
+// In-Memory Database Engine (Zero SQLite disk files created)
 try {
-  // Try better-sqlite3 first if installed
-  const BetterSqlite3 = require('better-sqlite3');
-  db = new BetterSqlite3(dbPath);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
+  const { DatabaseSync } = require('node:sqlite');
+  db = new DatabaseSync(':memory:');
+  db.exec('PRAGMA foreign_keys = ON;');
 } catch (err) {
-  // Fall back to built-in node:sqlite (Node.js 22.5+)
   try {
-    const { DatabaseSync } = require('node:sqlite');
-    db = new DatabaseSync(dbPath);
-    db.exec('PRAGMA foreign_keys = ON;');
-    isNodeSqlite = true;
+    const BetterSqlite3 = require('better-sqlite3');
+    db = new BetterSqlite3(':memory:');
+    db.pragma('foreign_keys = ON');
   } catch (innerErr) {
-    console.error('Failed to initialize SQLite database:', err, innerErr);
-    throw new Error('SQLite engine not available. Please install better-sqlite3 or use Node.js 22.5+');
+    console.error('Failed to initialize in-memory database:', err, innerErr);
   }
 }
 
@@ -203,5 +225,8 @@ initSchema();
 
 module.exports = {
   db: dbWrapper,
-  initSchema
+  initSchema,
+  admin,
+  firestore: firestoreDb,
+  storage: storageBucket
 };

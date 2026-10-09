@@ -75,7 +75,7 @@ app.get('/api/health', (req, res) => {
     system: 'מערכת דיווח שעות פעילות חודשית של"ח',
     version: '2.1.0',
     timestamp: new Date().toISOString(),
-    database: process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite',
+    database: 'Firebase Cloud Firestore',
     stats: {
       totalUsers: userCount,
       totalReports: reportCount
