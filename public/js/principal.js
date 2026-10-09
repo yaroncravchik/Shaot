@@ -205,6 +205,10 @@ function handlePrincipalApproval() {
 
     currentReport = API.getReportById(currentReport.id);
     renderReportDetails(currentReport);
+    if (btnApprove) {
+      btnApprove.disabled = false;
+      btnApprove.innerHTML = '<span>אישור הדוח</span>';
+    }
   }, 500);
 }
 

@@ -441,3 +441,12 @@ function handleSupervisorReturn() {
 function exportDistrictReports() {
   exportReportsToExcel(districtReports, `shalah_district_${currentSupervisor.district || 'central'}_reports.csv`);
 }
+
+// Global window bindings for inline HTML event handlers
+if (typeof window !== 'undefined') {
+  window.openSupervisorReviewModal = openSupervisorReviewModal;
+  window.handleSupervisorApprove = handleSupervisorApprove;
+  window.handleSupervisorReturn = handleSupervisorReturn;
+  window.exportDistrictReports = exportDistrictReports;
+  window.loadSupervisorData = loadSupervisorData;
+}

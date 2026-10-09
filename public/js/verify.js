@@ -27,43 +27,76 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupDemoChips() {
- const container = document.getElementById('demo-sig-chips');
- container.innerHTML = '';
+  const container = document.getElementById('demo-sig-chips');
+  if (!container) return;
+  container.innerHTML = '';
 
- const reports = API.getReports().filter(r => !!r.signatureId);
+  let reports = API.getReports().filter(r => !!r.signatureId || !!r.digitalSignatureId);
+  if (reports.length === 0) {
+    reports = [{ signatureId: 'SIG-2026-07-948217', teacherName: 'ישראל ישראלי' }];
+  }
 
- if (reports.length === 0) {
- container.innerHTML = `<span class="text-muted" style="font-size:0.75rem;">(טרם הונפקו חתימות - אשר דוח במסך ממונה להנפקת חתימה חדשה)</span>`;
- return;
- }
-
- reports.forEach(r => {
- const btn = document.createElement('button');
- btn.type = 'button';
- btn.className = 'btn btn-secondary btn-sm';
- btn.style.fontFamily = 'monospace';
- btn.textContent = ` ${r.signatureId} (${r.teacherName})`;
- btn.addEventListener('click', () => {
- document.getElementById('verify-sig-input').value = r.signatureId;
- verifySignature(r.signatureId);
- });
- container.appendChild(btn);
- });
+  reports.forEach(r => {
+    const sig = r.signatureId || r.digitalSignatureId;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-secondary btn-sm';
+    btn.style.fontFamily = 'monospace';
+    btn.textContent = `🛡️ ${sig} (${r.teacherName || 'מורה'})`;
+    btn.addEventListener('click', () => {
+      document.getElementById('verify-sig-input').value = sig;
+      verifySignature(sig);
+    });
+    container.appendChild(btn);
+  });
 }
 
 function verifySignature(sigId) {
- const resultContainer = document.getElementById('verification-result-container');
- const btnSubmit = document.getElementById('btn-verify-submit');
+  const resultContainer = document.getElementById('verification-result-container');
+  const btnSubmit = document.getElementById('btn-verify-submit');
+  if (!resultContainer || !btnSubmit) return;
 
   btnSubmit.disabled = true;
   btnSubmit.innerHTML = '<div class="spinner"></div><span>מאמת...</span>';
   resultContainer.innerHTML = '<div class="text-center p-4"><div class="spinner" style="margin:0 auto; border-color:rgba(0,123,255,0.3); border-top-color:#007bff;"></div><p class="mt-2 text-muted">מבצע אימות קריפטוגרפי מול שרת החתימות המאובטח...</p></div>';
 
-  setTimeout(() => {
+  setTimeout(async () => {
     btnSubmit.disabled = false;
     btnSubmit.innerHTML = '<span>🔍 אימות חתימה</span>';
 
-    const report = API.getReportBySignature(sigId);
+    const cleanSig = String(sigId || '').trim();
+    let report = API.getReportBySignature(cleanSig);
+
+    // If not found in localStorage, query backend verification endpoint
+    if (!report && typeof fetch !== 'undefined') {
+      try {
+        const res = await fetch(`/api/verify/${encodeURIComponent(cleanSig)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && (data.valid || data.verified) && data.report) {
+            report = {
+              id: data.report.id,
+              teacherName: data.report.teacher_name,
+              teacherId: data.report.id_number,
+              schoolName: data.report.school_name,
+              schoolCode: data.report.school_code,
+              district: data.report.district,
+              municipality: data.report.municipality || 'מרכז',
+              year: data.report.year,
+              month: data.report.month,
+              signatureId: data.signatureId || cleanSig,
+              rsaFingerprint: data.signatureHash,
+              totalOvertimeHours: data.report.total_approved_overtime_hours || data.report.total_overtime_hours || 0,
+              totalAbsenceHours: data.report.total_absence_hours || 0,
+              adminApprovedAt: data.report.signed_at,
+              status: 'approved_paid'
+            };
+          }
+        }
+      } catch (e) {
+        console.warn('Backend verify check error:', e);
+      }
+    }
 
     if (!report) {
       resultContainer.innerHTML = `
@@ -72,7 +105,7 @@ function verifySignature(sigId) {
           <div class="banner-alert-content">
             <h3 style="color:#721c24; margin-bottom:6px;">חתימה דיגיטלית לא נמצאה או אינה תקפה</h3>
             <p style="margin-bottom:8px;">
-              מזהה החתימה <strong>${sigId}</strong> אינו קיים במאגר הדוחות המאושרים. ייתכן והמזהה הוקלד באופן שגוי או שהדוח טרם אושר סופית לתשלום ע"י הממונה.
+              מזהה החתימה <strong>${cleanSig}</strong> אינו קיים במאגר הדוחות המאושרים. ייתכן והמזהה הוקלד באופן שגוי או שהדוח טרם אושר סופית לתשלום ע"י הממונה.
             </p>
             <small class="text-muted">לבירורים נוספים ניתן לפנות לתחום של"ח וידיעת הארץ.</small>
           </div>
@@ -145,9 +178,9 @@ function verifySignature(sigId) {
  <span style="font-size:0.8125rem; color:#0c5460;">
  מסמך מאובטח – מוגן מפני זיוף (Tamper Evident)
  </span>
- <button class="btn btn-secondary btn-sm" onclick="window.print()">
- ️ הדפסת אישור
- </button>
+        <button class="btn btn-secondary btn-sm" onclick="window.print()">
+          🖨️ הדפסת אישור
+        </button>
  </div>
  </div>
  `;

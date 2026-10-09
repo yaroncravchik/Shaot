@@ -384,7 +384,9 @@ function generateSampleDaysData(year, month, weeklySchedule = {}, fieldDays = []
 // ==========================================================================
 // 3. Database Initializer & Local Storage Wrapper
 // ==========================================================================
-const VALID_OVERTIME_REASONS = ['יום שדה', 'גיחה', 'מסע', 'מש"צים', 'אחר'];
+const ABSENCE_REASONS = ['מחלה', 'מילואים', 'השתלמות', 'חופשה', 'אישי', 'אחר'];
+const OVERTIME_REASONS = ['יום שדה', 'גיחה', 'מסע', 'מש"צים', 'אחר'];
+const VALID_OVERTIME_REASONS = OVERTIME_REASONS;
 
 function normalizeOvertimeReason(reason) {
   if (!reason || typeof reason !== 'string' || !reason.trim()) return '';
@@ -554,7 +556,7 @@ const API = {
  let reports = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS) || '[]');
  
  if (filters.teacherId) {
- reports = reports.filter(r => r.teacherId === filters.teacherId);
+ reports = reports.filter(r => String(r.teacherId) === String(filters.teacherId));
  }
  if (filters.supervisorName) {
  reports = reports.filter(r => r.supervisorName === filters.supervisorName);
@@ -565,12 +567,12 @@ const API = {
  if (filters.status && filters.status !== 'all') {
  reports = reports.filter(r => r.status === filters.status);
  }
- if (filters.month) {
- reports = reports.filter(r => r.month === parseInt(filters.month, 10));
- }
- if (filters.year) {
- reports = reports.filter(r => r.year === parseInt(filters.year, 10));
- }
+ if (filters.month !== undefined && filters.month !== null && filters.month !== '') {
+		reports = reports.filter(r => Number(r.month) === parseInt(filters.month, 10));
+	}
+ if (filters.year !== undefined && filters.year !== null && filters.year !== '') {
+		reports = reports.filter(r => Number(r.year) === parseInt(filters.year, 10));
+	}
 
  return reports;
  },
@@ -582,10 +584,16 @@ const API = {
  },
 
  getReportBySignature(sigId) {
- initStorage();
- const reports = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS) || '[]');
- return reports.find(r => r.signatureId === sigId) || null;
- },
+		if (!sigId) return null;
+		initStorage();
+		const cleanSig = String(sigId).trim();
+		const reports = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS) || '[]');
+		return reports.find(r => (
+			(r.signatureId && r.signatureId.trim() === cleanSig) ||
+			(r.digitalSignatureId && r.digitalSignatureId.trim() === cleanSig) ||
+			(r.id && r.id.trim() === cleanSig)
+		)) || null;
+	},
 
  saveReport(reportData) {
  initStorage();
@@ -2303,6 +2311,10 @@ window.exportReportsToExcel = exportReportsToExcel;
 window.exportReportToPDF = exportReportToPDF;
 window.isReportSupervisorApproved = isReportSupervisorApproved;
 window.generateReportPDFHtml = generateReportPDFHtml;
+window.ABSENCE_REASONS = ABSENCE_REASONS;
+window.OVERTIME_REASONS = OVERTIME_REASONS;
+API.ABSENCE_REASONS = ABSENCE_REASONS;
+API.OVERTIME_REASONS = OVERTIME_REASONS;
 window.REPORT_STATUSES = REPORT_STATUSES;
 window.HEBREW_MONTHS_NAME = HEBREW_MONTHS_NAME;
 window.HEBREW_DAYS_NAME = HEBREW_DAYS_NAME;

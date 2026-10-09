@@ -3,6 +3,9 @@
  * Teacher Dashboard & Monthly Report Grid Controller
  */
 
+const absenceReasonsList = (typeof ABSENCE_REASONS !== 'undefined' ? ABSENCE_REASONS : (window.ABSENCE_REASONS || ['מחלה', 'מילואים', 'השתלמות', 'חופשה', 'אישי', 'אחר']));
+const overtimeReasonsList = (typeof OVERTIME_REASONS !== 'undefined' ? OVERTIME_REASONS : (window.OVERTIME_REASONS || ['יום שדה', 'גיחה', 'מסע', 'מש"צים', 'אחר']));
+
 let currentTeacher = null;
 let currentActiveReport = null;
 let autoSaveInterval = null;
@@ -68,7 +71,7 @@ function loadTeacherDashboardData() {
 }
 
 function renderActiveMonthStatus(reports) {
-  const currentMonthReport = reports.find(r => r.year === selectedYear && r.month === selectedMonth);
+  const currentMonthReport = reports.find(r => Number(r.year) === selectedYear && Number(r.month) === selectedMonth);
   const pillContainer = document.getElementById('current-month-status-pill');
   const btnOpen = document.getElementById('btn-open-report-form');
 
@@ -176,10 +179,11 @@ function renderHistoryTable(reports) {
     const st = REPORT_STATUSES[r.status] || { label: r.status, badgeClass: 'badge-draft' };
 
     let sigCell = '<span class="text-muted">—</span>';
-    if (r.digitalSignatureId) {
-      sigCell = `<a href="verify.html?sig=${r.digitalSignatureId}" target="_blank" class="signature-badge" title="לחץ לאימות תעודה דיגיטלית">
+    const sig = r.signatureId || r.digitalSignatureId;
+    if (sig) {
+      sigCell = `<a href="verify.html?sig=${encodeURIComponent(sig)}" target="_blank" class="signature-badge" title="לחץ לאימות תעודה דיגיטלית">
         <span>🛡️</span>
-        <span>${r.digitalSignatureId}</span>
+        <span>${sig}</span>
       </a>`;
     }
 
@@ -456,7 +460,7 @@ function renderReportGrid(report, isReadOnly) {
           ${isReadOnly ? 'disabled' : ''}
         >
           <option value="">-- בחר סיבה --</option>
-          ${ABSENCE_REASONS.map(r => `<option value="${r}" ${day.absenceReason === r ? 'selected' : ''}>${r}</option>`).join('')}
+          ${absenceReasonsList.map(r => `<option value="${r}" ${day.absenceReason === r ? 'selected' : ''}>${r}</option>`).join('')}
         </select>
       </td>
       <td>
@@ -477,12 +481,12 @@ function renderReportGrid(report, isReadOnly) {
       </td>
       <td>
         <select 
-          class="cell-input select-overtime-reason" 
-          data-day-idx="${idx}"
-          ${isReadOnly ? 'disabled' : ''}
+            class="cell-input select-overtime-reason" 
+            data-day-idx="${idx}"
+            ${isReadOnly ? 'disabled' : ''}
         >
           <option value="">-- בחר סיבה --</option>
-          ${OVERTIME_REASONS.map(r => `<option value="${r}" ${day.overtimeReason === r ? 'selected' : ''}>${r}</option>`).join('')}
+          ${overtimeReasonsList.map(r => `<option value="${r}" ${day.overtimeReason === r ? 'selected' : ''}>${r}</option>`).join('')}
         </select>
       </td>
       <td>
@@ -719,4 +723,6 @@ if (typeof window !== 'undefined') {
   window.handleFileUpload = handleFileUpload;
   window.removeAttachment = removeAttachment;
   window.downloadReportPDF = downloadReportPDF;
+  window.ABSENCE_REASONS = window.ABSENCE_REASONS || absenceReasonsList;
+  window.OVERTIME_REASONS = window.OVERTIME_REASONS || overtimeReasonsList;
 }
