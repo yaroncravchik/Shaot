@@ -13,49 +13,232 @@ const STORAGE_KEYS = {
 // ==========================================================================
 // 1. Israeli Ministry of Education Holidays & Calendar Utilities
 // ==========================================================================
-const ISRAELI_HOLIDAYS_DB = {
- // Format: 'YYYY-MM-DD': 'שם החג/החופשה'
- '2026-09-12': 'ערב ראש השנה',
- '2026-09-13': 'ראש השנה א\'',
- '2026-09-14': 'ראש השנה ב\'',
- '2026-09-21': 'ערב יום כיפור',
- '2026-09-22': 'יום כיפור',
- '2026-09-26': 'ערב סוכות',
- '2026-09-27': 'חג סוכות',
- '2026-09-28': 'חול המועד סוכות',
- '2026-09-29': 'חול המועד סוכות',
- '2026-09-30': 'חול המועד סוכות',
- '2026-10-01': 'חול המועד סוכות',
- '2026-10-02': 'חול המועד סוכות',
- '2026-10-03': 'ערב שמחת תורה',
- '2026-10-04': 'שמחת תורה',
- '2026-12-05': 'חנוכה - נר ראשון',
- '2026-12-06': 'חופשת חנוכה',
- '2026-12-07': 'חופשת חנוכה',
- '2026-12-08': 'חופשת חנוכה',
- '2026-12-09': 'חופשת חנוכה',
- '2026-12-10': 'חופשת חנוכה',
- '2026-12-11': 'חופשת חנוכה',
- '2026-12-12': 'חופשת חנוכה',
- '2026-12-13': 'חופשת חנוכה',
- '2026-03-03': 'תענית אסתר',
- '2026-03-04': 'חג פורים',
- '2026-03-05': 'שושן פורים',
- '2026-04-01': 'ערב פסח / חופשת פסח',
- '2026-04-02': 'חג פסח א\'',
- '2026-04-03': 'חול המועד פסח',
- '2026-04-04': 'חול המועד פסח',
- '2026-04-05': 'חול המועד פסח',
- '2026-04-06': 'חול המועד פסח',
- '2026-04-07': 'חול המועד פסח',
- '2026-04-08': 'שביעי של פסח',
- '2026-04-21': 'יום הזיכרון לחללי מערכות ישראל',
- '2026-04-22': 'יום העצמאות',
- '2026-05-05': 'ל"ג בעומר',
- '2026-05-22': 'ערב שבועות',
- '2026-05-23': 'חג שבועות',
- '2026-06-20': 'סיום שנת הלימודים - חטיבה עליונה'
+const MOE_JEWISH_ELEMENTARY_HOLIDAYS = {
+  // 2024 (תשפ"ה)
+  '2024-10-02': 'ערב ראש השנה',
+  '2024-10-03': 'ראש השנה א׳',
+  '2024-10-04': 'ראש השנה ב׳',
+  '2024-10-11': 'ערב יום כיפור',
+  '2024-10-12': 'יום כיפור',
+  '2024-10-16': 'ערב סוכות',
+  '2024-10-17': 'חג סוכות',
+  '2024-10-18': 'חול המועד סוכות',
+  '2024-10-19': 'חול המועד סוכות',
+  '2024-10-20': 'חול המועד סוכות',
+  '2024-10-21': 'חול המועד סוכות',
+  '2024-10-22': 'חול המועד סוכות',
+  '2024-10-23': 'הושענא רבה',
+  '2024-10-24': 'שמחת תורה',
+  '2024-12-27': 'חופשת חנוכה',
+  '2024-12-28': 'חופשת חנוכה',
+  '2024-12-29': 'חופשת חנוכה',
+  '2024-12-30': 'חופשת חנוכה',
+  '2024-12-31': 'חופשת חנוכה',
+
+  // 2025 (תשפ"ה - תשפ"ו)
+  '2025-01-01': 'חופשת חנוכה',
+  '2025-01-02': 'חופשת חנוכה - זאת חנוכה',
+  '2025-03-13': 'תענית אסתר',
+  '2025-03-14': 'חג פורים',
+  '2025-03-15': 'שושן פורים',
+  '2025-03-16': 'חופשת פורים (יסודי)',
+  '2025-04-05': 'חופשת פסח',
+  '2025-04-06': 'חופשת פסח',
+  '2025-04-07': 'חופשת פסח',
+  '2025-04-08': 'חופשת פסח',
+  '2025-04-09': 'חופשת פסח',
+  '2025-04-10': 'חופשת פסח',
+  '2025-04-11': 'חופשת פסח',
+  '2025-04-12': 'ערב פסח',
+  '2025-04-13': 'חג פסח א׳',
+  '2025-04-14': 'חול המועד פסח',
+  '2025-04-15': 'חול המועד פסח',
+  '2025-04-16': 'חול המועד פסח',
+  '2025-04-17': 'חול המועד פסח',
+  '2025-04-18': 'חול המועד פסח',
+  '2025-04-19': 'שביעי של פסח',
+  '2025-04-24': 'יום הזיכרון לשואה ולגבורה',
+  '2025-04-30': 'יום הזיכרון לחללי מערכות ישראל',
+  '2025-05-01': 'יום העצמאות',
+  '2025-05-16': 'חופשת ל"ג בעומר (יסודי)',
+  '2025-05-26': 'יום ירושלים',
+  '2025-06-01': 'ערב שבועות',
+  '2025-06-02': 'חג שבועות',
+  '2025-06-20': 'סיום שנת הלימודים (על-יסודי)',
+  '2025-09-22': 'ערב ראש השנה',
+  '2025-09-23': 'ראש השנה א׳',
+  '2025-09-24': 'ראש השנה ב׳',
+  '2025-09-25': 'צום גדליה',
+  '2025-10-01': 'ערב יום כיפור',
+  '2025-10-02': 'יום כיפור',
+  '2025-10-03': 'חופשת סוכות (גשר יסודי)',
+  '2025-10-04': 'חופשת סוכות (גשר יסודי)',
+  '2025-10-05': 'חופשת סוכות (גשר יסודי)',
+  '2025-10-06': 'ערב סוכות',
+  '2025-10-07': 'חג סוכות',
+  '2025-10-08': 'חול המועד סוכות',
+  '2025-10-09': 'חול המועד סוכות',
+  '2025-10-10': 'חול המועד סוכות',
+  '2025-10-11': 'חול המועד סוכות',
+  '2025-10-12': 'הושענא רבה',
+  '2025-10-13': 'שמחת תורה',
+  '2025-10-14': 'חופשת סוכות',
+  '2025-12-15': 'חנוכה - נר ראשון',
+  '2025-12-16': 'חופשת חנוכה',
+  '2025-12-17': 'חופשת חנוכה',
+  '2025-12-18': 'חופשת חנוכה',
+  '2025-12-19': 'חופשת חנוכה',
+  '2025-12-20': 'חופשת חנוכה',
+  '2025-12-21': 'חופשת חנוכה',
+  '2025-12-22': 'חופשת חנוכה - זאת חנוכה',
+
+  // 2026 (תשפ"ו - תשפ"ז)
+  '2026-03-02': 'תענית אסתר',
+  '2026-03-03': 'חג פורים',
+  '2026-03-04': 'שושן פורים',
+  '2026-03-24': 'חופשת פסח',
+  '2026-03-25': 'חופשת פסח',
+  '2026-03-26': 'חופשת פסח',
+  '2026-03-27': 'חופשת פסח',
+  '2026-03-28': 'חופשת פסח',
+  '2026-03-29': 'חופשת פסח',
+  '2026-03-30': 'חופשת פסח',
+  '2026-03-31': 'חופשת פסח',
+  '2026-04-01': 'ערב פסח',
+  '2026-04-02': 'חג פסח א׳',
+  '2026-04-03': 'חול המועד פסח',
+  '2026-04-04': 'חול המועד פסח',
+  '2026-04-05': 'חול המועד פסח',
+  '2026-04-06': 'חול המועד פסח',
+  '2026-04-07': 'חול המועד פסח',
+  '2026-04-08': 'שביעי של פסח',
+  '2026-04-14': 'יום הזיכרון לשואה ולגבורה',
+  '2026-04-21': 'יום הזיכרון לחללי מערכות ישראל',
+  '2026-04-22': 'יום העצמאות',
+  '2026-05-05': 'חופשת ל"ג בעומר (יסודי)',
+  '2026-05-15': 'יום ירושלים',
+  '2026-05-21': 'ערב שבועות',
+  '2026-05-22': 'חג שבועות',
+  '2026-06-20': 'סיום שנת הלימודים (על-יסודי)',
+  '2026-09-11': 'ערב ראש השנה',
+  '2026-09-12': 'ראש השנה א׳',
+  '2026-09-13': 'ראש השנה ב׳',
+  '2026-09-14': 'צום גדליה',
+  '2026-09-20': 'ערב יום כיפור',
+  '2026-09-21': 'יום כיפור',
+  '2026-09-22': 'חופשת בין כיפור לסוכות (יסודי)',
+  '2026-09-23': 'חופשת בין כיפור לסוכות (יסודי)',
+  '2026-09-24': 'חופשת בין כיפור לסוכות (יסודי)',
+  '2026-09-25': 'ערב סוכות',
+  '2026-09-26': 'חג סוכות',
+  '2026-09-27': 'חול המועד סוכות',
+  '2026-09-28': 'חול המועד סוכות',
+  '2026-09-29': 'חול המועד סוכות',
+  '2026-09-30': 'חול המועד סוכות',
+  '2026-10-01': 'הושענא רבה',
+  '2026-10-02': 'שמחת תורה',
+  '2026-10-03': 'חופשת סוכות',
+  '2026-12-05': 'חנוכה - נר ראשון',
+  '2026-12-06': 'חופשת חנוכה',
+  '2026-12-07': 'חופשת חנוכה',
+  '2026-12-08': 'חופשת חנוכה',
+  '2026-12-09': 'חופשת חנוכה',
+  '2026-12-10': 'חופשת חנוכה',
+  '2026-12-11': 'חופשת חנוכה',
+  '2026-12-12': 'חופשת חנוכה',
+  '2026-12-13': 'חופשת חנוכה - זאת חנוכה',
+
+  // 2027 (תשפ"ז)
+  '2027-03-22': 'תענית אסתר',
+  '2027-03-23': 'חג פורים',
+  '2027-03-24': 'שושן פורים',
+  '2027-04-13': 'חופשת פסח',
+  '2027-04-14': 'חופשת פסח',
+  '2027-04-15': 'חופשת פסח',
+  '2027-04-16': 'חופשת פסח',
+  '2027-04-17': 'חופשת פסח',
+  '2027-04-18': 'חופשת פסח',
+  '2027-04-19': 'חופשת פסח',
+  '2027-04-20': 'חופשת פסח',
+  '2027-04-21': 'ערב פסח',
+  '2027-04-22': 'חג פסח א׳',
+  '2027-04-23': 'חול המועד פסח',
+  '2027-04-24': 'חול המועד פסח',
+  '2027-04-25': 'חול המועד פסח',
+  '2027-04-26': 'חול המועד פסח',
+  '2027-04-27': 'חול המועד פסח',
+  '2027-04-28': 'שביעי של פסח',
+  '2027-05-04': 'יום הזיכרון לשואה ולגבורה',
+  '2027-05-11': 'יום הזיכרון לחללי מערכות ישראל',
+  '2027-05-12': 'יום העצמאות',
+  '2027-05-24': 'חופשת ל"ג בעומר (יסודי)',
+  '2027-06-04': 'יום ירושלים',
+  '2027-06-10': 'ערב שבועות',
+  '2027-06-11': 'חג שבועות',
+  '2027-06-20': 'סיום שנת הלימודים (על-יסודי)'
 };
+
+const ISRAELI_HOLIDAYS_DB = MOE_JEWISH_ELEMENTARY_HOLIDAYS;
+
+/**
+ * Returns vacation/holiday info for a given date:
+ * - Summer Vacation: Jewish Post-Elementary (June 21 - August 31)
+ * - Other Holidays: Jewish Elementary Schools
+ */
+function getMoEVacationInfo(year, month, day) {
+  const y = parseInt(year, 10);
+  const m = parseInt(month, 10);
+  const d = parseInt(day, 10);
+
+  // 1. Summer Vacation (החופש הגדול) - per Jewish Post-Elementary Schools (על-יסודי)
+  if (m === 7 || m === 8) {
+    return {
+      isHoliday: true,
+      name: 'חופשת קיץ (החופש הגדול)'
+    };
+  }
+  if (m === 6) {
+    if (d >= 21) {
+      return {
+        isHoliday: true,
+        name: 'החופש הגדול (על-יסודי)'
+      };
+    }
+    if (d === 20) {
+      return {
+        isHoliday: false,
+        name: 'סיום שנת הלימודים (על-יסודי)'
+      };
+    }
+  }
+
+  // 2. Jewish Elementary School Vacations (חופשות יסודי יהודי)
+  const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  const holiday = MOE_JEWISH_ELEMENTARY_HOLIDAYS[dateStr];
+  if (holiday) {
+    return {
+      isHoliday: true,
+      name: holiday
+    };
+  }
+
+  return {
+    isHoliday: false,
+    name: ''
+  };
+}
+
+/**
+ * Returns true if a given date string is during Summer Vacation
+ * Summer vacation for Post-Elementary starts June 21 and ends August 31
+ */
+function isSummerVacation(year, month, day = null) {
+  const m = parseInt(month, 10);
+  if (m === 7 || m === 8) return true;
+  if (m === 6 && day !== null && parseInt(day, 10) >= 21) return true;
+  return false;
+}
+
 
 const HEBREW_DAYS_NAME = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
 const HEBREW_MONTHS_NAME = [
@@ -144,6 +327,94 @@ function getInitialSeedUsers() {
       weeklySchedule: { 0: 6, 1: 6, 2: 8, 3: 6, 4: 6, 5: 0 },
       consentSigned: true,
       consentDate: '2026-08-02T10:00:00Z'
+    },
+    {
+      id: '023456781',
+      phone: '0523456789',
+      password: '0523456789',
+      name: 'מיכל לוי',
+      role: 'teacher',
+      email: 'michal.levi@school.org.il',
+      schoolName: 'תיכון רבין כפר סבא',
+      schoolCode: '123456',
+      municipality: 'כפר סבא',
+      district: 'מרכז',
+      jobScope: 80,
+      supervisorName: 'דוד לוי',
+      supervisorId: '011111111',
+      principalName: 'רונית שחר',
+      principalEmail: 'shalah.system.reports@gmail.com',
+      principalToken: 'PRINCIPAL_TOKEN_KFS_440123',
+      fieldDays: [2],
+      weeklySchedule: { 0: 5, 1: 5, 2: 8, 3: 4, 4: 6, 5: 0 },
+      consentSigned: true,
+      consentDate: '2026-08-01T08:30:00Z'
+    },
+    {
+      id: '034567812',
+      phone: '0541234567',
+      password: '0541234567',
+      name: 'דניאל כהן',
+      role: 'teacher',
+      email: 'daniel.c@school.org.il',
+      schoolName: 'עירוני א׳ תל אביב',
+      schoolCode: '654321',
+      municipality: 'תל אביב',
+      district: 'תל אביב',
+      jobScope: 100,
+      supervisorName: 'רחל שלום',
+      supervisorId: '056789012',
+      principalName: 'יורם פרידמן',
+      principalEmail: 'yoram@ironi-a.k12.il',
+      principalToken: 'PRINCIPAL_TOKEN_TLV_654321',
+      fieldDays: [4],
+      weeklySchedule: { 0: 6, 1: 6, 2: 6, 3: 6, 4: 8, 5: 0 },
+      consentSigned: true,
+      consentDate: '2026-08-02T09:00:00Z'
+    },
+    {
+      id: '034567891',
+      phone: '0533456789',
+      password: '0533456789',
+      name: 'דנה כהן',
+      role: 'teacher',
+      email: 'dana.cohen@school.org.il',
+      schoolName: 'תיכון דרור השרון',
+      schoolCode: '440555',
+      municipality: 'לב השרון',
+      district: 'מרכז',
+      jobScope: 100,
+      supervisorName: 'דוד לוי',
+      supervisorId: '011111111',
+      principalName: 'רונית שחר',
+      principalEmail: 'shalah.system.reports@gmail.com',
+      principalToken: 'PRINCIPAL_TOKEN_KFS_440123',
+      fieldDays: [1, 3],
+      weeklySchedule: { 0: 6, 1: 8, 2: 6, 3: 8, 4: 4, 5: 0 },
+      consentSigned: true,
+      consentDate: '2026-08-02T10:00:00Z'
+    },
+    {
+      id: 'test_tch_user',
+      phone: '0503334455',
+      password: '0503334455',
+      name: 'מורה בדיקה',
+      role: 'teacher',
+      email: 'test.tch@school.org.il',
+      schoolName: 'תיכון דרום',
+      schoolCode: '778899',
+      municipality: 'באר שבע',
+      district: 'דרום',
+      jobScope: 100,
+      supervisorName: 'מנחה בדיקה',
+      supervisorId: 'test_sup_user',
+      principalName: 'מנהל בדיקה',
+      principalEmail: 'principal.test@school.org.il',
+      principalToken: 'PRINCIPAL_TOKEN_TEST',
+      fieldDays: [2, 4],
+      weeklySchedule: { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 },
+      consentSigned: true,
+      consentDate: '2026-08-01T08:00:00Z'
     },
     {
       id: '033333333',
@@ -350,8 +621,9 @@ function generateSampleDaysData(year, month, weeklySchedule = {}, fieldDays = []
     if (dayOfWeek === 6) continue; // Skip Saturday per PRD!
 
     const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    const isHoliday = !!ISRAELI_HOLIDAYS_DB[dateStr];
-    const holidayName = ISRAELI_HOLIDAYS_DB[dateStr] || '';
+    const vac = getMoEVacationInfo(year, month, d);
+    const isHoliday = vac.isHoliday;
+    const holidayName = vac.name || '';
     const isFieldDay = fieldDays.includes(dayOfWeek);
     const fixedHours = weeklySchedule[dayOfWeek] || 0;
 
@@ -385,13 +657,14 @@ function generateSampleDaysData(year, month, weeklySchedule = {}, fieldDays = []
 // 3. Database Initializer & Local Storage Wrapper
 // ==========================================================================
 const ABSENCE_REASONS = ['מחלה', 'מילואים', 'השתלמות', 'חופשה', 'אישי', 'אחר'];
-const OVERTIME_REASONS = ['יום שדה', 'גיחה', 'מסע', 'מש"צים', 'אחר'];
+const OVERTIME_REASONS = ['יום שדה', 'יום שדה ארוך', 'גיחה', 'מסע', 'מש"צים', 'אחר'];
 const VALID_OVERTIME_REASONS = OVERTIME_REASONS;
 
 function normalizeOvertimeReason(reason) {
   if (!reason || typeof reason !== 'string' || !reason.trim()) return '';
   const r = reason.trim();
   if (VALID_OVERTIME_REASONS.includes(r)) return r;
+  if (r.includes('ארוך')) return 'יום שדה ארוך';
   if (r.includes('שדה') || r.includes('סיור')) return 'יום שדה';
   if (r.includes('גיחה')) return 'גיחה';
   if (r.includes('מסע')) return 'מסע';
@@ -507,8 +780,116 @@ initStorage();
 // 4. API Client Object
 // ==========================================================================
 const API = {
+  getMoEVacationInfo(year, month, day) {
+    return getMoEVacationInfo(year, month, day);
+  },
+  isSummerVacation(year, month, day) {
+    return isSummerVacation(year, month, day);
+  },
+
  // Users & Auth
- getUsers() {
+ async syncUsersWithFirestore() {
+    if (typeof fetch === 'undefined') return this.getUsers();
+    try {
+      const res = await fetch('/api/users');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.users) && data.users.length > 0) {
+          const remoteUsers = data.users;
+          const localUsers = this.getUsers();
+
+          const strip = (s) => String(s || '').replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '').trim();
+          const remoteIds = new Set(remoteUsers.map(u => strip(u.id || u.id_number || '')));
+          const unsyncedToRemote = localUsers.filter(u => {
+            const uid = strip(u.id || u.id_number || '');
+            return uid && !remoteIds.has(uid);
+          });
+
+          if (unsyncedToRemote.length > 0) {
+            console.log(`Uploading ${unsyncedToRemote.length} local users to Cloud Firestore...`);
+            await fetch('/api/users/batch', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ users: unsyncedToRemote })
+            }).catch(e => console.warn('Batch upload to Firestore failed:', e));
+          }
+
+          const mergedMap = new Map();
+          for (const u of localUsers) {
+            const key = strip(u && (u.id || u.id_number));
+            if (key) mergedMap.set(key, { ...u, id: key, id_number: key });
+          }
+          for (const u of remoteUsers) {
+            const key = strip(u && (u.id || u.id_number));
+            if (key) {
+              mergedMap.set(key, { ...(mergedMap.get(key) || {}), ...u, id: key, id_number: key });
+            }
+          }
+          const mergedUsers = Array.from(mergedMap.values());
+          localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(mergedUsers));
+          return mergedUsers;
+        }
+      }
+    } catch (err) {
+      console.warn('Firestore sync failed, using cached users:', err);
+    }
+    return this.getUsers();
+  },
+
+  async syncReportsWithFirestore() {
+    if (typeof fetch === 'undefined') return this.getReports();
+    try {
+      const res = await fetch('/api/reports');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.reports)) {
+          const remoteReports = data.reports;
+          const localReports = this.getReports();
+
+          // 1. Auto-upload any local reports created in this browser that are not yet in Firestore
+          const remoteIds = new Set(remoteReports.map(r => String(r.id || '')));
+          const unsyncedToRemote = localReports.filter(r => {
+            const rid = String(r.id || '');
+            return rid && !remoteIds.has(rid);
+          });
+
+          if (unsyncedToRemote.length > 0) {
+            console.log(`Uploading ${unsyncedToRemote.length} local reports to Cloud Firestore...`);
+            await fetch('/api/reports/batch', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reports: unsyncedToRemote })
+            }).catch(e => console.warn('Batch upload reports to Firestore failed:', e));
+          }
+
+          // 2. Merge remote reports into local storage (remote Firestore is master)
+          const mergedMap = new Map();
+          for (const r of localReports) {
+            if (r && r.id) mergedMap.set(String(r.id), r);
+          }
+          for (const r of remoteReports) {
+            if (r && r.id) {
+              const key = String(r.id);
+              mergedMap.set(key, { ...(mergedMap.get(key) || {}), ...r });
+            }
+          }
+          const mergedReports = Array.from(mergedMap.values()).sort((a, b) => {
+            const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return timeB - timeA;
+          });
+
+          localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(mergedReports));
+          return mergedReports;
+        }
+      }
+    } catch (err) {
+      console.warn('Firestore reports sync failed, using cached reports:', err);
+    }
+    return this.getReports();
+  },
+
+  getUsers() {
  initStorage();
  return JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || '[]');
  },
@@ -523,17 +904,28 @@ const API = {
  return users.find(u => u.token === token || u.principalToken === token) || null;
  },
 
- saveUser(user) {
- const users = this.getUsers();
- const idx = users.findIndex(u => u.id === user.id);
- if (idx >= 0) {
- users[idx] = { ...users[idx], ...user };
- } else {
- users.push(user);
- }
- localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
- return users[idx >= 0 ? idx : users.length - 1];
- },
+  saveUser(user) {
+    const stripBidi = (s) => String(s || '').replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '').trim();
+    const users = this.getUsers();
+    const targetId = stripBidi(user.id || user.id_number || '');
+    const idx = users.findIndex(u => stripBidi(u.id) === targetId || (u.id_number && stripBidi(u.id_number) === targetId));
+    if (idx >= 0) {
+      users[idx] = { ...users[idx], ...user };
+    } else {
+      users.push(user);
+    }
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+    if (typeof fetch !== 'undefined' && targetId) {
+      fetch('/api/users/' + encodeURIComponent(targetId), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user)
+      }).catch(err => console.warn('Firestore user update warning:', err));
+    }
+
+    return users[idx >= 0 ? idx : users.length - 1];
+  },
 
  // Reports
 
@@ -541,12 +933,14 @@ const API = {
 		if (!supervisor) return [];
 		const users = this.getUsers();
 		const supId = String(typeof supervisor === 'object' ? (supervisor.id || '') : supervisor).trim();
-		const supName = String(typeof supervisor === 'object' ? (supervisor.name || '') : '').trim();
+		const supName = String(typeof supervisor === 'object' ? (supervisor.name || supervisor.full_name || '') : '').trim();
+		const supPhone = String(typeof supervisor === 'object' ? (supervisor.phone || '') : '').trim();
 
-		// Match strictly by supervisorId or supervisorName (unassigned teachers appear only for Admin and Site Admin)
 		return users.filter(u => u.role === 'teacher' && (
 			(supId && String(u.supervisorId || '').trim() === supId) ||
-			(supName && String(u.supervisorName || '').trim() === supName)
+			(supPhone && String(u.supervisorId || '').trim() === supPhone) ||
+			(supName && String(u.supervisorName || '').trim() === supName) ||
+			(supName && u.supervisorName && (u.supervisorName.includes(supName) || supName.includes(u.supervisorName)))
 		));
 	},
 
@@ -577,11 +971,64 @@ const API = {
  return reports;
  },
 
- getReportById(reportId) {
- initStorage();
- const reports = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS) || '[]');
- return reports.find(r => r.id === reportId) || null;
- },
+  saveReportLocally(reportData) {
+    if (!reportData || !reportData.id) return reportData;
+    initStorage();
+    const reports = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS) || '[]');
+    const idx = reports.findIndex(r => r.id === reportData.id);
+    if (idx >= 0) {
+      reports[idx] = { ...reports[idx], ...reportData };
+    } else {
+      reports.unshift(reportData);
+    }
+    localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(reports));
+    return reportData;
+  },
+
+  getReportById(reportId) {
+    initStorage();
+    const reports = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS) || '[]');
+    return reports.find(r => r.id === reportId) || null;
+  },
+
+  async fetchReportById(reportId) {
+    if (!reportId) return null;
+    try {
+      if (typeof fetch !== 'undefined') {
+        const res = await fetch('/api/reports/' + encodeURIComponent(reportId));
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success && data.report) {
+            this.saveReportLocally(data.report);
+            return data.report;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Backend fetchReportById error, fallback to local:', e);
+    }
+    return this.getReportById(reportId);
+  },
+
+  async fetchReportByToken(token) {
+    if (!token) return null;
+    try {
+      if (typeof fetch !== 'undefined') {
+        const res = await fetch('/api/principal/review/' + encodeURIComponent(token));
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success && data.report) {
+            this.saveReportLocally(data.report);
+            return data.report;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Backend fetchReportByToken error:', e);
+    }
+    const reports = this.getReports();
+    return reports.find(r => r.principalToken === token || r.principal_token === token || ('PRINCIPAL_TOKEN_' + r.schoolCode) === token) || null;
+  },
 
  getReportBySignature(sigId) {
 		if (!sigId) return null;
@@ -638,8 +1085,17 @@ const API = {
  reports.unshift(report);
  }
 
- localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(reports));
- return report;
+  localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(reports));
+
+  if (typeof fetch !== 'undefined' && report && report.id) {
+    fetch('/api/reports/' + encodeURIComponent(report.id), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(report)
+    }).catch(err => console.warn('Firestore report write-through warning:', err));
+  }
+
+  return report;
  },
 
    canSubmitReport(year, month, checkDate = new Date()) {
@@ -650,7 +1106,8 @@ const API = {
  // Workflow Actions
   getPrincipalReviewUrl(report, teacher) {
     if (!report) return '';
-    const token = (teacher && teacher.principalToken) || report.principalToken || (teacher && teacher.schoolCode ? 'PRINCIPAL_TOKEN_' + teacher.schoolCode : 'PRINCIPAL_TOKEN_KFS_440123');
+    const schoolCode = (teacher && teacher.schoolCode) || (report && report.schoolCode) || '';
+    const token = (teacher && teacher.principalToken) || report.principalToken || (schoolCode ? 'PRINCIPAL_TOKEN_' + schoolCode : 'PRINCIPAL_TOKEN_SCHOOL');
     let baseUrl = '';
     if (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file:')) {
       const path = window.location.pathname || '';
@@ -827,6 +1284,14 @@ ${reviewUrl}
  }
  }
 
+ if (user) {
+   if (!report.principalName && user.principalName) report.principalName = user.principalName;
+   if (!report.principalEmail && (user.principalEmail || user.principal_email)) report.principalEmail = user.principalEmail || user.principal_email;
+   if (!report.schoolCode && user.schoolCode) report.schoolCode = user.schoolCode;
+   if (!report.schoolName && user.schoolName) report.schoolName = user.schoolName;
+   if (!report.principalToken) report.principalToken = user.principalToken || (user.schoolCode ? 'PRINCIPAL_TOKEN_' + user.schoolCode : 'PRINCIPAL_TOKEN_SCHOOL');
+ }
+
  report.status = 'pending_principal';
  report.submittedAt = new Date().toISOString();
  report.auditHistory = report.auditHistory || [];
@@ -849,11 +1314,51 @@ ${reviewUrl}
  report.auditHistory = report.auditHistory || [];
  report.auditHistory.push({
  date: formatDateTime(new Date()),
- user: `${principalUser.name} (מנהל/ת)`,
+ user: `${(principalUser && principalUser.name) || report.principalName || 'מנהל/ת'} (מנהל/ת)`,
  action: 'אישור וחתימה דיגיטלית של מנהל/ת בי"ס' + (remarks ? `: "${remarks}"` : '')
  });
 
  return this.saveReport(report);
+ },
+
+ async principalApproveAsync(reportId, principalUser, remarks = '') {
+   let report = this.getReportById(reportId);
+   if (!report) {
+     report = await this.fetchReportById(reportId);
+   }
+   if (!report) throw new Error('דוח לא נמצא');
+
+   report.status = 'pending_supervisor';
+   report.principalApprovedAt = new Date().toISOString();
+   report.principalRemarks = remarks;
+   report.auditHistory = report.auditHistory || [];
+   report.auditHistory.push({
+     date: formatDateTime(new Date()),
+     user: `${(principalUser && principalUser.name) || report.principalName || 'מנהל/ת'} (מנהל/ת)`,
+     action: 'אישור וחתימה דיגיטלית של מנהל/ת בי"ס' + (remarks ? `: "${remarks}"` : '')
+   });
+
+   this.saveReportLocally(report);
+
+   if (typeof fetch !== 'undefined') {
+     try {
+       const res = await fetch('/api/reports/' + encodeURIComponent(report.id), {
+         method: 'PUT',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(report)
+       });
+       if (res.ok) {
+         const data = await res.json();
+         if (data && data.report) {
+           this.saveReportLocally(data.report);
+           return data.report;
+         }
+       }
+     } catch (err) {
+       console.warn('Firestore write warning:', err);
+     }
+   }
+   return report;
  },
 
  principalReject(reportId, principalUser, remarks) {
@@ -866,11 +1371,51 @@ ${reviewUrl}
  report.auditHistory = report.auditHistory || [];
  report.auditHistory.push({
  date: formatDateTime(new Date()),
- user: `${principalUser.name} (מנהל/ת)`,
+ user: `${(principalUser && principalUser.name) || report.principalName || 'מנהל/ת'} (מנהל/ת)`,
  action: `החזרה למורה לתיקון: "${remarks}"`
  });
 
  return this.saveReport(report);
+ },
+
+ async principalRejectAsync(reportId, principalUser, remarks) {
+   let report = this.getReportById(reportId);
+   if (!report) {
+     report = await this.fetchReportById(reportId);
+   }
+   if (!report) throw new Error('דוח לא נמצא');
+
+   report.status = 'returned';
+   report.principalRemarks = remarks;
+   report.signatureId = null;
+   report.auditHistory = report.auditHistory || [];
+   report.auditHistory.push({
+     date: formatDateTime(new Date()),
+     user: `${(principalUser && principalUser.name) || report.principalName || 'מנהל/ת'} (מנהל/ת)`,
+     action: `החזרה למורה לתיקון: "${remarks}"`
+   });
+
+   this.saveReportLocally(report);
+
+   if (typeof fetch !== 'undefined') {
+     try {
+       const res = await fetch('/api/reports/' + encodeURIComponent(report.id), {
+         method: 'PUT',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(report)
+       });
+       if (res.ok) {
+         const data = await res.json();
+         if (data && data.report) {
+           this.saveReportLocally(data.report);
+           return data.report;
+         }
+       }
+     } catch (err) {
+       console.warn('Firestore write warning:', err);
+     }
+   }
+   return report;
  },
 
  supervisorApprove(reportId, supervisorUser, remarks = '', editedDays = null) {
@@ -1005,6 +1550,14 @@ ${reviewUrl}
     users.push(newTeacher);
     this.saveUsers(users);
 
+    if (typeof fetch !== 'undefined') {
+      fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTeacher)
+      }).catch(err => console.warn('Firestore teacher save warning:', err));
+    }
+
     return newTeacher;
   },
 
@@ -1032,6 +1585,14 @@ ${reviewUrl}
     users.push(newSupervisor);
     this.saveUsers(users);
 
+    if (typeof fetch !== 'undefined') {
+      fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSupervisor)
+      }).catch(err => console.warn('Firestore supervisor save warning:', err));
+    }
+
     return newSupervisor;
   },
 
@@ -1058,6 +1619,14 @@ ${reviewUrl}
 
     users.push(newAdmin);
     this.saveUsers(users);
+
+    if (typeof fetch !== 'undefined') {
+      fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newAdmin)
+      }).catch(err => console.warn('Firestore admin save warning:', err));
+    }
 
     return newAdmin;
   },
@@ -1103,6 +1672,14 @@ ${reviewUrl}
     users.push(newTeacher);
     this.saveUsers(users);
 
+    if (typeof fetch !== 'undefined') {
+      fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTeacher)
+      }).catch(err => console.warn('Firestore teacher save warning:', err));
+    }
+
     return newTeacher;
   },
 
@@ -1121,14 +1698,16 @@ ${reviewUrl}
       return results;
     }
 
+    const stripBidi = (s) => String(s || '').replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '').trim();
+
     teachersList.forEach((t, index) => {
-      const cleanUsername = String(t.username || '').trim();
-      const cleanPassword = String(t.password || '').trim();
-      const cleanPhone = String(t.phone || '').trim();
-      const firstName = String(t.firstName || '').trim();
-      const lastName = String(t.lastName || '').trim();
+      const cleanUsername = stripBidi(t.username);
+      const cleanPassword = stripBidi(t.password);
+      const cleanPhone = stripBidi(t.phone);
+      const firstName = stripBidi(t.firstName);
+      const lastName = stripBidi(t.lastName);
       const fullName = `${firstName} ${lastName}`.trim() || cleanUsername;
-      const rawSupervisor = String(t.supervisor || t.supervisorName || t.supervisorId || '').trim();
+      const rawSupervisor = stripBidi(t.supervisor || t.supervisorName || t.supervisorId || '');
 
       if (!cleanUsername || !cleanPassword || !firstName) {
         results.errors.push({
@@ -1196,6 +1775,14 @@ ${reviewUrl}
     if (results.added.length > 0) {
       this.saveUsers(users);
 
+      if (typeof fetch !== 'undefined') {
+        fetch('/api/users/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ users: results.added })
+        }).catch(err => console.warn('Firestore batch import warning:', err));
+      }
+
       // Audit Log
       const audit = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS) || '[]');
       audit.push({
@@ -1217,14 +1804,36 @@ ${reviewUrl}
       throw new Error('הדוח לא נמצא במערכת');
     }
 
+    const reportToDelete = reports[idx];
+
+    // Business Rule: Teacher can only delete reports that are in 'draft' status
+    if (performedByUser && performedByUser.role === 'teacher') {
+      if (reportToDelete.status !== 'draft') {
+        throw new Error('מורה רשאי למחוק דוח אך ורק כאשר הוא במצב טיוטה.');
+      }
+      const teacherId = String(performedByUser.id || performedByUser.id_number || '').trim();
+      const reportTeacherId = String(reportToDelete.teacherId || '').trim();
+      if (teacherId && reportTeacherId && teacherId !== reportTeacherId) {
+        throw new Error('אין הרשאה למחוק דוח של מורה אחר.');
+      }
+    }
+
     const deletedReport = reports.splice(idx, 1)[0];
     localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(reports));
 
+    if (typeof fetch !== 'undefined' && reportId) {
+      const userRole = performedByUser && performedByUser.role ? performedByUser.role : '';
+      fetch('/api/reports/' + encodeURIComponent(reportId) + (userRole ? `?role=${encodeURIComponent(userRole)}` : ''), {
+        method: 'DELETE'
+      }).catch(err => console.warn('Firestore delete report warning:', err));
+    }
+
+    const roleName = performedByUser ? (performedByUser.role === 'teacher' ? 'מורה' : performedByUser.role === 'site_admin' ? 'מנהל אתר' : 'משתמש') : 'משתמש';
     const audit = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS) || '[]');
     audit.push({
       date: formatDateTime(new Date()),
-      user: performedByUser ? `${performedByUser.name} (מנהל אתר)` : 'מנהל אתר',
-      action: `מחיקת דוח ${deletedReport.id} עבור המורה ${deletedReport.teacherName || ''} (${deletedReport.month}/${deletedReport.year}) לצמיתות`
+      user: performedByUser ? `${performedByUser.name || performedByUser.id} (${roleName})` : 'מערכת',
+      action: `מחיקת ${deletedReport.status === 'draft' ? 'טיוטת ' : ''}דוח ${deletedReport.id} עבור חודש ${deletedReport.month}/${deletedReport.year}`
     });
     localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(audit));
 
@@ -1241,6 +1850,12 @@ ${reviewUrl}
 
     const deletedUser = users.splice(idx, 1)[0];
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+    if (typeof fetch !== 'undefined') {
+      fetch('/api/users/' + encodeURIComponent(userId), {
+        method: 'DELETE'
+      }).catch(err => console.warn('Firestore delete user warning:', err));
+    }
 
     const audit = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS) || '[]');
     audit.push({
@@ -1874,8 +2489,12 @@ function generateReportPDFHtml(report) {
   let rowsHtml = '';
   days.forEach(d => {
     let dayBadges = '';
-    if (d.isHoliday) dayBadges += `<span class="pdf-tag tag-holiday">${d.holidayName || 'חג/חופשה'}</span>`;
-    if (d.isFieldDay) dayBadges += `<span class="pdf-tag tag-field">יום שדה</span>`;
+    const dayNum = d.dayOfMonth || d.day_number || 1;
+    const vac = getMoEVacationInfo(report.year, report.month, dayNum);
+    const holidayName = vac.name || d.holidayName || d.holiday_name || '';
+    const isHoliday = vac.isHoliday || d.isHoliday || d.is_holiday;
+    if (isHoliday) dayBadges += `<span class="pdf-tag tag-holiday">${holidayName || 'חג/חופשה'}</span>`;
+    if (d.isFieldDay || d.is_field_day) dayBadges += `<span class="pdf-tag tag-field">יום שדה</span>`;
     
     let otDisplay = d.overtimeHours ? `${d.overtimeHours}` : '-';
     if (d.supervisorEdited && d.originalOvertime !== undefined) {
@@ -1883,9 +2502,9 @@ function generateReportPDFHtml(report) {
     }
     
     rowsHtml += `
-      <tr class="${d.isFieldDay ? 'row-field' : ''} ${d.isHoliday ? 'row-holiday' : ''}">
-        <td class="col-num">${d.dayOfMonth}</td>
-        <td class="col-day"><strong>${d.dayName || ''}</strong> ${dayBadges}</td>
+      <tr class="${(d.isFieldDay || d.is_field_day) ? 'row-field' : ''} ${isHoliday ? 'row-holiday' : ''}">
+        <td class="col-num">${d.dayOfMonth || d.day_number || ''}</td>
+        <td class="col-day"><strong>${d.dayName || d.day_name_hebrew || ''}</strong> ${dayBadges}</td>
         <td class="col-num col-fixed">${d.fixedHours || 0}</td>
         <td class="col-num">${d.absenceHours || 0}</td>
         <td>${d.absenceReason || '-'}</td>
@@ -2200,7 +2819,7 @@ function generateReportPDFHtml(report) {
     <thead>
       <tr>
         <th style="width:28px;">יום</th>
-        <th style="width:85px;">יום בשבוע</th>
+        <th style="width:110px;">יום בשבוע ומועדי חופשה</th>
         <th style="width:40px;">שעות קבועות</th>
         <th style="width:40px;">שעות היעדרות</th>
         <th style="width:70px;">סיבת היעדרות</th>
@@ -2414,4 +3033,16 @@ if (typeof window !== 'undefined') {
   window.showToast = showToast;
   window.openModal = openModal;
   window.closeModal = closeModal;
+}
+
+
+// Auto-sync Firestore users and reports silently in background on startup
+if (typeof window !== 'undefined' && typeof fetch !== 'undefined') {
+  API.syncUsersWithFirestore().then(() => {
+    window.dispatchEvent(new CustomEvent('shalah:users-synced'));
+  }).catch(e => console.warn('Background Firestore users sync warning:', e));
+
+  API.syncReportsWithFirestore().then(() => {
+    window.dispatchEvent(new CustomEvent('shalah:reports-synced'));
+  }).catch(e => console.warn('Background Firestore reports sync warning:', e));
 }

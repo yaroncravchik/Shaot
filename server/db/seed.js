@@ -40,7 +40,7 @@ function seed() {
  job_percentage: 100,
  consent_signed: 1,
  consent_timestamp: '2026-08-01 08:00:00',
- principal_id: 'usr_principal_1',
+ principal_id: null,
  principal_name: 'שרה כהן',
  principal_email: 'shalah.system.reports@gmail.com',
  supervisor_id: 'usr_supervisor_1'
@@ -59,7 +59,7 @@ function seed() {
  job_percentage: 80,
  consent_signed: 1,
  consent_timestamp: '2026-08-01 08:30:00',
- principal_id: 'usr_principal_1',
+ principal_id: null,
  principal_name: 'שרה כהן',
  principal_email: 'shalah.system.reports@gmail.com',
  supervisor_id: 'usr_supervisor_1'
@@ -78,48 +78,9 @@ function seed() {
  job_percentage: 100,
  consent_signed: 1,
  consent_timestamp: '2026-08-02 09:00:00',
- principal_id: 'usr_principal_2',
+ principal_id: null,
  principal_name: 'יורם פרידמן',
  principal_email: 'yoram@ironi-a.k12.il',
- supervisor_id: 'usr_supervisor_2'
- },
- // Principals
- {
- id: 'usr_principal_1',
- role: 'principal',
- id_number: '034567890',
- phone: '0534567890',
- full_name: 'שרה כהן',
- email: 'shalah.system.reports@gmail.com',
- school_code: '123456',
- school_name: 'תיכון רבין כפר סבא',
- district: 'מרכז',
- municipality: 'כפר סבא',
- job_percentage: 100,
- consent_signed: 1,
- consent_timestamp: '2026-08-01 07:30:00',
- principal_id: null,
- principal_name: null,
- principal_email: null,
- supervisor_id: 'usr_supervisor_1'
- },
- {
- id: 'usr_principal_2',
- role: 'principal',
- id_number: '045678912',
- phone: '0539876543',
- full_name: 'יורם פרידמן',
- email: 'yoram@ironi-a.k12.il',
- school_code: '654321',
- school_name: 'עירוני א׳ תל אביב',
- district: 'תל אביב',
- municipality: 'תל אביב',
- job_percentage: 100,
- consent_signed: 1,
- consent_timestamp: '2026-08-01 07:30:00',
- principal_id: null,
- principal_name: null,
- principal_email: null,
  supervisor_id: 'usr_supervisor_2'
  },
  // Supervisors
@@ -374,7 +335,7 @@ function seed() {
 
  insertAudit.run(['aud_1_1', rep1Id, 'created_draft', 'usr_teacher_1', 'ישראל ישראלי', 'יצירת טיוטת דוח', '2026-06-25 10:00:00']);
  insertAudit.run(['aud_1_2', rep1Id, 'submitted_to_principal', 'usr_teacher_1', 'ישראל ישראלי', 'הגשת דוח למנהלת בי"ס', '2026-06-28 12:15:00']);
- insertAudit.run(['aud_1_3', rep1Id, 'principal_approved', 'usr_principal_1', 'שרה כהן', 'אישור מנהלת', '2026-06-29 09:30:00']);
+ insertAudit.run(['aud_1_3', rep1Id, 'principal_approved', null, 'שרה כהן', 'אישור מנהלת', '2026-06-29 09:30:00']);
  insertAudit.run(['aud_1_4', rep1Id, 'supervisor_approved', 'usr_supervisor_1', 'אברהם מנחה', 'אישור מנחה מחוזי', '2026-07-01 11:00:00']);
  insertAudit.run(['aud_1_5', rep1Id, 'admin_approved_payment', 'usr_admin_1', 'רונן ממונה ארצי', `אישור סופי לתשלום וחתימה דיגיטלית (${rep1SignResult.signatureId})`, '2026-07-03 14:30:00']);
 
@@ -444,7 +405,7 @@ function seed() {
 
  insertAudit.run(['aud_2_1', rep2Id, 'created_draft', 'usr_teacher_1', 'ישראל ישראלי', 'יצירת טיוטה', '2026-07-25 11:00:00']);
  insertAudit.run(['aud_2_2', rep2Id, 'submitted_to_principal', 'usr_teacher_1', 'ישראל ישראלי', 'הגשה למנהלת', '2026-07-28 09:00:00']);
- insertAudit.run(['aud_2_3', rep2Id, 'principal_approved', 'usr_principal_1', 'שרה כהן', 'אישור מנהלת', '2026-07-29 10:30:00']);
+ insertAudit.run(['aud_2_3', rep2Id, 'principal_approved', null, 'שרה כהן', 'אישור מנהלת', '2026-07-29 10:30:00']);
  insertAudit.run(['aud_2_4', rep2Id, 'supervisor_edited', 'usr_supervisor_1', 'אברהם מנחה', 'עדכון שעות שדה ביום 6/7 מ-4 שעות ל-2 שעות', '2026-08-02 15:45:00']);
  insertAudit.run(['aud_2_5', rep2Id, 'supervisor_approved', 'usr_supervisor_1', 'אברהם מנחה', 'אישור מנחה והעברה לממונה ארצי', '2026-08-02 16:00:00']);
 
@@ -624,7 +585,7 @@ function seed() {
 
  insertAudit.run(['aud_5_1', rep5Id, 'created_draft', 'usr_teacher_3', 'דניאל כהן', 'יצירת טיוטה', '2026-08-24 10:00:00']);
  insertAudit.run(['aud_5_2', rep5Id, 'submitted_to_principal', 'usr_teacher_3', 'דניאל כהן', 'הגשה למנהל (יורם פרידמן)', '2026-08-24 17:00:00']);
- insertAudit.run(['aud_5_3', rep5Id, 'principal_rejected', 'usr_principal_2', 'יורם פרידמן', 'החזרה למורה: נא לצרף אישור שמ"פ עבור הימים 11-12/8/2026', '2026-08-25 09:00:00']);
+ insertAudit.run(['aud_5_3', rep5Id, 'principal_rejected', null, 'יורם פרידמן', 'החזרה למורה: נא לצרף אישור שמ"פ עבור הימים 11-12/8/2026', '2026-08-25 09:00:00']);
 
  console.log(' Seeded 5 sample reports with full days, audit logs, and status transitions.');
  console.log('--- Seed Completed Successfully ---');

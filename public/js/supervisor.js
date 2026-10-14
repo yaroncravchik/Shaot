@@ -8,7 +8,7 @@ let activeReviewReport = null;
 let districtReports = [];
 let assignedTeachers = [];
 
-document.addEventListener('DOMContentLoaded', () => {
+function initSupervisorPage() {
   currentSupervisor = Auth.requireAuth(['supervisor']);
   if (!currentSupervisor) return;
 
@@ -18,11 +18,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const districtCrumb = document.getElementById('sup-district-crumb');
   if (districtCrumb) districtCrumb.textContent = `מחוז ${currentSupervisor.district || 'מרכז'}`;
   const pageTitle = document.getElementById('sup-page-title');
-  if (pageTitle) pageTitle.textContent = `לוח בקרה מנחה מחוזי – ${currentSupervisor.name} (מחוז ${currentSupervisor.district || 'מרכז'})`;
+  if (pageTitle) pageTitle.textContent = `לוח בקרה מנחה מחוזי – ${currentSupervisor.name || currentSupervisor.full_name || ''} (מחוז ${currentSupervisor.district || 'מרכז'})`;
 
   loadSupervisorData();
   setupFilterListeners();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initSupervisorPage);
+} else {
+  initSupervisorPage();
+}
 
 function loadSupervisorData() {
   assignedTeachers = (typeof API.getTeachersBySupervisor === 'function')
@@ -33,8 +39,8 @@ function loadSupervisorData() {
   // Filter reports strictly for teachers assigned to this supervisor
   const assignedTeacherIds = new Set(assignedTeachers.map(t => String(t.id).trim()));
   const assignedTeacherNames = new Set(assignedTeachers.map(t => String(t.name).trim()));
-  const supId = String(currentSupervisor.id || '').trim();
-  const supName = String(currentSupervisor.name || '').trim();
+  const supId = String(currentSupervisor.id || currentSupervisor.id_number || '').trim();
+  const supName = String(currentSupervisor.name || currentSupervisor.full_name || '').trim();
 
   const allReports = (typeof API.getReports === 'function') ? API.getReports() : [];
   districtReports = allReports.filter(r => {
@@ -46,7 +52,8 @@ function loadSupervisorData() {
     return assignedTeacherIds.has(tId) ||
            (tName && assignedTeacherNames.has(tName)) ||
            (supId && rSupId === supId) ||
-           (supName && rSupName === supName);
+           (supName && rSupName === supName) ||
+           (supName && rSupName && (rSupName.includes(supName) || supName.includes(rSupName)));
   });
 
   renderReportsList(districtReports);
@@ -247,16 +254,38 @@ function renderReportsList(reports) {
 }
 
 function openSupervisorReviewModal(reportId) {
-  const report = API.getReportById(reportId);
-  if (!report) return;
+  let report = API.getReportById(reportId);
+  if (!report && Array.isArray(districtReports)) {
+    report = districtReports.find(r => r.id === reportId);
+  }
+  if (!report) {
+    if (typeof API.fetchReportById === 'function') {
+      API.fetchReportById(reportId).then(r => {
+        if (r) {
+          openSupervisorReviewModal(reportId);
+        } else {
+          showToast('לא ניתן למצוא את הדוח המבוקש', 'warning');
+        }
+      }).catch(err => {
+        console.error('Fetch report error:', err);
+      });
+    }
+    return;
+  }
 
   activeReviewReport = JSON.parse(JSON.stringify(report));
 
   const titleEl = document.getElementById('sup-modal-title');
   if (titleEl) {
-    titleEl.innerHTML = `בדיקת דוח שעות – <a href="javascript:void(0)" class="clickable-teacher-name" onclick="openTeacherProfileModal('${activeReviewReport.teacherId || activeReviewReport.teacherName}')" title="לחץ לצפייה בפרופיל המורה ובמערכת השעות" style="color:var(--primary);">${activeReviewReport.teacherName} <span class="teacher-info-icon">👤</span></a> (${HEBREW_MONTHS_NAME[activeReviewReport.month - 1]} ${activeReviewReport.year})`;
+    const monthName = (typeof HEBREW_MONTHS_NAME !== 'undefined' && HEBREW_MONTHS_NAME[activeReviewReport.month - 1])
+      ? HEBREW_MONTHS_NAME[activeReviewReport.month - 1]
+      : (activeReviewReport.month || '');
+    titleEl.innerHTML = `בדיקת דוח שעות – <a href="javascript:void(0)" class="clickable-teacher-name" onclick="openTeacherProfileModal('${activeReviewReport.teacherId || activeReviewReport.teacherName}')" title="לחץ לצפייה בפרופיל המורה ובמערכת השעות" style="color:var(--primary);">${activeReviewReport.teacherName} <span class="teacher-info-icon">👤</span></a> (${monthName} ${activeReviewReport.year})`;
   }
-  document.getElementById('sup-remarks-input').value = activeReviewReport.supervisorRemarks || '';
+  const remarksEl = document.getElementById('sup-remarks-input');
+  if (remarksEl) {
+    remarksEl.value = activeReviewReport.supervisorRemarks || '';
+  }
 
   renderSupervisorGrid(activeReviewReport);
   renderSupervisorAttachments(activeReviewReport);
@@ -267,16 +296,30 @@ function openSupervisorReviewModal(reportId) {
 
 function renderSupervisorGrid(report) {
   const tbody = document.getElementById('sup-review-grid-tbody');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
-  report.daysData.forEach((day, index) => {
+  const days = Array.isArray(report.daysData) ? report.daysData : [];
+  if (days.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted p-3">לא נמצאו נתוני ימים בדוח זה</td></tr>';
+    return;
+  }
+
+  days.forEach((day, index) => {
     const tr = document.createElement('tr');
-    if (day.isHoliday) tr.classList.add('row-holiday');
+    const dayNum = day.dayOfMonth || day.day_number || 1;
+    const vac = (typeof API !== 'undefined' && API.getMoEVacationInfo)
+      ? API.getMoEVacationInfo(report.year, report.month, dayNum)
+      : { isHoliday: day.isHoliday, name: day.holidayName };
+    const isHoliday = vac ? (vac.isHoliday || day.isHoliday) : day.isHoliday;
+    const holidayName = vac ? (vac.name || day.holidayName) : day.holidayName;
+
+    if (isHoliday) tr.classList.add('row-holiday');
     if (day.isFieldDay) tr.classList.add('row-field-day');
 
     let dayTags = '';
-    if (day.isHoliday) {
-      dayTags += `<span class="holiday-tag"> ${day.holidayName || 'חג'}</span>`;
+    if (isHoliday) {
+      dayTags += `<span class="holiday-tag" title="${holidayName}"> ${holidayName || 'חג/חופשה'}</span>`;
     }
     if (day.isFieldDay) {
       dayTags += `<span class="field-day-tag"> יום שדה</span>`;
@@ -287,7 +330,7 @@ function renderSupervisorGrid(report) {
     const overtime = parseFloat(day.overtimeHours || 0);
     const reason = (day.overtimeReason || '').trim();
     const total = fixed + overtime;
-    const isExceeded = (reason === 'גיחה' || reason === 'מסע') ? (total > 14) : (total > 10);
+    const isExceeded = (reason === 'גיחה' || reason === 'מסע' || reason === 'יום שדה ארוך') ? (total > 14) : (total > 10);
 
     let cellClass = isEdited ? 'cell-input supervisor-edited-cell' : 'cell-input';
     if (isExceeded) {
@@ -387,18 +430,31 @@ function renderSupervisorAttachments(report) {
   attachments.forEach(att => {
     const item = document.createElement('div');
     item.className = 'attachment-item';
-    item.innerHTML = `
-      <div class="attachment-info">
-        <span class="attachment-icon">📎</span>
-        <div>
-          <div class="attachment-name">${att.name}</div>
-          <div class="attachment-size">${att.size} • הועלה ב-${att.uploadDate}</div>
-        </div>
+
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'attachment-info';
+    infoDiv.innerHTML = `
+      <span class="attachment-icon">📎</span>
+      <div>
+        <div class="attachment-name">${att.name || 'נספח'}</div>
+        <div class="attachment-size">${att.size || ''} • הועלה ב-${att.uploadDate || ''}</div>
       </div>
-      <button class="btn btn-secondary btn-sm" onclick="showToast('הקובץ ${att.name} נבדק', 'info')">
-        👁️ צפה במסמך
-      </button>
     `;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-secondary btn-sm';
+    btn.textContent = '👁️ צפה במסמך';
+    btn.onclick = () => {
+      if (att.url) {
+        window.open(att.url, '_blank');
+      } else {
+        showToast(`הקובץ ${att.name || 'נספח'} נבדק`, 'info');
+      }
+    };
+
+    item.appendChild(infoDiv);
+    item.appendChild(btn);
     container.appendChild(item);
   });
 }
@@ -406,18 +462,24 @@ function renderSupervisorAttachments(report) {
 function handleSupervisorApprove() {
   if (!activeReviewReport) return;
 
-  const remarks = document.getElementById('sup-remarks-input').value.trim();
+  const remarks = document.getElementById('sup-remarks-input') ? document.getElementById('sup-remarks-input').value.trim() : '';
   const btnApprove = document.getElementById('sup-btn-approve');
-  btnApprove.disabled = true;
-  btnApprove.innerHTML = '<div class="spinner"></div><span>מאשר ומעביר לממונה...</span>';
+  if (btnApprove) {
+    btnApprove.disabled = true;
+    btnApprove.innerHTML = '<div class="spinner"></div><span>מאשר ומעביר לממונה...</span>';
+  }
+
+  const supDistrict = (currentSupervisor && currentSupervisor.district) || 'מרכז';
 
   setTimeout(() => {
     API.supervisorApprove(activeReviewReport.id, currentSupervisor, remarks, activeReviewReport.daysData);
     closeModal('supervisor-review-modal');
-    showToast('הדוח נבדק ואושר בהצלחה והועבר לבדיקת ממונה מחוז מרכז (רונן)', 'success');
+    showToast(`הדוח נבדק ואושר בהצלחה והועבר לבדיקת ממונה מחוז ${supDistrict}`, 'success');
     loadSupervisorData();
-    btnApprove.disabled = false;
-    btnApprove.innerHTML = '<span>אישור והעברה לממונה מחוז מרכז</span>';
+    if (btnApprove) {
+      btnApprove.disabled = false;
+      btnApprove.innerHTML = `<span>אישור והעברה לממונה מחוז ${supDistrict}</span>`;
+    }
   }, 500);
 }
 
@@ -441,6 +503,14 @@ function handleSupervisorReturn() {
 function exportDistrictReports() {
   exportReportsToExcel(districtReports, `shalah_district_${currentSupervisor.district || 'central'}_reports.csv`);
 }
+
+window.addEventListener('shalah:users-synced', () => {
+  loadSupervisorData();
+});
+
+window.addEventListener('shalah:reports-synced', () => {
+  loadSupervisorData();
+});
 
 // Global window bindings for inline HTML event handlers
 if (typeof window !== 'undefined') {

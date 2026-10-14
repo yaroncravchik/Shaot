@@ -373,11 +373,11 @@ async function runTests() {
 
   // 9. Overtime Reasons & Daily Hours Threshold Exceeded Rule
   test('9. Overtime Reason Options and Threshold Rule (>10h standard, >14h for גיחה/מסע)', () => {
-    const validReasons = ['יום שדה', 'גיחה', 'מסע', 'מש"צים', 'אחר'];
+    const validReasons = ['יום שדה', 'יום שדה ארוך', 'גיחה', 'מסע', 'מש"צים', 'אחר'];
 
     function isDailyHoursExceeded(fixed, overtime, reason) {
       const total = fixed + overtime;
-      if (reason === 'גיחה' || reason === 'מסע') {
+      if (reason === 'גיחה' || reason === 'מסע' || reason === 'יום שדה ארוך') {
         return total > 14;
       }
       return total > 10;
@@ -411,6 +411,10 @@ async function runTests() {
 
     // Case 9: 8 fixed + 7 overtime = 15 > 14, reason = 'מסע' -> EXCEEDED (true)
     assert.strictEqual(isDailyHoursExceeded(8, 7, 'מסע'), true);
+
+    // Case 10 and 11: Long field day (יום שדה ארוך): threshold > 14
+    assert.strictEqual(isDailyHoursExceeded(8, 5, 'יום שדה ארוך'), false);
+    assert.strictEqual(isDailyHoursExceeded(8, 7, 'יום שדה ארוך'), true);
   });
 
   console.log('\n============================================================');

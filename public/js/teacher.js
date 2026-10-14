@@ -4,7 +4,7 @@
  */
 
 const absenceReasonsList = (typeof ABSENCE_REASONS !== 'undefined' ? ABSENCE_REASONS : (window.ABSENCE_REASONS || ['מחלה', 'מילואים', 'השתלמות', 'חופשה', 'אישי', 'אחר']));
-const overtimeReasonsList = (typeof OVERTIME_REASONS !== 'undefined' ? OVERTIME_REASONS : (window.OVERTIME_REASONS || ['יום שדה', 'גיחה', 'מסע', 'מש"צים', 'אחר']));
+const overtimeReasonsList = (typeof OVERTIME_REASONS !== 'undefined' ? OVERTIME_REASONS : (window.OVERTIME_REASONS || ['יום שדה', 'יום שדה ארוך', 'גיחה', 'מסע', 'מש"צים', 'אחר']));
 
 let currentTeacher = null;
 let currentActiveReport = null;
@@ -87,6 +87,17 @@ function renderActiveMonthStatus(reports) {
       ? '<span>✏️ המשך עריכת דוח שעות</span>'
       : '<span>👁️ צפייה בדוח שעות שהוגש</span>';
 
+    // Delete draft button in month selector bar
+    const btnDeleteMonthDraft = document.getElementById('btn-delete-selected-month-draft');
+    if (btnDeleteMonthDraft) {
+      if (currentMonthReport.status === 'draft') {
+        btnDeleteMonthDraft.style.display = 'inline-flex';
+        btnDeleteMonthDraft.onclick = () => promptDeleteDraft(currentMonthReport.id);
+      } else {
+        btnDeleteMonthDraft.style.display = 'none';
+      }
+    }
+
     // Stats
     const otEl = document.getElementById('stat-overtime-hours');
     const abEl = document.getElementById('stat-absence-hours');
@@ -95,6 +106,11 @@ function renderActiveMonthStatus(reports) {
   } else {
     pillContainer.innerHTML = `<span class="badge badge-draft"><span class="badge-dot"></span> טרם נפתח דיווח לחודש זה</span>`;
     btnOpen.innerHTML = '<span>➕ פתיחת דוח שעות חדש</span>';
+
+    const btnDeleteMonthDraft = document.getElementById('btn-delete-selected-month-draft');
+    if (btnDeleteMonthDraft) {
+      btnDeleteMonthDraft.style.display = 'none';
+    }
 
     const otEl = document.getElementById('stat-overtime-hours');
     const abEl = document.getElementById('stat-absence-hours');
@@ -196,23 +212,36 @@ function renderHistoryTable(reports) {
 
     const isSupervisorApproved = API.isReportSupervisorApproved(r);
 
+    const isApproved = API.isReportSupervisorApproved(r);
+    const canDelete = r.status === 'draft';
+    const actionButtons = `
+      <div style="display:inline-flex; gap:6px; align-items:center; justify-content:center; flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="openReportModal(${r.year}, ${r.month})">
+          ${r.status === 'draft' || r.status === 'returned' ? '✏️ עריכה' : '👁️ צפייה'}
+        </button>
+        ${canDelete ? `
+          <button class="btn btn-outline-danger btn-sm" onclick="promptDeleteDraft('${r.id}')" title="מחיקת טיוטת דוח לצמיתות">
+            <span>🗑️ מחיקה</span>
+          </button>
+        ` : ''}
+        ${isApproved ? `
+          <button class="btn btn-outline-primary btn-sm" onclick="downloadReportPDF('${r.id}')" title="הורדת דוח מאושר בקובץ PDF">
+            <span>📄 PDF</span>
+          </button>
+        ` : ''}
+      </div>
+    `;
+
     tr.innerHTML = `
-      <td><strong>${HEBREW_MONTHS_NAME[r.month - 1]} ${r.year}</strong></td>
+      <td><strong>${HEBREW_MONTHS_NAME[r.month - 1] || r.month} ${r.year}</strong></td>
       <td><span class="badge ${st.badgeClass}"><span class="badge-dot"></span> ${st.label}</span></td>
-      <td>${r.submittedAt ? r.submittedAt.slice(0, 10) : '—'}</td>
-      <td><strong>${r.totalOvertimeHours || 0}</strong> שעות</td>
+      <td>${r.submittedAt ? r.submittedAt.slice(0, 10) : '<span class="text-muted">טיוטה</span>'}</td>
+      <td><strong style="color:var(--primary); font-size:1.05rem;">${r.totalOvertimeHours || 0} שעות</strong></td>
       <td>${r.totalAbsenceHours || 0} שעות</td>
       <td>${sigCell}</td>
       <td>${remarksCell}</td>
       <td style="text-align: center;">
-        <button class="btn btn-secondary btn-sm" onclick="openReportModal(${r.year}, ${r.month})">
-          ${r.status === 'draft' || r.status === 'returned' ? '✏️ עריכה' : '👁️ צפייה'}
-        </button>
-        ${isSupervisorApproved ? `
-          <button class="btn btn-outline-primary btn-sm" onclick="downloadReportPDF('${r.id}')" title="הורדת דוח מאושר כקובץ PDF" style="margin-right: 4px;">
-            📄 PDF
-          </button>
-        ` : ''}
+        ${actionButtons}
       </td>
     `;
     tbody.appendChild(tr);
@@ -275,7 +304,8 @@ function openReportModal(year, month) {
       municipality: currentTeacher.municipality,
       supervisorName: currentTeacher.supervisorName,
       principalName: currentTeacher.principalName,
-      principalEmail: currentTeacher.principalEmail,
+      principalEmail: currentTeacher.principalEmail || currentTeacher.principal_email || '',
+      principalToken: currentTeacher.principalToken || (currentTeacher.schoolCode ? 'PRINCIPAL_TOKEN_' + currentTeacher.schoolCode : 'PRINCIPAL_TOKEN_SCHOOL'),
       year: year,
       month: month,
       status: 'draft',
@@ -340,6 +370,16 @@ function openReportModal(year, month) {
     }
   }
 
+  // Show delete draft button only when report is in draft status
+  const btnDeleteModalDraft = document.getElementById('btn-delete-modal-draft');
+  if (btnDeleteModalDraft) {
+    if (currentActiveReport && currentActiveReport.status === 'draft') {
+      btnDeleteModalDraft.style.display = 'inline-flex';
+    } else {
+      btnDeleteModalDraft.style.display = 'none';
+    }
+  }
+
   renderReportGrid(currentActiveReport, isReadOnly);
   renderAttachmentsList(currentActiveReport, isReadOnly);
   calculateGridTotals();
@@ -362,8 +402,8 @@ function isDailyHoursExceeded(day) {
   const reason = (day.overtimeReason || '').trim();
   const total = fixed + overtime;
 
-  // סייג לכלל זה: אם נבחר בסיבת שעות נוספות "גיחה" או "מסע", סף השעות הוא 14
-  if (reason === 'גיחה' || reason === 'מסע') {
+  // סייג לכלל זה: אם נבחר בסיבת שעות נוספות "גיחה" או "מסע" או "יום שדה ארוך", סף השעות הוא 14 (התראה מעל 14)
+  if (reason === 'גיחה' || reason === 'מסע' || reason === 'יום שדה ארוך') {
     return total > 14;
   }
 
@@ -408,12 +448,19 @@ function renderReportGrid(report, isReadOnly) {
   report.daysData.forEach((day, idx) => {
     const tr = document.createElement('tr');
     tr.setAttribute('data-day-idx', idx);
-    if (day.isHoliday) tr.classList.add('row-holiday');
+    const dayNum = day.dayOfMonth || day.day_number || 1;
+    const vac = (typeof API !== 'undefined' && API.getMoEVacationInfo)
+      ? API.getMoEVacationInfo(report.year, report.month, dayNum)
+      : { isHoliday: day.isHoliday, name: day.holidayName };
+    const isHoliday = vac.isHoliday || day.isHoliday;
+    const holidayName = vac.name || day.holidayName;
+
+    if (isHoliday) tr.classList.add('row-holiday');
     if (day.isFieldDay) tr.classList.add('row-field-day');
 
     let dayTags = '';
-    if (day.isHoliday) {
-      dayTags += `<span class="holiday-tag">🌿 ${day.holidayName || 'חג'}</span>`;
+    if (isHoliday) {
+      dayTags += `<span class="holiday-tag" title="${holidayName}">🌿 ${holidayName || 'חג/חופשה'}</span>`;
     }
     if (day.isFieldDay) {
       dayTags += `<span class="field-day-tag">🌾 יום שדה</span>`;
@@ -422,8 +469,8 @@ function renderReportGrid(report, isReadOnly) {
     const fixed = parseFloat(day.fixedHours || 0);
     const overtime = parseFloat(day.overtimeHours || 0);
     const reason = (day.overtimeReason || '').trim();
-    const isExceeded = (reason === 'גיחה' || reason === 'מסע') ? (fixed + overtime > 14) : (fixed + overtime > 10);
-    const thresholdLimit = (reason === 'גיחה' || reason === 'מסע') ? '14' : '10';
+    const isExceeded = (reason === 'גיחה' || reason === 'מסע' || reason === 'יום שדה ארוך') ? (fixed + overtime > 14) : (fixed + overtime > 10);
+    const thresholdLimit = (reason === 'גיחה' || reason === 'מסע' || reason === 'יום שדה ארוך') ? '14' : '10';
 
     tr.innerHTML = `
       <td style="text-align:center; font-weight:700;">${day.dayOfMonth}</td>
@@ -710,6 +757,88 @@ function downloadReportPDF(reportId) {
   API.exportReportToPDF(report);
 }
 
+// ==========================================================================
+// Draft Deletion Logic (Only allowed in 'draft' status)
+// ==========================================================================
+let pendingDeleteDraftId = null;
+
+function promptDeleteDraft(reportId) {
+  const report = API.getReportById(reportId);
+  if (!report) {
+    showToast('דוח לא נמצא במערכת', 'error');
+    return;
+  }
+  if (report.status !== 'draft') {
+    showToast('ניתן למחוק דוח אך ורק כאשר הוא במצב טיוטה', 'warning');
+    return;
+  }
+
+  pendingDeleteDraftId = reportId;
+  const monthName = HEBREW_MONTHS_NAME[report.month - 1] || report.month;
+  const confirmTextEl = document.getElementById('delete-draft-confirm-text');
+  if (confirmTextEl) {
+    confirmTextEl.innerHTML = `האם את/ה בטוח/ה שברצונך למחוק את טיוטת הדוח עבור <strong>${monthName} ${report.year}</strong>?`;
+  }
+
+  openModal('modal-delete-draft');
+}
+
+function promptDeleteCurrentDraft() {
+  if (currentActiveReport && currentActiveReport.id) {
+    promptDeleteDraft(currentActiveReport.id);
+  } else {
+    clearInterval(autoSaveInterval);
+    closeModal('monthly-report-modal');
+    currentActiveReport = null;
+    showToast('הטיוטה בוטלה', 'info');
+    loadTeacherDashboardData();
+  }
+}
+
+function executeDeleteDraft() {
+  if (!pendingDeleteDraftId) return;
+
+  const btnConfirm = document.getElementById('btn-confirm-delete-draft');
+  if (btnConfirm) {
+    btnConfirm.disabled = true;
+    btnConfirm.innerHTML = '<div class="spinner"></div><span>מוחק טיוטה...</span>';
+  }
+
+  setTimeout(() => {
+    try {
+      const rep = API.getReportById(pendingDeleteDraftId);
+      if (rep && rep.status !== 'draft') {
+        throw new Error('ניתן למחוק דוח אך ורק כאשר הוא במצב טיוטה.');
+      }
+
+      API.deleteReport(pendingDeleteDraftId, currentTeacher);
+
+      clearInterval(autoSaveInterval);
+      closeModal('modal-delete-draft');
+      closeModal('monthly-report-modal');
+      currentActiveReport = null;
+
+      showToast('טיוטת הדוח נמחקה בהצלחה לצמיתות!', 'success', 'טיוטה נמחקה');
+      loadTeacherDashboardData();
+    } catch (err) {
+      showToast(err.message || 'שגיאה במחיקת טיוטת הדוח', 'error');
+    } finally {
+      if (btnConfirm) {
+        btnConfirm.disabled = false;
+        btnConfirm.innerHTML = '<span>🗑️ מחק טיוטה לצמיתות</span>';
+      }
+      pendingDeleteDraftId = null;
+    }
+  }, 350);
+}
+
+// Modal Escape key listener
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    ['modal-delete-draft', 'monthly-report-modal', 'modal-principal-email-dispatch'].forEach(closeModal);
+  }
+});
+
 // Global window bindings
 if (typeof window !== 'undefined') {
   window.checkReportSubmissionEligibility = checkReportSubmissionEligibility;
@@ -723,6 +852,17 @@ if (typeof window !== 'undefined') {
   window.handleFileUpload = handleFileUpload;
   window.removeAttachment = removeAttachment;
   window.downloadReportPDF = downloadReportPDF;
+  window.openPrincipalEmailDispatchModal = openPrincipalEmailDispatchModal;
+  window.copyDispatchReviewUrl = copyDispatchReviewUrl;
+  window.openDispatchMailClient = openDispatchMailClient;
+  window.sendDispatchWhatsApp = sendDispatchWhatsApp;
+  window.promptDeleteDraft = promptDeleteDraft;
+  window.promptDeleteCurrentDraft = promptDeleteCurrentDraft;
+  window.executeDeleteDraft = executeDeleteDraft;
   window.ABSENCE_REASONS = window.ABSENCE_REASONS || absenceReasonsList;
   window.OVERTIME_REASONS = window.OVERTIME_REASONS || overtimeReasonsList;
 }
+
+window.addEventListener('shalah:reports-synced', () => {
+  if (typeof loadTeacherDashboardData === 'function') loadTeacherDashboardData();
+});

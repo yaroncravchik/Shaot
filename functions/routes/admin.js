@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const { db } = require('../db/database');
+const { FirestoreDB } = require('../db/firestore-db');
 const { HEBREW_MONTH_NAMES } = require('../services/calendarService');
 const { signReport } = require('../services/cryptoService');
 const { generateReportsSummaryExcel } = require('../services/excelService');
@@ -469,7 +470,7 @@ router.get('/users', (req, res) => {
  * POST /api/admin/create-user
  * Create a new teacher or supervisor in the system
  */
-router.post('/create-user', (req, res) => {
+router.post('/create-user', async (req, res) => {
   try {
     const {
       role,
@@ -589,6 +590,33 @@ router.post('/create-user', (req, res) => {
       now
     );
 
+    // Save directly to Cloud Firestore
+    try {
+      await FirestoreDB.saveUser({
+        id: cleanUsername,
+        id_number: cleanUsername,
+        username: cleanUsername,
+        password: cleanPassword,
+        phone: cleanPhone,
+        name: fullName,
+        full_name: fullName,
+        role,
+        email: userEmail,
+        schoolCode: school_code ? school_code.trim() : null,
+        schoolName: school_name ? school_name.trim() : (role === 'teacher' ? 'תיכון מחוזי מרכז' : null),
+        district: district || 'מרכז',
+        municipality: municipality ? municipality.trim() : 'מרכז',
+        jobScope: Number(job_percentage) || 100,
+        supervisorId: supervisor_id || null,
+        supervisorName,
+        consentSigned: true,
+        weeklySchedule: { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 },
+        fieldDays: [2, 4]
+      });
+    } catch (fsErr) {
+      console.warn('Firestore user save warning:', fsErr.message);
+    }
+
     return res.json({
       success: true,
       message: `${roleNameHebrew} ${fullName} נוסף בהצלחה למערכת!`,
@@ -653,7 +681,7 @@ router.delete('/reports/:id', (req, res) => {
  * DELETE /api/admin/users/:id
  * Permanent deletion of a user
  */
-router.delete('/users/:id', (req, res) => {
+router.delete('/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
@@ -663,6 +691,13 @@ router.delete('/users/:id', (req, res) => {
 
     db.prepare('DELETE FROM teacher_schedules WHERE user_id = ?').run(id);
     db.prepare('DELETE FROM users WHERE id = ?').run(id);
+
+    try {
+      await FirestoreDB.deleteUser(id);
+      if (user.id_number) await FirestoreDB.deleteUser(user.id_number);
+    } catch (fsErr) {
+      console.warn('Firestore user delete warning:', fsErr.message);
+    }
 
     return res.json({
       success: true,
@@ -678,7 +713,7 @@ router.delete('/users/:id', (req, res) => {
  * PUT /api/admin/users/:id
  * Update an existing user's details (Teacher, Supervisor, Admin)
  */
-router.put('/users/:id', (req, res) => {
+router.put('/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -758,6 +793,26 @@ router.put('/users/:id', (req, res) => {
     );
 
     const updatedUser = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+
+    try {
+      await FirestoreDB.saveUser({
+        id: (user.id_number || id),
+        id_number: user.id_number || id,
+        name: newFullName,
+        full_name: newFullName,
+        phone: newPhone,
+        password: newPassword,
+        email: newEmail,
+        schoolCode: newSchoolCode,
+        schoolName: newSchoolName,
+        district: newDistrict,
+        municipality: newMunicipality,
+        supervisorId: newSupervisorId,
+        jobScope: newJobPercentage
+      });
+    } catch (fsErr) {
+      console.warn('Firestore user update warning:', fsErr.message);
+    }
 
     return res.json({
       success: true,

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const { db } = require('../db/database');
+const { FirestoreDB } = require('../db/firestore-db');
 const { HEBREW_MONTH_NAMES } = require('../services/calendarService');
 const { signReport } = require('../services/cryptoService');
 const { generateReportsSummaryExcel } = require('../services/excelService');
@@ -71,53 +72,69 @@ router.get('/reports', (req, res) => {
 
     const reports = db.prepare(sql).all(params);
 
-    const formatted = reports.map(r => ({
-      ...r,
-      month_name_hebrew: HEBREW_MONTH_NAMES[r.month - 1] || r.month
-    }));
-
-    // Calculate aggregated stats
+    // Calculate Master Statistics
+    const allReports = db.prepare('SELECT status, user_id, id FROM reports').all();
     const stats = {
-      totalReports: formatted.length,
-      approvedForPayment: formatted.filter(r => r.status === 'approved_for_payment').length,
-      supervisorApproved: formatted.filter(r => r.status === 'supervisor_approved').length,
-      principalApproved: formatted.filter(r => r.status === 'principal_approved').length,
-      submittedToPrincipal: formatted.filter(r => r.status === 'submitted_to_principal').length,
-      drafts: formatted.filter(r => r.status === 'draft').length,
-      returned: formatted.filter(r => r.status === 'returned_to_teacher' || r.status === 'returned_to_supervisor').length,
-      totalOvertimeHours: formatted.reduce((acc, r) => acc + Number(r.total_overtime_hours || 0), 0),
-      totalRegularHours: formatted.reduce((acc, r) => acc + Number(r.total_regular_hours || 0), 0),
-      totalAbsenceHours: formatted.reduce((acc, r) => acc + Number(r.total_absence_hours || 0), 0)
+      total_reports: allReports.length,
+      pending_admin: allReports.filter(r => r.status === 'supervisor_approved').length,
+      supervisor_approved: allReports.filter(r => r.status === 'supervisor_approved').length,
+      approved_for_payment: allReports.filter(r => r.status === 'approved_for_payment').length,
+      drafts: allReports.filter(r => r.status === 'draft').length,
+      returned: allReports.filter(r => r.status === 'returned_to_teacher' || r.status === 'returned_to_supervisor').length,
+      total_teachers: db.prepare('SELECT COUNT(*) as c FROM users WHERE role = "teacher"').get().c,
+      total_supervisors: db.prepare('SELECT COUNT(*) as c FROM users WHERE role = "supervisor"').get().c
     };
+
+    // Calculate total hours payable
+    const totalHoursResult = db.prepare(`
+      SELECT
+        COALESCE(SUM(regular_hours - absence_hours + overtime_hours), 0) as total_payable_hours
+      FROM report_days rd
+      JOIN reports r ON rd.report_id = r.id
+      WHERE r.status = 'approved_for_payment'
+    `).get();
+
+    stats.total_paid_hours = totalHoursResult ? totalHoursResult.total_payable_hours : 0;
 
     return res.json({
       success: true,
       stats,
-      reports: formatted
+      reports: reports.map(r => ({
+        ...r,
+        month_name: HEBREW_MONTH_NAMES[r.month] || r.month,
+        total_payable_hours: (r.total_regular_hours - r.total_absence_hours + r.total_overtime_hours)
+      }))
     });
   } catch (err) {
-    console.error('Admin reports error:', err);
-    return res.status(500).json({ success: false, error: 'שגיאה בטעינת דוחות ממונה.' });
+    console.error('Admin get reports error:', err);
+    return res.status(500).json({ success: false, error: 'שגיאה בשליפת דוחות מנהל מערכת.' });
   }
 });
 
 /**
- * POST /api/admin/reports/:id/approve-payment
- * Final approval for payment & Cryptographic RSA 2048-bit Digital Signing
+ * GET /api/admin/reports/:id
+ * Single report detailed view for Super Admin
  */
-router.post('/reports/:id/approve-payment', (req, res) => {
+router.get('/reports/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const { admin_user_id, admin_name, admin_notes } = req.body || {};
 
     const report = db.prepare(`
       SELECT
         r.*,
         u.full_name as teacher_name,
         u.id_number,
+        u.phone as teacher_phone,
+        u.email as teacher_email,
         u.school_name,
         u.school_code,
-        u.district
+        u.district,
+        u.municipality,
+        u.job_percentage,
+        u.principal_name,
+        u.principal_email,
+        u.supervisor_id,
+        (SELECT full_name FROM users WHERE id = u.supervisor_id) as supervisor_name
       FROM reports r
       JOIN users u ON r.user_id = u.id
       WHERE r.id = ?
@@ -127,41 +144,107 @@ router.post('/reports/:id/approve-payment', (req, res) => {
       return res.status(404).json({ success: false, error: 'דוח לא נמצא.' });
     }
 
-    const days = db.prepare('SELECT * FROM report_days WHERE report_id = ? ORDER BY day_number ASC').all(id);
+    const days = db.prepare(`
+      SELECT * FROM report_days
+      WHERE report_id = ?
+      ORDER BY day_number ASC
+    `).all(id);
+
+    const attachments = db.prepare(`
+      SELECT id, original_filename, file_size, mime_type, uploaded_at
+      FROM report_attachments
+      WHERE report_id = ?
+      ORDER BY uploaded_at ASC
+    `).all(id);
+
+    const auditLogs = db.prepare(`
+      SELECT * FROM audit_logs
+      WHERE report_id = ?
+      ORDER BY timestamp DESC
+    `).all(id);
 
     let totalRegular = 0;
     let totalAbsence = 0;
     let totalOvertime = 0;
+    let supervisorEditsCount = 0;
+
     days.forEach(d => {
-      totalRegular += Number(d.regular_hours) || 0;
-      totalAbsence += Number(d.absence_hours) || 0;
-      totalOvertime += Number(d.overtime_hours) || 0;
+      totalRegular += d.regular_hours;
+      totalAbsence += d.absence_hours;
+      totalOvertime += d.overtime_hours;
+      if (d.supervisor_edited) supervisorEditsCount++;
     });
 
-    // Execute Cryptographic RSA 2048-bit Digital Signing
-    const signResult = signReport({
-      id: report.id,
-      user_id: report.user_id,
-      teacher_name: report.teacher_name,
-      id_number: report.id_number,
-      school_code: report.school_code,
-      school_name: report.school_name,
-      district: report.district,
-      year: report.year,
-      month: report.month,
+    const summary = {
       total_regular_hours: totalRegular,
       total_absence_hours: totalAbsence,
       total_overtime_hours: totalOvertime,
-      total_approved_overtime_hours: totalOvertime,
-      days
-    }, 'admin');
+      total_payable_hours: totalRegular - totalAbsence + totalOvertime,
+      supervisor_edits_count: supervisorEditsCount
+    };
+
+    return res.json({
+      success: true,
+      report: {
+        ...report,
+        month_name: HEBREW_MONTH_NAMES[report.month] || report.month
+      },
+      summary,
+      days,
+      attachments,
+      auditLogs
+    });
+  } catch (err) {
+    console.error('Admin get single report error:', err);
+    return res.status(500).json({ success: false, error: 'שגיאה בשליפת נתוני הדוח.' });
+  }
+});
+
+/**
+ * POST /api/admin/reports/:id/approve-payment
+ * Final approval for payment - triggers RSA 2048-bit digital signing!
+ */
+router.post('/reports/:id/approve-payment', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { admin_user_id, admin_name, admin_notes } = req.body || {};
+
+    const report = db.prepare(`
+      SELECT r.*, u.full_name, u.id_number, u.school_code, u.district
+      FROM reports r
+      JOIN users u ON r.user_id = u.id
+      WHERE r.id = ?
+    `).get(id);
+
+    if (!report) {
+      return res.status(404).json({ success: false, error: 'דוח לא נמצא.' });
+    }
+
+    if (report.status !== 'supervisor_approved' && report.status !== 'approved_for_payment') {
+      return res.status(400).json({
+        success: false,
+        error: 'ניתן לאשר לתשלום רק דוחות שאושרו על ידי המנחה המחוזי.'
+      });
+    }
+
+    const days = db.prepare('SELECT * FROM report_days WHERE report_id = ? ORDER BY day_number ASC').all(id);
+
+    // Perform Cryptographic RSA 2048-bit Digital Signing
+    const signResult = signReport(
+      report,
+      days,
+      'admin',
+      admin_name || 'רונן - ממונה מחוז מרכז'
+    );
 
     const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
+    // Update Report with Signature & Status
     db.prepare(`
-      UPDATE reports SET
+      UPDATE reports
+      SET
         status = 'approved_for_payment',
-        admin_notes = COALESCE(?, admin_notes),
+        admin_notes = ?,
         digital_signature_id = ?,
         signature_hash = ?,
         signature_data = ?,
@@ -170,7 +253,7 @@ router.post('/reports/:id/approve-payment', (req, res) => {
         updated_at = ?
       WHERE id = ?
     `).run(
-      admin_notes || null,
+      admin_notes ? admin_notes.trim() : report.admin_notes,
       signResult.signatureId,
       signResult.signatureHash,
       signResult.signatureData,
@@ -207,18 +290,15 @@ router.post('/reports/:id/approve-payment', (req, res) => {
 
 /**
  * POST /api/admin/reports/:id/return
- * Return report to Supervisor or Teacher with notes
+ * Return report back to teacher or supervisor with notes
  */
 router.post('/reports/:id/return', (req, res) => {
   try {
     const { id } = req.params;
-    const { target, admin_user_id, admin_name, notes } = req.body || {};
+    const { target_role, notes, admin_user_id, admin_name } = req.body || {};
 
     if (!notes || !notes.trim()) {
-      return res.status(400).json({
-        success: false,
-        error: 'חובה להזין הערות והנחיות בעת החזרת הדוח לעריכה.'
-      });
+      return res.status(400).json({ success: false, error: 'חובה להזין נימוק / הערות להחזרת הדוח.' });
     }
 
     const report = db.prepare('SELECT * FROM reports WHERE id = ?').get(id);
@@ -226,28 +306,32 @@ router.post('/reports/:id/return', (req, res) => {
       return res.status(404).json({ success: false, error: 'דוח לא נמצא.' });
     }
 
-    const targetStatus = target === 'supervisor' ? 'returned_to_supervisor' : 'returned_to_teacher';
+    const targetStatus = (target_role === 'supervisor') ? 'returned_to_supervisor' : 'returned_to_teacher';
+    const targetHebrew = (target_role === 'supervisor') ? 'מנחה מחוזי' : 'מורה';
     const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
     db.prepare(`
-      UPDATE reports SET
+      UPDATE reports
+      SET
         status = ?,
         admin_notes = ?,
         digital_signature_id = NULL,
         signature_hash = NULL,
         signature_data = NULL,
-        signed_by_role = NULL,
         signed_at = NULL,
         updated_at = ?
       WHERE id = ?
-    `).run(targetStatus, notes.trim(), now, id);
-
-    const targetHebrew = target === 'supervisor' ? 'מנחה מחוזי' : 'מורה';
+    `).run(
+      targetStatus,
+      notes.trim(),
+      now,
+      id
+    );
 
     // Audit log
     db.prepare(`
       INSERT INTO audit_logs (id, report_id, action, performed_by_user_id, performed_by_name, details, timestamp)
-      VALUES (?, ?, 'admin_returned', ?, ?, ?, ?)
+      VALUES (?, ?, 'admin_returned_report', ?, ?, ?, ?)
     `).run(
       `aud_${crypto.randomUUID()}`,
       id,
@@ -259,19 +343,19 @@ router.post('/reports/:id/return', (req, res) => {
 
     return res.json({
       success: true,
-      message: `הדוח הוחזר בהצלחה ל${targetHebrew}.`
+      message: `הדוח הוחזר בהצלחה ל${targetHebrew} לצורך תיקון.`
     });
   } catch (err) {
-    console.error('Admin return error:', err);
+    console.error('Admin return report error:', err);
     return res.status(500).json({ success: false, error: 'שגיאה בהחזרת הדוח.' });
   }
 });
 
 /**
  * GET /api/admin/reports/export
- * Master Excel export for Super Admin
+ * Master Excel Export for Super Admin
  */
-router.get('/reports/export', async (req, res) => {
+router.get('/export/master', async (req, res) => {
   try {
     const { district, status, year, month } = req.query;
 
@@ -280,17 +364,25 @@ router.get('/reports/export', async (req, res) => {
         r.*,
         u.full_name as teacher_name,
         u.id_number,
-        u.phone,
+        u.phone as teacher_phone,
+        u.email as teacher_email,
         u.school_name,
         u.school_code,
         u.district,
+        u.municipality,
+        u.job_percentage,
+        u.principal_name,
+        (SELECT full_name FROM users WHERE id = u.supervisor_id) as supervisor_name,
         COALESCE((SELECT SUM(regular_hours) FROM report_days WHERE report_id = r.id), 0) as total_regular_hours,
         COALESCE((SELECT SUM(absence_hours) FROM report_days WHERE report_id = r.id), 0) as total_absence_hours,
-        COALESCE((SELECT SUM(overtime_hours) FROM report_days WHERE report_id = r.id), 0) as total_overtime_hours
+        COALESCE((SELECT SUM(overtime_hours) FROM report_days WHERE report_id = r.id), 0) as total_overtime_hours,
+        COALESCE((SELECT COUNT(*) FROM report_days WHERE report_id = r.id AND supervisor_edited = 1), 0) as supervisor_edited_count,
+        COALESCE((SELECT COUNT(*) FROM report_attachments WHERE report_id = r.id), 0) as attachments_count
       FROM reports r
       JOIN users u ON r.user_id = u.id
       WHERE 1=1
     `;
+
     const params = [];
 
     if (district) {
@@ -378,7 +470,7 @@ router.get('/users', (req, res) => {
  * POST /api/admin/create-user
  * Create a new teacher or supervisor in the system
  */
-router.post('/create-user', (req, res) => {
+router.post('/create-user', async (req, res) => {
   try {
     const {
       role,
@@ -498,6 +590,33 @@ router.post('/create-user', (req, res) => {
       now
     );
 
+    // Save directly to Cloud Firestore
+    try {
+      await FirestoreDB.saveUser({
+        id: cleanUsername,
+        id_number: cleanUsername,
+        username: cleanUsername,
+        password: cleanPassword,
+        phone: cleanPhone,
+        name: fullName,
+        full_name: fullName,
+        role,
+        email: userEmail,
+        schoolCode: school_code ? school_code.trim() : null,
+        schoolName: school_name ? school_name.trim() : (role === 'teacher' ? 'תיכון מחוזי מרכז' : null),
+        district: district || 'מרכז',
+        municipality: municipality ? municipality.trim() : 'מרכז',
+        jobScope: Number(job_percentage) || 100,
+        supervisorId: supervisor_id || null,
+        supervisorName,
+        consentSigned: true,
+        weeklySchedule: { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 },
+        fieldDays: [2, 4]
+      });
+    } catch (fsErr) {
+      console.warn('Firestore user save warning:', fsErr.message);
+    }
+
     return res.json({
       success: true,
       message: `${roleNameHebrew} ${fullName} נוסף בהצלחה למערכת!`,
@@ -562,7 +681,7 @@ router.delete('/reports/:id', (req, res) => {
  * DELETE /api/admin/users/:id
  * Permanent deletion of a user
  */
-router.delete('/users/:id', (req, res) => {
+router.delete('/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
@@ -572,6 +691,13 @@ router.delete('/users/:id', (req, res) => {
 
     db.prepare('DELETE FROM teacher_schedules WHERE user_id = ?').run(id);
     db.prepare('DELETE FROM users WHERE id = ?').run(id);
+
+    try {
+      await FirestoreDB.deleteUser(id);
+      if (user.id_number) await FirestoreDB.deleteUser(user.id_number);
+    } catch (fsErr) {
+      console.warn('Firestore user delete warning:', fsErr.message);
+    }
 
     return res.json({
       success: true,
@@ -587,7 +713,7 @@ router.delete('/users/:id', (req, res) => {
  * PUT /api/admin/users/:id
  * Update an existing user's details (Teacher, Supervisor, Admin)
  */
-router.put('/users/:id', (req, res) => {
+router.put('/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -668,6 +794,26 @@ router.put('/users/:id', (req, res) => {
 
     const updatedUser = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
 
+    try {
+      await FirestoreDB.saveUser({
+        id: (user.id_number || id),
+        id_number: user.id_number || id,
+        name: newFullName,
+        full_name: newFullName,
+        phone: newPhone,
+        password: newPassword,
+        email: newEmail,
+        schoolCode: newSchoolCode,
+        schoolName: newSchoolName,
+        district: newDistrict,
+        municipality: newMunicipality,
+        supervisorId: newSupervisorId,
+        jobScope: newJobPercentage
+      });
+    } catch (fsErr) {
+      console.warn('Firestore user update warning:', fsErr.message);
+    }
+
     return res.json({
       success: true,
       message: `פרטי המשתמש ${newFullName} עודכנו בהצלחה.`,
@@ -680,4 +826,3 @@ router.put('/users/:id', (req, res) => {
 });
 
 module.exports = router;
-

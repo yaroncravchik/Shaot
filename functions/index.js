@@ -17,15 +17,16 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
-// Register all API routes on apiRouter
-apiRouter.use('/auth', require('./routes/auth'));
-apiRouter.use('/profile', require('./routes/profile'));
-apiRouter.use('/reports', require('./routes/reports'));
-apiRouter.use('/principal', require('./routes/principal'));
-apiRouter.use('/supervisor', require('./routes/supervisor'));
-apiRouter.use('/admin', require('./routes/admin'));
-apiRouter.use('/verify', require('./routes/verify'));
-apiRouter.use('/upload', require('./routes/upload'));
+// Register all API routes on apiRouter with lazy loading for instant startup
+apiRouter.use('/auth', (req, res, next) => require('./routes/auth')(req, res, next));
+apiRouter.use('/users', (req, res, next) => require('./routes/users')(req, res, next));
+apiRouter.use('/profile', (req, res, next) => require('./routes/profile')(req, res, next));
+apiRouter.use('/reports', (req, res, next) => require('./routes/reports')(req, res, next));
+apiRouter.use('/principal', (req, res, next) => require('./routes/principal')(req, res, next));
+apiRouter.use('/supervisor', (req, res, next) => require('./routes/supervisor')(req, res, next));
+apiRouter.use('/admin', (req, res, next) => require('./routes/admin')(req, res, next));
+apiRouter.use('/verify', (req, res, next) => require('./routes/verify')(req, res, next));
+apiRouter.use('/upload', (req, res, next) => require('./routes/upload')(req, res, next));
 
 // Health check endpoint
 apiRouter.get('/health', (req, res) => {

@@ -515,7 +515,7 @@ function openAdminReviewModal(reportId) {
     </div>
   `;
 
-  renderAdminDaysTable(report.daysData || []);
+  renderAdminDaysTable(report.daysData || [], report);
 
   const timelineMount = document.getElementById('admin-m-audit-timeline');
   timelineMount.innerHTML = '';
@@ -566,16 +566,29 @@ function openAdminReviewModal(reportId) {
   openModal('admin-review-modal');
 }
 
-function renderAdminDaysTable(days) {
+function renderAdminDaysTable(days, reportParam = null) {
   const tbody = document.getElementById('admin-m-days-tbody');
   if (!tbody) return;
   tbody.innerHTML = '';
 
+  const rep = reportParam || activeAdminReviewReport || {};
+
   days.forEach(day => {
     const tr = document.createElement('tr');
+    const dayNum = day.dayOfMonth || day.day_number || 1;
+    const vac = (typeof API !== 'undefined' && API.getMoEVacationInfo)
+      ? API.getMoEVacationInfo(rep.year, rep.month, dayNum)
+      : { isHoliday: day.isHoliday, name: day.holidayName };
+    const isHoliday = vac.isHoliday || day.isHoliday;
+    const holidayName = vac.name || day.holidayName;
+    const isFieldDay = day.isFieldDay || day.is_field_day;
+
+    if (isHoliday) tr.classList.add('row-holiday');
+    if (isFieldDay) tr.classList.add('row-field-day');
+
     let dayTags = '';
-    if (day.isFieldDay) dayTags += '<span class="badge badge-warning" style="margin-right:4px;">יום שדה</span>';
-    if (day.isHoliday) dayTags += `<span class="badge" style="background:#e2e3e5; margin-right:4px;">${day.holidayName || 'חג/חופשה'}</span>`;
+    if (isHoliday) dayTags += `<span class="holiday-tag" style="margin-right:4px;" title="${holidayName}">${holidayName || 'חג/חופשה'}</span>`;
+    if (isFieldDay) dayTags += '<span class="field-day-tag" style="margin-right:4px;">יום שדה</span>';
 
     let overtimeCellHtml = day.overtimeHours ? `<strong>${day.overtimeHours}</strong>` : '-';
     if (day.supervisorEdited) {
@@ -691,3 +704,12 @@ window.exportMasterReports = exportMasterReports;
 window.loadSupervisorsList = loadSupervisorsList;
 window.loadRosterUsers = loadRosterUsers;
 window.loadMasterAdminData = loadMasterAdminData;
+
+window.addEventListener('shalah:users-synced', () => {
+  if (typeof loadSupervisorsList === 'function') loadSupervisorsList();
+  if (typeof loadAdminData === 'function') loadAdminData();
+});
+
+window.addEventListener('shalah:reports-synced', () => {
+  if (typeof loadMasterAdminData === 'function') loadMasterAdminData();
+});

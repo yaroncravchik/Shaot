@@ -1,15 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../db/database');
+const { FirestoreDB } = require('../db/firestore-db');
+
+function stripInvisibleChars(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '').trim();
+}
 
 /**
  * POST /api/auth/login
  * Login by Israeli ID Number / Username and Phone Number / Password
+ * Queries Cloud Firestore first for live real-time credentials
  */
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   try {
-    const loginId = String(req.body.id_number || req.body.username || '').trim();
-    const loginSecret = String(req.body.phone || req.body.password || '').trim();
+    const loginId = stripInvisibleChars(String(req.body.id_number || req.body.username || req.body.id || ''));
+    const loginSecret = stripInvisibleChars(String(req.body.phone || req.body.password || ''));
 
     if (!loginId || !loginSecret) {
       return res.status(400).json({
@@ -18,14 +25,51 @@ router.post('/login', (req, res) => {
       });
     }
 
-    const cleanSecret = loginSecret.replace(/[- ]/g, '');
+    // 1. Check Cloud Firestore
+    let user = null;
+    let firestoreChecked = false;
+    try {
+      user = await FirestoreDB.getUserByCredentials(loginId, loginSecret);
+      firestoreChecked = true;
+    } catch (fsErr) {
+      console.warn('Firestore login check warning:', fsErr.message);
+    }
 
-    // Search user
-    const user = db.prepare(`
-      SELECT * FROM users
-      WHERE (id_number = ? OR phone = ? OR full_name = ?)
-        AND (phone = ? OR replace(replace(phone, '-', ''), ' ', '') = ? OR id_number = ?)
-    `).get(loginId, loginId, loginId, loginSecret, cleanSecret, loginSecret);
+    // 2. Only fallback to local DB if Firestore was unreachable
+    if (!user && !firestoreChecked) {
+      const cleanSecret = loginSecret.replace(/[- ]/g, '');
+      const localUser = db.prepare(`
+        SELECT * FROM users
+        WHERE (id_number = ? OR phone = ? OR full_name = ? OR id = ?)
+      `).get(loginId, loginId, loginId, loginId);
+
+      if (localUser) {
+        const uPass = stripInvisibleChars(String(localUser.password || localUser.phone || '')).replace(/[- ]/g, '');
+        const uId = stripInvisibleChars(String(localUser.id_number || localUser.id || '')).replace(/[- ]/g, '');
+        if (uPass === cleanSecret || String(localUser.password || localUser.phone) === loginSecret || uId === cleanSecret) {
+          user = {
+            id: localUser.id_number || localUser.id,
+            role: localUser.role,
+            id_number: localUser.id_number,
+            phone: localUser.phone,
+            password: localUser.password || localUser.phone,
+            name: localUser.full_name || localUser.name,
+            full_name: localUser.full_name,
+            email: localUser.email,
+            schoolCode: localUser.school_code,
+            schoolName: localUser.school_name,
+            district: localUser.district,
+            municipality: localUser.municipality,
+            jobScope: localUser.job_percentage || 100,
+            consentSigned: Boolean(localUser.consent_signed),
+            principalId: localUser.principal_id,
+            principalName: localUser.principal_name,
+            principalEmail: localUser.principal_email,
+            supervisorId: localUser.supervisor_id
+          };
+        }
+      }
+    }
 
     if (!user) {
       return res.status(401).json({
@@ -34,38 +78,33 @@ router.post('/login', (req, res) => {
       });
     }
 
-    // If teacher, fetch schedule
-    let schedule = [];
-    if (user.role === 'teacher') {
-      schedule = db.prepare(`
-        SELECT * FROM teacher_schedules
-        WHERE user_id = ?
-        ORDER BY day_of_week ASC
-      `).all(user.id);
-    }
+    // Normalize user response fields for web app
+    const normalizedUser = {
+      id: user.id || user.id_number,
+      id_number: user.id_number || user.id,
+      name: user.name || user.full_name || '',
+      full_name: user.full_name || user.name || '',
+      role: user.role,
+      phone: user.phone || '',
+      email: user.email || '',
+      schoolName: user.schoolName || user.school_name || '',
+      schoolCode: user.schoolCode || user.school_code || '',
+      district: user.district || 'מרכז',
+      municipality: user.municipality || '',
+      jobScope: user.jobScope || user.job_percentage || 100,
+      supervisorName: user.supervisorName || '',
+      supervisorId: user.supervisorId || user.supervisor_id || '',
+      principalName: user.principalName || user.principal_name || '',
+      principalEmail: user.principalEmail || user.principal_email || '',
+      consentSigned: user.consentSigned !== undefined ? Boolean(user.consentSigned) : true,
+      consentDate: user.consentDate || user.consent_timestamp || null,
+      weeklySchedule: user.weeklySchedule || { 0: 6, 1: 6, 2: 8, 3: 6, 4: 8, 5: 0 },
+      fieldDays: user.fieldDays || [2, 4]
+    };
 
     return res.json({
       success: true,
-      user: {
-        id: user.id,
-        role: user.role,
-        id_number: user.id_number,
-        phone: user.phone,
-        full_name: user.full_name,
-        email: user.email,
-        school_code: user.school_code,
-        school_name: user.school_name,
-        district: user.district,
-        municipality: user.municipality,
-        job_percentage: user.job_percentage,
-        consent_signed: Boolean(user.consent_signed),
-        consent_timestamp: user.consent_timestamp,
-        principal_id: user.principal_id,
-        principal_name: user.principal_name,
-        principal_email: user.principal_email,
-        supervisor_id: user.supervisor_id,
-        schedule
-      }
+      user: normalizedUser
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -78,28 +117,26 @@ router.post('/login', (req, res) => {
 
 /**
  * GET /api/auth/me/:userId
- * Fetch user details by ID
+ * Fetch user details by ID from Cloud Firestore
  */
-router.get('/me/:userId', (req, res) => {
+router.get('/me/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+    let user = await FirestoreDB.getUserById(userId);
+
+    if (!user) {
+      user = db.prepare('SELECT * FROM users WHERE id = ? OR id_number = ?').get(userId, userId);
+    }
 
     if (!user) {
       return res.status(404).json({ success: false, error: 'משתמש לא נמצא.' });
-    }
-
-    let schedule = [];
-    if (user.role === 'teacher') {
-      schedule = db.prepare('SELECT * FROM teacher_schedules WHERE user_id = ? ORDER BY day_of_week ASC').all(user.id);
     }
 
     return res.json({
       success: true,
       user: {
         ...user,
-        consent_signed: Boolean(user.consent_signed),
-        schedule
+        consentSigned: Boolean(user.consentSigned !== undefined ? user.consentSigned : user.consent_signed)
       }
     });
   } catch (err) {
@@ -110,21 +147,21 @@ router.get('/me/:userId', (req, res) => {
 
 /**
  * GET /api/auth/demo-users
- * Returns list of demo users for quick login & switcher in UI
+ * Returns list of authorized users from Cloud Firestore
  */
-router.get('/demo-users', (req, res) => {
+router.get('/demo-users', async (req, res) => {
   try {
+    const firestoreUsers = await FirestoreDB.getAllUsers();
+    if (firestoreUsers && firestoreUsers.length > 0) {
+      return res.json({
+        success: true,
+        users: firestoreUsers
+      });
+    }
+
     const users = db.prepare(`
       SELECT id, role, id_number, phone, full_name, email, school_name, district, job_percentage, consent_signed
       FROM users
-      ORDER BY
-        CASE role
-          WHEN 'admin' THEN 1
-          WHEN 'supervisor' THEN 2
-          WHEN 'principal' THEN 3
-          WHEN 'teacher' THEN 4
-          ELSE 5
-        END, full_name ASC
     `).all();
 
     return res.json({

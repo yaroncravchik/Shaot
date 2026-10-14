@@ -22,26 +22,82 @@ const Auth = {
     }
   },
 
-  login(username, password) {
-    const cleanUsername = String(username || '').trim();
-    const cleanPassword = String(password || '').trim();
+  async login(username, password) {
+    const cleanUsername = (typeof stripInvisibleChars === 'function' ? stripInvisibleChars(username) : String(username || '').replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '')).trim();
+    const cleanPassword = (typeof stripInvisibleChars === 'function' ? stripInvisibleChars(password) : String(password || '').replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '')).trim();
 
     if (!cleanUsername || !cleanPassword) {
       throw new Error('נא להזין שם משתמש וסיסמה');
     }
 
+    // 1. Authenticate against Cloud Firestore via backend API
+    try {
+      if (typeof fetch !== 'undefined') {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: cleanUsername,
+            password: cleanPassword
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success && data.user) {
+            const remoteUser = data.user;
+            // Update local storage cache with live user data from Firestore
+            const users = API.getUsers();
+            const idx = users.findIndex(u => String(u.id) === String(remoteUser.id) || (u.id_number && String(u.id_number) === String(remoteUser.id)));
+            if (idx >= 0) {
+              users[idx] = { ...users[idx], ...remoteUser };
+            } else {
+              users.push(remoteUser);
+            }
+            API.saveUsers(users);
+
+            this.setCurrentUser(remoteUser);
+            return remoteUser;
+          }
+        } else if (res.status === 401 || res.status === 400) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || 'שם המשתמש או הסיסמה שגויים. נא לפנות למנחה המחוזי.');
+        }
+      }
+    } catch (fetchErr) {
+      if (fetchErr.message && !fetchErr.message.includes('fetch') && !fetchErr.message.includes('network') && !fetchErr.message.includes('Failed to fetch')) {
+        throw fetchErr;
+      }
+      console.warn('Backend login unavailable, checking local storage cache...', fetchErr);
+    }
+
+    // 2. Fallback to local storage
     const users = API.getUsers();
     // Find matching authorized user
+    const strip = (s) => String(s || '').replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '').trim();
     const found = users.find(u => {
-      const matchUsername = (String(u.id) === cleanUsername || (u.id_number && String(u.id_number) === cleanUsername));
+      const uId = strip(u.id);
+      const uIdNum = strip(u.id_number);
+      const matchUsername = (uId === cleanUsername || (uIdNum && uIdNum === cleanUsername));
       if (!matchUsername) return false;
 
-      if (u.password) {
-        return u.password === cleanPassword;
+      const uPass = strip(u.password);
+      const uPhone = strip(u.phone);
+
+      if (uPass) {
+        if (uPass === cleanPassword || uPass.replace(/[-\s]/g, '') === cleanPassword.replace(/[-\s]/g, '')) {
+          return true;
+        }
       }
-      // Fallback for legacy records without a password field
-      if (u.phone) {
-        return u.phone === cleanPassword || u.phone.replace(/[-\s]/g, '') === cleanPassword.replace(/[-\s]/g, '');
+      // Fallback for phone
+      if (uPhone) {
+        if (uPhone === cleanPassword || uPhone.replace(/[-\s]/g, '') === cleanPassword.replace(/[-\s]/g, '')) {
+          return true;
+        }
+      }
+      // Fallback for ID number used as password
+      if (uIdNum === cleanPassword || uId === cleanPassword) {
+        return true;
       }
       return false;
     });

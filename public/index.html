@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=1791529326301">
-  <link rel="stylesheet" href="css/components.css?v=1791529326301">
+  <link rel="stylesheet" href="css/style.css?v=1791755000000">
+  <link rel="stylesheet" href="css/components.css?v=1791755000000">
   <style>
     .login-wrapper {
       min-height: calc(100vh - 200px);
@@ -113,9 +113,8 @@
 
   <!-- Universal Footer Mount -->
   <div id="gov-footer-mount"></div>
-
-    <script src="js/api.js?v=1791529326301"></script>
-  <script src="js/auth.js?v=1791529326301"></script>
+  <script src="js/api.js?v=1791986000000"></script>
+  <script src="js/auth.js?v=1791986000000"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       Auth.renderHeader();
@@ -125,7 +124,7 @@
       const errBox = document.getElementById('login-error');
       const submitBtn = document.getElementById('login-submit-btn');
 
-      form.addEventListener('submit', (e) => {
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
         errBox.style.display = 'none';
         errBox.textContent = '';
@@ -136,34 +135,32 @@
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<div class="spinner"></div><span>מאמת פרטים...</span>';
 
-        setTimeout(() => {
-          try {
-            const user = Auth.login(idVal, phoneVal);
-            showToast(`שלום, ${user.name}`, 'success');
+        try {
+          const user = await Auth.login(idVal, phoneVal);
+          showToast(`שלום, ${user.name || user.full_name}`, 'success');
 
-            setTimeout(() => {
-              if (user.role === 'site_admin' || user.role === 'superadmin') {
-                window.location.href = 'site-admin.html';
-              } else if (user.role === 'teacher') {
-                window.location.href = user.consentSigned ? 'teacher.html' : 'profile.html';
-              } else if (user.role === 'supervisor') {
-                window.location.href = 'supervisor.html';
-              } else if (user.role === 'admin') {
-                window.location.href = 'admin.html';
-              } else if (user.role === 'principal') {
-                window.location.href = 'principal.html';
-              } else {
-                window.location.href = 'site-admin.html';
-              }
-            }, 300);
-          } catch (err) {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<span>כניסה למערכת</span>';
-            errBox.textContent = err.message;
-            errBox.style.display = 'flex';
-            showToast(err.message, 'error');
-          }
-        }, 400);
+          setTimeout(() => {
+            if (user.role === 'site_admin' || user.role === 'superadmin') {
+              window.location.href = 'site-admin.html';
+            } else if (user.role === 'teacher') {
+              window.location.href = user.consentSigned ? 'teacher.html' : 'profile.html';
+            } else if (user.role === 'supervisor') {
+              window.location.href = 'supervisor.html';
+            } else if (user.role === 'admin') {
+              window.location.href = 'admin.html';
+            } else if (user.role === 'principal') {
+              window.location.href = 'principal.html';
+            } else {
+              window.location.href = 'site-admin.html';
+            }
+          }, 300);
+        } catch (err) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>כניסה למערכת</span>';
+          errBox.textContent = err.message || 'שגיאה בהתחברות למערכת';
+          errBox.style.display = 'flex';
+          showToast(err.message || 'שגיאה בהתחברות', 'error');
+        }
       });
     });
   </script>

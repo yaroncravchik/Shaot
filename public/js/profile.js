@@ -22,7 +22,31 @@ function loadProfileData(user) {
   document.getElementById('prof-school-name').value = user.schoolName || 'תיכון יצחק רבין כפר סבא';
   document.getElementById('prof-municipality').value = user.municipality || 'כפר סבא';
   document.getElementById('prof-district').value = user.district || 'מרכז';
-  document.getElementById('prof-supervisor').value = user.supervisorName || 'אברהם מנחה';
+    const supSelect = document.getElementById('prof-supervisor');
+  if (supSelect) {
+    const supervisors = API.getSupervisors();
+    supSelect.innerHTML = '<option value="">-- בחר מנחה מחוזי --</option>';
+    let matched = false;
+    supervisors.forEach(s => {
+      const opt = document.createElement('option');
+      const sName = s.name || s.full_name || '';
+      opt.value = sName;
+      opt.dataset.id = s.id;
+      opt.textContent = `${sName} (${s.district || 'מרכז'})`;
+      if (user.supervisorName && (user.supervisorName === sName || (user.supervisorId && (user.supervisorId === s.id || user.supervisorId === s.phone)))) {
+        opt.selected = true;
+        matched = true;
+      }
+      supSelect.appendChild(opt);
+    });
+    if (user.supervisorName && !matched) {
+      const opt = document.createElement('option');
+      opt.value = user.supervisorName;
+      opt.textContent = user.supervisorName;
+      opt.selected = true;
+      supSelect.appendChild(opt);
+    }
+  }
   document.getElementById('prof-principal-name').value = user.principalName || 'שרה כהן';
   document.getElementById('prof-principal-email').value = user.principalEmail || 'principal@rabin-kfs.org.il';
 
@@ -145,7 +169,14 @@ function setupEventListeners(currentUser) {
       schoolName: document.getElementById('prof-school-name').value.trim(),
       municipality: document.getElementById('prof-municipality').value.trim(),
       district: document.getElementById('prof-district').value,
-      supervisorName: document.getElementById('prof-supervisor').value,
+      supervisorName: (document.getElementById('prof-supervisor') ? document.getElementById('prof-supervisor').value : user.supervisorName),
+      supervisorId: (() => {
+        const sel = document.getElementById('prof-supervisor');
+        if (sel && sel.selectedIndex >= 0 && sel.options[sel.selectedIndex].dataset.id) {
+          return sel.options[sel.selectedIndex].dataset.id;
+        }
+        return user.supervisorId || null;
+      })(),
       principalName: document.getElementById('prof-principal-name').value.trim(),
       principalEmail: document.getElementById('prof-principal-email').value.trim(),
       weeklySchedule: updatedWeeklySchedule,
@@ -204,6 +235,11 @@ function calculateWeeklyTotals() {
     }
   }
 }
+
+window.addEventListener('shalah:users-synced', () => {
+  const u = Auth.getCurrentUser();
+  if (u) loadProfileData(u);
+});
 
 async function testSendPrincipalEmail() {
   const emailInput = document.getElementById('prof-principal-email');

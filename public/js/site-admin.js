@@ -242,9 +242,31 @@ function viewReportDetails(reportId) {
   const days = report.daysData || [];
   days.forEach(d => {
     const tr = document.createElement('tr');
+    const dayNum = d.dayOfMonth || d.day_number || 1;
+    const vac = (typeof API !== 'undefined' && API.getMoEVacationInfo)
+      ? API.getMoEVacationInfo(report.year, report.month, dayNum)
+      : { isHoliday: d.isHoliday || d.is_holiday, name: d.holidayName || d.holiday_name };
+    const isHoliday = vac.isHoliday || d.isHoliday || d.is_holiday;
+    const holidayName = vac.name || d.holidayName || d.holiday_name;
+    const isFieldDay = d.isFieldDay || d.is_field_day;
+
+    if (isHoliday) tr.classList.add('row-holiday');
+    if (isFieldDay) tr.classList.add('row-field-day');
+
+    let dayTags = '';
+    if (isHoliday) {
+      dayTags += `<span class="holiday-tag" title="${holidayName}">${holidayName || 'חג/חופשה'}</span>`;
+    }
+    if (isFieldDay) {
+      dayTags += `<span class="field-day-tag">יום שדה</span>`;
+    }
+
     tr.innerHTML = `
-      <td style="text-align:center; font-weight:700;">${d.dayOfMonth || d.day_number || ''}</td>
-      <td>${d.dayName || d.day_name_hebrew || ''}</td>
+      <td style="text-align:center; font-weight:700;">${dayNum}</td>
+      <td>
+        <div style="font-weight:600;">${d.dayName || d.day_name_hebrew || ''}</div>
+        <div>${dayTags}</div>
+      </td>
       <td style="text-align:center;">${d.fixedHours || d.regular_hours || 0}</td>
       <td style="text-align:center; color:${d.absenceHours > 0 ? '#dc3545' : 'inherit'}; font-weight:${d.absenceHours > 0 ? '700' : 'normal'};">${d.absenceHours || d.absence_hours || 0}</td>
       <td style="font-size:0.75rem;">${d.absenceReason || d.absence_reason || '—'}</td>
@@ -859,9 +881,10 @@ function parseTeachersCsvText(text) {
     if (colIndexMap.password < 0) colIndexMap.password = 4;
   }
 
+  const cleanCell = (c) => String(c || '').replace(/^["']|["']$/g, '').replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '').trim();
   const parsedRows = [];
   dataLines.forEach((line, idx) => {
-    const cols = parseCsvLine(line, delimiter).map(c => c.replace(/^["']|["']$/g, '').trim());
+    const cols = parseCsvLine(line, delimiter).map(cleanCell);
     if (cols.every(c => c === '')) return;
 
     parsedRows.push({
@@ -1137,3 +1160,12 @@ window.handleConfirmCsvImport = handleConfirmCsvImport;
 window.parseTeachersCsvText = parseTeachersCsvText;
 window.renderAuditLogs = renderAuditLogs;
 window.renderCsvPreview = renderCsvPreview;
+
+window.addEventListener('shalah:users-synced', () => {
+  loadInitialData();
+  if (typeof updateTeacherModalSupervisors === 'function') updateTeacherModalSupervisors();
+});
+
+window.addEventListener('shalah:reports-synced', () => {
+  loadInitialData();
+});

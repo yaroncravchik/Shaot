@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=1791529326301">
-  <link rel="stylesheet" href="css/components.css?v=1791529326301">
+  <link rel="stylesheet" href="css/style.css?v=1791755000000">
+  <link rel="stylesheet" href="css/components.css?v=1791755000000">
   <style>
     .teacher-profile-bar {
       background: linear-gradient(135deg, #0c3058 0%, #0056b3 100%);
@@ -140,7 +140,10 @@
           <div id="current-month-status-pill" class="mt-2"></div>
         </div>
 
-        <div class="flex gap-sm">
+        <div class="flex gap-sm items-center flex-wrap">
+          <button type="button" id="btn-delete-selected-month-draft" class="btn btn-outline-danger" style="display:none;" title="מחיקת טיוטת דוח לחודש זה">
+            <span>🗑️ מחיקת טיוטה</span>
+          </button>
           <button type="button" id="btn-open-report-form" class="btn btn-primary btn-lg">
             <span>📋 פתיחת דוח שעות לחודש זה</span>
           </button>
@@ -240,7 +243,7 @@
             <thead style="position: sticky; top: 0; z-index: 10;">
               <tr>
                 <th style="width: 50px; text-align: center;">יום</th>
-                <th style="width: 80px;">יום בשבוע</th>
+                <th style="width: 120px;">יום בשבוע ומועדי חופשה</th>
                 <th style="width: 100px; text-align: center;" title="שעות קבועות לפי מערכת השעות שהוגדרה בפרופיל (לקריאה בלבד)">
                   שעות קבועות<br><small class="text-muted">(לקריאה בלבד)</small>
                 </th>
@@ -299,16 +302,55 @@
         <div id="submission-eligibility-note" class="alert alert-info mt-2 mb-0" style="display:none; font-size:0.875rem;"></div>
       </div>
 
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeModal('monthly-report-modal')">סגירה</button>
-        <button type="button" id="btn-download-modal-pdf" class="btn btn-outline-primary" style="display:none;">
-          <span>📄 הורדת PDF</span>
-        </button>
-        <button type="button" id="btn-save-draft" class="btn btn-secondary">
-          <span>💾 שמירת טיוטה</span>
-        </button>
-        <button type="button" id="btn-submit-report" class="btn btn-primary btn-lg">
-          <span>🚀 הגשת דוח לאישור מנהל/ת</span>
+      <div class="modal-footer flex justify-between items-center flex-wrap gap-sm">
+        <div class="flex gap-sm">
+          <button type="button" id="btn-delete-modal-draft" class="btn btn-outline-danger" style="display:none;" onclick="promptDeleteCurrentDraft()">
+            <span>🗑️ מחק טיוטה</span>
+          </button>
+        </div>
+        <div class="flex gap-sm items-center flex-wrap">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('monthly-report-modal')">סגירה</button>
+          <button type="button" id="btn-download-modal-pdf" class="btn btn-outline-primary" style="display:none;">
+            <span>📄 הורדת PDF</span>
+          </button>
+          <button type="button" id="btn-save-draft" class="btn btn-secondary">
+            <span>💾 שמירת טיוטה</span>
+          </button>
+          <button type="button" id="btn-submit-report" class="btn btn-primary btn-lg">
+            <span>🚀 הגשת דוח לאישור מנהל/ת</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       CONFIRM DELETE DRAFT MODAL
+       ========================================================================== -->
+  <div class="modal-backdrop" id="modal-delete-draft">
+    <div class="modal-container modal-sm">
+      <div class="modal-header" style="background:#fee2e2; border-bottom:1px solid #fca5a5;">
+        <div class="flex items-center gap-sm">
+          <span style="font-size:1.5rem;">🗑️</span>
+          <div>
+            <h3 class="modal-title" style="color:#991b1b;">מחיקת טיוטת דוח</h3>
+            <span style="font-size:0.8125rem; color:#b91c1c;">פעולה זו הינה בלתי הפיכה</span>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modal-delete-draft')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin:0 0 12px 0; font-size:0.9375rem;" id="delete-draft-confirm-text">
+          האם את/ה בטוח/ה שברצונך למחוק את טיוטת הדוח לחודש זה?
+        </p>
+        <div class="alert alert-warning" style="font-size:0.8125rem; margin:0;">
+          ⚠️ כל הנתונים, השעות והנספחים שהוזנו בטיוטה זו יימחקו לצמיתות.
+        </div>
+      </div>
+      <div class="modal-footer flex justify-between">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-delete-draft')">ביטול</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete-draft" onclick="executeDeleteDraft()">
+          <span>🗑️ מחק טיוטה לצמיתות</span>
         </button>
       </div>
     </div>
@@ -317,8 +359,8 @@
   <!-- Universal Footer Mount -->
   <div id="gov-footer-mount"></div>
 
-  <script src="js/api.js?v=1791529326301"></script>
-  <script src="js/auth.js?v=1791529326301"></script>
-  <script src="js/teacher.js?v=1791529326301"></script>
+  <script src="js/api.js?v=1791986000000"></script>
+  <script src="js/auth.js?v=1791986000000"></script>
+  <script src="js/teacher.js?v=1791986000000"></script>
 </body>
 </html>
