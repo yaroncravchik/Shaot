@@ -142,6 +142,17 @@ function renderActiveMonthStatus(reports) {
       }
     }
 
+    // Principal backup link button in month selector bar
+    const btnSharePrincipalLink = document.getElementById('btn-share-principal-link');
+    if (btnSharePrincipalLink) {
+      if (currentMonthReport.status === 'pending_principal') {
+        btnSharePrincipalLink.style.display = 'inline-flex';
+        btnSharePrincipalLink.onclick = () => openPrincipalEmailDispatchModal(currentMonthReport);
+      } else {
+        btnSharePrincipalLink.style.display = 'none';
+      }
+    }
+
     // Stats
     const otEl = document.getElementById('stat-overtime-hours');
     const abEl = document.getElementById('stat-absence-hours');
@@ -154,6 +165,11 @@ function renderActiveMonthStatus(reports) {
     const btnDeleteMonthDraft = document.getElementById('btn-delete-selected-month-draft');
     if (btnDeleteMonthDraft) {
       btnDeleteMonthDraft.style.display = 'none';
+    }
+
+    const btnSharePrincipalLink = document.getElementById('btn-share-principal-link');
+    if (btnSharePrincipalLink) {
+      btnSharePrincipalLink.style.display = 'none';
     }
 
     const otEl = document.getElementById('stat-overtime-hours');
@@ -258,11 +274,17 @@ function renderHistoryTable(reports) {
 
     const isApproved = API.isReportSupervisorApproved(r);
     const canDelete = r.status === 'draft';
+    const isPendingPrincipal = r.status === 'pending_principal';
     const actionButtons = `
       <div style="display:inline-flex; gap:6px; align-items:center; justify-content:center; flex-wrap:wrap;">
         <button class="btn btn-secondary btn-sm" onclick="openReportModal(${r.year}, ${r.month})">
           ${r.status === 'draft' || r.status === 'returned' ? '✏️ עריכה' : '👁️ צפייה'}
         </button>
+        ${isPendingPrincipal ? `
+          <button class="btn btn-outline-primary btn-sm" onclick="openPrincipalEmailDispatchModalById('${r.id}')" title="העתקת קישור ישיר למנהל/ת כגיבוי">
+            <span>🔗 קישור למנהל</span>
+          </button>
+        ` : ''}
         ${canDelete ? `
           <button class="btn btn-outline-danger btn-sm" onclick="promptDeleteDraft('${r.id}')" title="מחיקת טיוטת דוח לצמיתות">
             <span>🗑️ מחיקה</span>
@@ -445,6 +467,17 @@ function openReportModal(year, month) {
       btnDeleteModalDraft.style.display = 'inline-flex';
     } else {
       btnDeleteModalDraft.style.display = 'none';
+    }
+  }
+
+  // Show principal backup link button in modal if report is pending principal approval
+  const btnModalShareLink = document.getElementById('btn-modal-share-principal-link');
+  if (btnModalShareLink) {
+    if (currentActiveReport && currentActiveReport.status === 'pending_principal') {
+      btnModalShareLink.style.display = 'inline-flex';
+      btnModalShareLink.onclick = () => openPrincipalEmailDispatchModal(currentActiveReport);
+    } else {
+      btnModalShareLink.style.display = 'none';
     }
   }
 
@@ -838,20 +871,23 @@ function submitCurrentReport() {
   setTimeout(async () => {
     try {
       const saved = API.saveReport(currentActiveReport);
-      API.submitReportToPrincipal(saved.id, currentTeacher);
+      const submittedReport = API.submitReportToPrincipal(saved.id, currentTeacher) || saved;
 
       clearInterval(autoSaveInterval);
       closeModal('monthly-report-modal');
       loadTeacherDashboardData();
 
       const principalEmail = (currentTeacher && (currentTeacher.principalEmail || currentTeacher.principal_email)) || 
-                             saved.principalEmail || 
+                             submittedReport.principalEmail || 
                              'shalah.system.reports@gmail.com';
       
       // Automatically send email notification to principal via Firebase Email Extension
-      await API.sendAutomaticPrincipalEmail(saved, currentTeacher);
+      await API.sendAutomaticPrincipalEmail(submittedReport, currentTeacher);
 
       showToast(`הדוח ננעל והוגש בהצלחה! קישור לאישור הדוח נשלח אוטומטית למייל המנהל/ת (${principalEmail})`, 'success');
+
+      // Open principal review backup link modal
+      openPrincipalEmailDispatchModal(submittedReport);
     } catch (err) {
       showToast(err.message || 'שגיאה בעת הגשת הדוח', 'error');
     } finally {
@@ -870,6 +906,161 @@ function downloadReportPDF(reportId) {
     return;
   }
   API.exportReportToPDF(report);
+}
+
+// ==========================================================================
+// Principal Review Link Generation & Backup Dispatch
+// ==========================================================================
+let currentDispatchReport = null;
+let currentDispatchUrl = '';
+
+function openPrincipalEmailDispatchModal(report) {
+  if (!report) return;
+  currentDispatchReport = report;
+
+  const teacher = (typeof currentTeacher !== 'undefined' && currentTeacher) ? currentTeacher : (typeof Auth !== 'undefined' ? Auth.getCurrentUser() : null);
+  const reviewUrl = API.getPrincipalReviewUrl(report, teacher);
+  currentDispatchUrl = reviewUrl;
+
+  const urlInput = document.getElementById('dispatch-review-url-input');
+  if (urlInput) {
+    urlInput.value = reviewUrl;
+  }
+
+  const pEmail = (teacher && (teacher.principalEmail || teacher.principal_email)) || 
+                 report.principalEmail || 
+                 report.principal_email || 
+                 'כתובת המייל המוגדרת במערכת';
+                 
+  const noticeEl = document.getElementById('dispatch-modal-email-notice');
+  if (noticeEl) {
+    noticeEl.innerHTML = `נשלחה הודעת דוא"ל עם קישור ישיר לאישור וחתימה אל תיבת המנהל/ת (<strong>${pEmail}</strong>).`;
+  }
+
+  const infoEl = document.getElementById('dispatch-modal-report-info');
+  if (infoEl) {
+    const monthName = HEBREW_MONTHS_NAME[(report.month || 1) - 1] || report.month;
+    infoEl.textContent = `דוח חודש ${monthName} ${report.year || ''}`;
+  }
+
+  // Reset copy button state
+  const copyBtnText = document.getElementById('btn-copy-dispatch-text');
+  if (copyBtnText) {
+    copyBtnText.textContent = '📋 העתק קישור';
+  }
+  const copyBtn = document.getElementById('btn-copy-dispatch-url');
+  if (copyBtn) {
+    copyBtn.className = 'btn btn-primary';
+  }
+
+  openModal('modal-principal-email-dispatch');
+}
+
+function openPrincipalEmailDispatchModalById(reportId) {
+  let rep = API.getReportById(reportId);
+  if (!rep && currentActiveReport && currentActiveReport.id === reportId) {
+    rep = currentActiveReport;
+  }
+  if (!rep) {
+    showToast('דוח לא נמצא במערכת', 'error');
+    return;
+  }
+  openPrincipalEmailDispatchModal(rep);
+}
+
+async function copyDispatchReviewUrl(urlToCopy) {
+  const text = urlToCopy || currentDispatchUrl || (document.getElementById('dispatch-review-url-input') ? document.getElementById('dispatch-review-url-input').value : '');
+  if (!text) {
+    showToast('לא נמצא קישור להעתקה', 'warning');
+    return;
+  }
+
+  let copied = false;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      copied = true;
+    }
+  } catch (err) {
+    console.warn('Clipboard writeText failed, trying execCommand fallback:', err);
+  }
+
+  if (!copied) {
+    try {
+      const urlInput = document.getElementById('dispatch-review-url-input');
+      if (urlInput) {
+        urlInput.select();
+        urlInput.setSelectionRange(0, 99999);
+        copied = document.execCommand('copy');
+      }
+    } catch (e) {
+      console.warn('execCommand copy fallback failed:', e);
+    }
+  }
+
+  if (copied) {
+    const copyBtnText = document.getElementById('btn-copy-dispatch-text');
+    if (copyBtnText) {
+      copyBtnText.textContent = '✅ הקישור הועתק!';
+    }
+    const copyBtn = document.getElementById('btn-copy-dispatch-url');
+    if (copyBtn) {
+      copyBtn.className = 'btn btn-success';
+      setTimeout(() => {
+        if (copyBtnText) copyBtnText.textContent = '📋 העתק קישור';
+        if (copyBtn) copyBtn.className = 'btn btn-primary';
+      }, 3000);
+    }
+    showToast('קישור חתימת המנהל/ת הועתק ללוח בהצלחה!', 'success');
+  } else {
+    const urlInput = document.getElementById('dispatch-review-url-input');
+    if (urlInput) {
+      urlInput.select();
+    }
+    showToast('הקישור סומן - לחץ Ctrl+C להעתקה', 'info');
+  }
+}
+
+function sendDispatchWhatsApp() {
+  if (!currentDispatchUrl) return;
+  const report = currentDispatchReport;
+  const teacher = (typeof currentTeacher !== 'undefined' && currentTeacher) ? currentTeacher : (typeof Auth !== 'undefined' ? Auth.getCurrentUser() : null);
+  const teacherName = (teacher && teacher.name) || (report && report.teacherName) || 'מורה של"ח';
+  const monthName = report ? (HEBREW_MONTHS_NAME[(report.month || 1) - 1] || report.month) : '';
+  const year = report ? (report.year || '') : '';
+  const principalName = (teacher && teacher.principalName) || (report && report.principalName) || 'מנהל/ת בית הספר';
+
+  const message = `שלום ${principalName},
+מוגש לאישורך דוח שעות פעילות חודשי בשל"ח עבור חודש ${monthName} ${year} מאת ${teacherName}.
+קישור ישיר לצפייה, הערות ואישור בחתימה דיגיטלית:
+${currentDispatchUrl}`;
+
+  const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+  window.open(waUrl, '_blank');
+}
+
+function openDispatchMailClient() {
+  if (!currentDispatchUrl) return;
+  const report = currentDispatchReport;
+  const teacher = (typeof currentTeacher !== 'undefined' && currentTeacher) ? currentTeacher : (typeof Auth !== 'undefined' ? Auth.getCurrentUser() : null);
+  const teacherName = (teacher && teacher.name) || (report && report.teacherName) || 'מורה של"ח';
+  const monthName = report ? (HEBREW_MONTHS_NAME[(report.month || 1) - 1] || report.month) : '';
+  const year = report ? (report.year || '') : '';
+  const principalEmail = (teacher && (teacher.principalEmail || teacher.principal_email)) || (report && (report.principalEmail || report.principal_email)) || '';
+
+  const subject = `אישור דוח שעות פעילות של"ח – ${teacherName} – חודש ${monthName} ${year}`;
+  const body = `שלום,
+
+מוגש לאישורך דוח שעות פעילות חודשי בשל"ח עבור חודש ${monthName} ${year} מאת המורה ${teacherName}.
+
+לכניסה ישירה לדוח, הוספת הערות וחתימה על הדוח:
+${currentDispatchUrl}
+
+בברכה,
+${teacherName}`;
+
+  const mailtoUrl = `mailto:${encodeURIComponent(principalEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = mailtoUrl;
 }
 
 // ==========================================================================
@@ -969,6 +1160,7 @@ if (typeof window !== 'undefined') {
   window.removeAttachment = removeAttachment;
   window.downloadReportPDF = downloadReportPDF;
   window.openPrincipalEmailDispatchModal = openPrincipalEmailDispatchModal;
+  window.openPrincipalEmailDispatchModalById = openPrincipalEmailDispatchModalById;
   window.copyDispatchReviewUrl = copyDispatchReviewUrl;
   window.openDispatchMailClient = openDispatchMailClient;
   window.sendDispatchWhatsApp = sendDispatchWhatsApp;

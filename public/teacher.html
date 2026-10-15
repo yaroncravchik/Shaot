@@ -144,6 +144,9 @@
           <button type="button" id="btn-delete-selected-month-draft" class="btn btn-outline-danger" style="display:none;" title="מחיקת טיוטת דוח לחודש זה">
             <span>🗑️ מחיקת טיוטה</span>
           </button>
+          <button type="button" id="btn-share-principal-link" class="btn btn-outline-primary" style="display:none;" title="העתקת קישור למנהל/ת לאישור הדוח כגיבוי">
+            <span>🔗 קישור לחתימת מנהל/ת</span>
+          </button>
           <button type="button" id="btn-open-report-form" class="btn btn-primary btn-lg">
             <span>📋 פתיחת דוח שעות לחודש זה</span>
           </button>
@@ -313,6 +316,9 @@
           <button type="button" id="btn-download-modal-pdf" class="btn btn-outline-primary" style="display:none;">
             <span>📄 הורדת PDF</span>
           </button>
+          <button type="button" id="btn-modal-share-principal-link" class="btn btn-outline-primary" style="display:none;">
+            <span>🔗 קישור לחתימת מנהל/ת</span>
+          </button>
           <button type="button" id="btn-save-draft" class="btn btn-secondary">
             <span>💾 שמירת טיוטה</span>
           </button>
@@ -351,6 +357,79 @@
         <button type="button" class="btn btn-secondary" onclick="closeModal('modal-delete-draft')">ביטול</button>
         <button type="button" class="btn btn-danger" id="btn-confirm-delete-draft" onclick="executeDeleteDraft()">
           <span>🗑️ מחק טיוטה לצמיתות</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       PRINCIPAL REVIEW LINK MODAL (BACKUP DISPATCH)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="modal-principal-email-dispatch">
+    <div class="modal-container modal-md" style="max-width: 620px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #0c3058 0%, #1e40af 100%); color: #ffffff;">
+        <div class="flex items-center gap-sm">
+          <span style="font-size: 1.6rem;">🎉</span>
+          <div>
+            <h3 class="modal-title" style="color: #ffffff; margin: 0; font-size: 1.15rem;">הדוח הוגש בהצלחה למנהל/ת!</h3>
+            <span style="font-size: 0.8125rem; color: #bfdbfe;">קישור ישיר לצפייה וחתימה כגיבוי</span>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" style="color: #ffffff;" onclick="closeModal('modal-principal-email-dispatch')">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 24px;">
+        <div class="alert alert-success" style="display: flex; gap: 12px; align-items: flex-start; margin-bottom: 20px;">
+          <span style="font-size: 1.4rem; line-height: 1;">✉️</span>
+          <div>
+            <strong style="display: block; margin-bottom: 4px;">הדוח ננעל והוגש בהצלחה!</strong>
+            <span id="dispatch-modal-email-notice" style="font-size: 0.875rem;">
+              נשלחה הודעת דוא"ל עם קישור ישיר לאישור וחתימה אל תיבת המנהל/ת.
+            </span>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label class="form-label" for="dispatch-review-url-input" style="font-weight: 600; display: flex; align-items: center; justify-content: space-between;">
+            <span>🔗 קישור ישיר לעמוד אישור וחתימת המנהל/ת (גיבוי):</span>
+            <span style="font-size: 0.75rem; color: var(--on-surface-variant); font-weight: normal;">ללא צורך בסיסמה</span>
+          </label>
+          <div style="display: flex; gap: 8px; margin-top: 6px;">
+            <input type="text" id="dispatch-review-url-input" class="form-control" readonly dir="ltr" 
+                   style="font-family: monospace; font-size: 0.875rem; background: #f8fafc; cursor: text; text-align: left;"
+                   onclick="this.select();">
+            <button type="button" id="btn-copy-dispatch-url" class="btn btn-primary" onclick="copyDispatchReviewUrl()" style="white-space: nowrap; min-width: 130px;">
+              <span id="btn-copy-dispatch-text">📋 העתק קישור</span>
+            </button>
+          </div>
+          <p style="font-size: 0.8125rem; color: var(--on-surface-variant); margin: 8px 0 0 0;">
+            💡 במידת הצורך, ניתן להעתיק קישור זה ולשלוח אותו ישירות למנהל/ת (בוואטסאפ, בהודעה או במייל אישי).
+          </p>
+        </div>
+
+        <div style="background: #f1f5f9; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;">
+          <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 10px; color: #1e293b;">
+            שליחה מהירה למנהל/ת:
+          </div>
+          <div class="flex gap-sm flex-wrap">
+            <button type="button" class="btn btn-whatsapp" onclick="sendDispatchWhatsApp()">
+              <span>💬 שליחה ב-WhatsApp</span>
+            </button>
+            <button type="button" class="btn btn-outline-primary" onclick="openDispatchMailClient()">
+              <span>✉️ פתיחה בתוכנת מייל</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="font-size: 0.8125rem; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+          <strong>שים לב:</strong> הקישור מאובטח וייחודי למוסד החינוכי. לאחר אישור המנהל/ת, הדוח יועבר אוטומטית לבדיקת מנחה השל"ח.
+        </div>
+      </div>
+
+      <div class="modal-footer flex justify-between items-center">
+        <span id="dispatch-modal-report-info" style="font-size: 0.8125rem; color: var(--on-surface-variant);"></span>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-principal-email-dispatch')">
+          <span>סגור</span>
         </button>
       </div>
     </div>

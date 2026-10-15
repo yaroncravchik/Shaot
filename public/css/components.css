@@ -140,6 +140,30 @@
   color: #ffffff;
 }
 
+.btn-outline-success {
+  background-color: transparent;
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.btn-outline-success:hover {
+  background-color: var(--success);
+  color: #ffffff;
+}
+
+.btn-whatsapp {
+  background-color: #25D366;
+  border-color: #25D366;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+.btn-whatsapp:hover {
+  background-color: #1ebc59;
+  border-color: #1ebc59;
+  color: #ffffff !important;
+}
+
 .btn-sm {
   padding: 6px 12px;
   font-size: 0.8125rem;

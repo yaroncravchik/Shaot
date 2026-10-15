@@ -375,7 +375,8 @@ router.post('/:id/send-principal-email', async (req, res) => {
     return res.json({
       success: true,
       message: `הודעת אישור נשלחה אוטומטית למייל המנהל/ת (${recipient}) באמצעות Firebase Email Extension`,
-      mailDocId: firestoreDocId
+      mailDocId: firestoreDocId,
+      reviewUrl: link
     });
   } catch (err) {
     console.error('Send principal email error:', err);
