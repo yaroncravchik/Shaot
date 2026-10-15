@@ -949,7 +949,75 @@
 }
 
 .modal-container.modal-lg { max-width: 950px; }
-.modal-container.modal-xl { max-width: 1140px; }
+.modal-container.modal-xl,
+#monthly-report-modal .modal-container,
+#supervisor-review-modal .modal-container,
+#admin-review-modal .modal-container {
+  width: calc(100vw - 28px) !important;
+  max-width: calc(100vw - 28px) !important;
+  max-height: 96vh !important;
+  margin: auto;
+}
+
+#monthly-report-modal .modal-body,
+#supervisor-review-modal .modal-body,
+#admin-review-modal .modal-body {
+  padding: 12px 16px;
+  max-height: calc(96vh - 120px);
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+#report-grid-table,
+#sup-review-grid-table,
+#admin-m-days-table {
+  width: 100% !important;
+  min-width: 100% !important;
+  table-layout: auto !important;
+  border-collapse: collapse;
+}
+
+#report-grid-table th,
+#report-grid-table td,
+#sup-review-grid-table th,
+#sup-review-grid-table td,
+#admin-m-days-table th,
+#admin-m-days-table td {
+  padding: 6px 4px !important;
+  font-size: 0.8125rem !important;
+  vertical-align: middle;
+}
+
+#report-grid-table th,
+#sup-review-grid-table th,
+#admin-m-days-table th {
+  padding: 8px 4px !important;
+  text-align: center;
+  white-space: nowrap;
+}
+
+#report-grid-table .cell-input,
+#sup-review-grid-table .cell-input {
+  min-width: 0 !important;
+  width: 100% !important;
+  height: 32px !important;
+  padding: 2px 4px !important;
+  font-size: 0.8125rem !important;
+  box-sizing: border-box;
+}
+
+#report-grid-table select.cell-input,
+#sup-review-grid-table select.cell-input {
+  padding-right: 4px !important;
+  padding-left: 2px !important;
+  font-size: 0.78125rem !important;
+}
+
+#report-grid-table .input-description,
+#sup-review-grid-table .input-description {
+  text-align: right !important;
+  width: 100% !important;
+}
 
 .modal-backdrop.show .modal-container {
   transform: translateY(0);

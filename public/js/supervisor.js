@@ -355,8 +355,8 @@ function renderSupervisorGrid(report) {
             class="${cellClass}" 
             min="0" 
             max="16" 
-            step="0.5" 
-            value="${day.overtimeHours || 0}" 
+            step="1" 
+            value="${day.overtimeHours !== undefined && day.overtimeHours !== null ? Math.round(day.overtimeHours) : 0}" 
             data-day-idx="${index}"
           >
           ${isEdited && day.originalOvertime !== undefined ? `<span class="original-value-hint">מקורי: ${day.originalOvertime} שעות</span>` : ''}
@@ -374,13 +374,22 @@ function renderSupervisorGrid(report) {
 
   // Attach direct edit listener to overtime input cells
   tbody.querySelectorAll('input[type="number"]').forEach(input => {
+    // Prevent typing decimal point or comma
+    input.addEventListener('keydown', (e) => {
+      if (e.key === '.' || e.key === ',') {
+        e.preventDefault();
+      }
+    });
+
     input.addEventListener('change', (e) => {
       const idx = parseInt(e.target.dataset.dayIdx, 10);
-      const newVal = parseFloat(e.target.value) || 0;
+      let newVal = Math.round(parseFloat(e.target.value) || 0);
+      if (newVal < 0) newVal = 0;
+      e.target.value = newVal;
       const dayObj = activeReviewReport.daysData[idx];
 
       if (dayObj.originalOvertime === undefined) {
-        dayObj.originalOvertime = dayObj.overtimeHours || 0;
+        dayObj.originalOvertime = Math.round(dayObj.overtimeHours || 0);
       }
 
       if (newVal !== dayObj.originalOvertime) {
@@ -406,7 +415,7 @@ function calculateSupervisorTotals() {
   if (activeReviewReport && activeReviewReport.daysData) {
     activeReviewReport.daysData.forEach(d => {
       totalAbsence += parseFloat(d.absenceHours || 0);
-      totalOvertime += parseFloat(d.overtimeHours || 0);
+      totalOvertime += Math.round(parseFloat(d.overtimeHours || 0));
     });
   }
 

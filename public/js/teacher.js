@@ -582,13 +582,13 @@ function renderReportGrid(report, isReadOnly) {
         <div style="position:relative;">
           <input 
             type="number" 
-            step="0.5" 
+            step="1" 
             min="0" 
-            max="24"
+            max="24" 
             class="cell-input input-overtime ${isExceeded ? 'cell-overtime-exceeded' : ''}" 
-            data-day-idx="${idx}"
-            value="${day.overtimeHours || ''}" 
-            placeholder="0"
+            data-day-idx="${idx}" 
+            value="${day.overtimeHours !== undefined && day.overtimeHours !== null && day.overtimeHours !== '' ? Math.round(day.overtimeHours) : ''}" 
+            placeholder="0" 
             ${isReadOnly ? 'disabled' : ''}
           >
           ${isExceeded ? `<div class="hours-exceeded-badge">⚠️ חריגה מעל ${thresholdLimit} ש'</div>` : ''}
@@ -642,7 +642,13 @@ function renderReportGrid(report, isReadOnly) {
         } else if (el.classList.contains('select-absence-reason')) {
           currentActiveReport.daysData[dayIdx].absenceReason = el.value;
         } else if (el.classList.contains('input-overtime')) {
-          currentActiveReport.daysData[dayIdx].overtimeHours = parseFloat(el.value) || 0;
+          // Rule: Only whole hours allowed, no half hours
+          let raw = el.value.replace(/[^\d]/g, '');
+          if (raw !== el.value) {
+            el.value = raw;
+          }
+          const intVal = raw !== '' ? parseInt(raw, 10) : 0;
+          currentActiveReport.daysData[dayIdx].overtimeHours = intVal;
           updateDayThresholdWarning(dayIdx);
         } else if (el.classList.contains('select-overtime-reason')) {
           currentActiveReport.daysData[dayIdx].overtimeReason = el.value;
@@ -657,6 +663,21 @@ function renderReportGrid(report, isReadOnly) {
       };
 
       input.addEventListener('input', handleLiveChange);
+      if (input.classList.contains('input-overtime')) {
+        // Prevent typing decimal point or comma
+        input.addEventListener('keydown', (e) => {
+          if (e.key === '.' || e.key === ',') {
+            e.preventDefault();
+          }
+        });
+        input.addEventListener('change', (e) => {
+          let val = Math.round(parseFloat(e.target.value) || 0);
+          if (val < 0) val = 0;
+          e.target.value = val > 0 ? val : (e.target.value === '0' ? '0' : '');
+          currentActiveReport.daysData[dayIdx].overtimeHours = val;
+          calculateGridTotals();
+        });
+      }
       if (input.tagName === 'SELECT') {
         input.addEventListener('change', handleLiveChange);
       }
@@ -671,14 +692,14 @@ function calculateGridTotals() {
   if (currentActiveReport && currentActiveReport.daysData) {
     currentActiveReport.daysData.forEach(d => {
       totalAbsence += parseFloat(d.absenceHours || 0);
-      totalOvertime += parseFloat(d.overtimeHours || 0);
+      totalOvertime += Math.round(parseFloat(d.overtimeHours || 0));
     });
   }
 
   const abEl = document.getElementById('grid-total-absence');
   const otEl = document.getElementById('grid-total-overtime');
   if (abEl) abEl.textContent = totalAbsence.toFixed(1).replace('.0', '');
-  if (otEl) otEl.textContent = totalOvertime.toFixed(1).replace('.0', '');
+  if (otEl) otEl.textContent = String(Math.round(totalOvertime));
 }
 
 function handleFileUpload(files) {
@@ -751,6 +772,15 @@ function removeAttachment(index) {
 function saveCurrentReportDraft(showFeedback = true) {
   if (!currentActiveReport) return;
 
+  // Enforce integer whole hours for overtime
+  if (currentActiveReport.daysData) {
+    currentActiveReport.daysData.forEach(d => {
+      d.overtimeHours = d.overtimeHours !== undefined && d.overtimeHours !== null && d.overtimeHours !== ''
+        ? Math.round(Number(d.overtimeHours) || 0)
+        : 0;
+    });
+  }
+
   const saved = API.saveReport(currentActiveReport);
   currentActiveReport.id = saved.id;
 
@@ -772,6 +802,15 @@ function submitCurrentReport() {
       showToast(elig.reason, 'error');
       return;
     }
+  }
+
+  // Enforce integer whole hours for overtime
+  if (currentActiveReport && currentActiveReport.daysData) {
+    currentActiveReport.daysData.forEach(d => {
+      d.overtimeHours = d.overtimeHours !== undefined && d.overtimeHours !== null && d.overtimeHours !== ''
+        ? Math.round(Number(d.overtimeHours) || 0)
+        : 0;
+    });
   }
 
   const declaration = document.getElementById('report-submit-declaration');

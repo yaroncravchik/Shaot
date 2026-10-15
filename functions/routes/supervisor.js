@@ -192,7 +192,7 @@ router.put('/reports/:id/edit-hours', (req, res) => {
           const origAbs = currentDay.supervisor_edited ? currentDay.original_absence_hours : currentDay.absence_hours;
 
           updateDay.run(
-            Number(edit.overtime_hours) >= 0 ? Number(edit.overtime_hours) : currentDay.overtime_hours,
+            Number(edit.overtime_hours) >= 0 ? Math.round(Number(edit.overtime_hours)) : currentDay.overtime_hours,
             Number(edit.absence_hours) >= 0 ? Number(edit.absence_hours) : currentDay.absence_hours,
             origOt,
             origAbs,

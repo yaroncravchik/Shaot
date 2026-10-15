@@ -102,6 +102,16 @@ router.post('/', async (req, res) => {
         error: `חודש ${reportData.month}/${reportData.year} טרם נפתח לדיווח (הדיווח לכל חודש נפתח ב-5 לאותו חודש)`
       });
     }
+    if (Array.isArray(reportData.daysData)) {
+      reportData.daysData.forEach(d => {
+        if (d.overtimeHours !== undefined && d.overtimeHours !== null && d.overtimeHours !== '') {
+          d.overtimeHours = Math.round(Number(d.overtimeHours) || 0);
+        } else {
+          d.overtimeHours = 0;
+        }
+      });
+    }
+
     const reportId = reportData.id || `REP-${reportData.year || new Date().getFullYear()}-${String(reportData.month || 1).padStart(2, '0')}-${Date.now().toString().slice(-4)}`;
     const saved = await FirestoreDB.saveReport({ ...reportData, id: reportId });
     return res.json({
