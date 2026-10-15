@@ -131,10 +131,17 @@ const FirestoreDB = {
       return false;
     };
 
-    // Build candidate identifiers (handling leading zero, dashes, parens, international code)
+    // Build candidate identifiers (handling leading zero, dashes, parens, international code, casing)
     const cleanIdPlain = cleanId.replace(/[-\s]/g, '');
     const cleanDigits = cleanId.replace(/\D/g, '');
-    const idCandidates = new Set([cleanId, cleanIdPlain]);
+    const idCandidates = new Set([
+      cleanId,
+      cleanIdPlain,
+      cleanId.toLowerCase(),
+      cleanIdPlain.toLowerCase(),
+      cleanId.toUpperCase(),
+      cleanIdPlain.toUpperCase()
+    ]);
 
     if (cleanDigits) {
       idCandidates.add(cleanDigits);
@@ -162,20 +169,20 @@ const FirestoreDB = {
     // 2. Query indexed fields for each candidate ID
     for (const cand of idCandidates) {
       if (!cand) continue;
+      // username
+      let snap = await db.collection(USERS_COL).where('username', '==', cand).limit(1).get();
+      if (!snap.empty) {
+        const u = { id: snap.docs[0].id, ...snap.docs[0].data() };
+        if (matchesPassword(u)) return u;
+      }
       // id_number
-      let snap = await db.collection(USERS_COL).where('id_number', '==', cand).limit(1).get();
+      snap = await db.collection(USERS_COL).where('id_number', '==', cand).limit(1).get();
       if (!snap.empty) {
         const u = { id: snap.docs[0].id, ...snap.docs[0].data() };
         if (matchesPassword(u)) return u;
       }
       // phone
       snap = await db.collection(USERS_COL).where('phone', '==', cand).limit(1).get();
-      if (!snap.empty) {
-        const u = { id: snap.docs[0].id, ...snap.docs[0].data() };
-        if (matchesPassword(u)) return u;
-      }
-      // username
-      snap = await db.collection(USERS_COL).where('username', '==', cand).limit(1).get();
       if (!snap.empty) {
         const u = { id: snap.docs[0].id, ...snap.docs[0].data() };
         if (matchesPassword(u)) return u;
@@ -215,14 +222,25 @@ const FirestoreDB = {
       for (const u of allUsers) {
         const uName = stripInvisibleChars(String(u.name || ''));
         const uFullName = stripInvisibleChars(String(u.full_name || ''));
-        const uId = stripInvisibleChars(String(u.id_number || u.id || '')).replace(/[-\s]/g, '');
+        const uDocId = stripInvisibleChars(String(u.id || '')).trim();
+        const uDocIdLower = uDocId.toLowerCase();
+        const uDocIdPlain = uDocId.replace(/[-\s]/g, '');
+        const uUsername = stripInvisibleChars(String(u.username || '')).trim();
+        const uUsernameLower = uUsername.toLowerCase();
+        const uIdNum = stripInvisibleChars(String(u.id_number || '')).replace(/[-\s]/g, '');
         const uPhone = stripInvisibleChars(String(u.phone || '')).replace(/[-\s]/g, '');
         const uEmail = stripInvisibleChars(String(u.email || '')).toLowerCase();
 
         // Effective phone check
-        const uEffectivePhone = uPhone || (uId.length === 9 && uId.startsWith('5') ? '0' + uId : '');
+        const uEffectivePhone = uPhone || (uIdNum.length === 9 && uIdNum.startsWith('5') ? '0' + uIdNum : '');
 
-        const matchId = idCandidates.has(uId) ||
+        const matchId = 
+          idCandidates.has(uDocId) ||
+          idCandidates.has(uDocIdLower) ||
+          idCandidates.has(uDocIdPlain) ||
+          (uUsername && idCandidates.has(uUsername)) ||
+          (uUsernameLower && idCandidates.has(uUsernameLower)) ||
+          (uIdNum && idCandidates.has(uIdNum)) ||
           (uPhone && idCandidates.has(uPhone)) ||
           (uEffectivePhone && idCandidates.has(uEffectivePhone)) ||
           (uEmail && uEmail === cleanId.toLowerCase());
@@ -324,14 +342,17 @@ const FirestoreDB = {
   },
 
   async saveUser(user) {
-    const rawId = String(user.id || user.id_number || user.username || '');
+    const rawId = String(user.id || user.username || user.id_number || '');
     const userId = stripInvisibleChars(rawId);
     if (!userId) throw new Error('Missing user ID');
+
+    const usernameVal = stripInvisibleChars(String(user.username || user.id || user.id_number || ''));
 
     const cleanUser = {
       ...user,
       id: userId,
       id_number: stripInvisibleChars(String(user.id_number || userId)),
+      username: usernameVal || userId,
       name: stripInvisibleChars(String(user.name || user.full_name || '')),
       full_name: stripInvisibleChars(String(user.full_name || user.name || '')),
       password: stripInvisibleChars(String(user.password || user.phone || '')),
@@ -350,15 +371,17 @@ const FirestoreDB = {
     const saved = [];
 
     for (const u of usersArray) {
-      const rawId = String(u.id || u.id_number || u.username || '');
+      const rawId = String(u.id || u.username || u.id_number || '');
       const userId = stripInvisibleChars(rawId);
       if (!userId) continue;
 
+      const usernameVal = stripInvisibleChars(String(u.username || u.id || u.id_number || ''));
       const ref = db.collection(USERS_COL).doc(userId);
       const cleanUser = {
         ...u,
         id: userId,
         id_number: stripInvisibleChars(String(u.id_number || userId)),
+        username: usernameVal || userId,
         name: stripInvisibleChars(String(u.name || u.full_name || '')),
         full_name: stripInvisibleChars(String(u.full_name || u.name || '')),
         password: stripInvisibleChars(String(u.password || u.phone || '')),
@@ -373,6 +396,24 @@ const FirestoreDB = {
 
     await batch.commit();
     return saved;
+  },
+
+  async cascadeTeacherIdChange(oldId, newId, newName = null) {
+    if (!oldId || !newId || oldId === newId) return;
+    try {
+      const snap = await db.collection(REPORTS_COL).where('teacherId', '==', oldId).get();
+      if (!snap.empty) {
+        const batch = db.batch();
+        snap.docs.forEach(doc => {
+          const updateObj = { teacherId: newId };
+          if (newName) updateObj.teacherName = newName;
+          batch.update(doc.ref, updateObj);
+        });
+        await batch.commit();
+      }
+    } catch (e) {
+      console.warn('Cascade teacherId error in Firestore:', e.message);
+    }
   },
 
   async deleteUser(userId) {

@@ -80,7 +80,14 @@ const Auth = {
     const cleanIdPlain = cleanUsername.replace(/[-\s]/g, '');
     const cleanPassPlain = cleanPassword.replace(/[-\s]/g, '');
     const cleanDigits = cleanUsername.replace(/\D/g, '');
-    const idCandidates = new Set([cleanUsername, cleanIdPlain]);
+    const idCandidates = new Set([
+      cleanUsername,
+      cleanIdPlain,
+      cleanUsername.toLowerCase(),
+      cleanIdPlain.toLowerCase(),
+      cleanUsername.toUpperCase(),
+      cleanIdPlain.toUpperCase()
+    ]);
 
     if (cleanDigits) {
       idCandidates.add(cleanDigits);
@@ -99,6 +106,7 @@ const Auth = {
 
     const found = users.find(u => {
       const uId = stripInvisibleChars(u.id);
+      const uUsername = stripInvisibleChars(u.username);
       const uIdNum = stripInvisibleChars(u.id_number);
       const uPhone = stripInvisibleChars(u.phone).replace(/[-\s]/g, '');
       const uName = stripInvisibleChars(u.name || u.full_name);
@@ -108,6 +116,9 @@ const Auth = {
 
       const matchId = (
         idCandidates.has(uId) ||
+        (uId && idCandidates.has(uId.toLowerCase())) ||
+        (uUsername && idCandidates.has(uUsername)) ||
+        (uUsername && idCandidates.has(uUsername.toLowerCase())) ||
         (uIdNum && idCandidates.has(uIdNum)) ||
         (uPhone && idCandidates.has(uPhone)) ||
         (uEffectivePhone && idCandidates.has(uEffectivePhone))

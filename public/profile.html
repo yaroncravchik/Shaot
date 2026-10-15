@@ -103,21 +103,19 @@
  <span class="form-text">הסיסמה המשמשת להזדהות וכניסה למערכת</span>
  </div>
 
- <div class="form-group">
- <label class="form-label" for="prof-phone">
- <span>מספר טלפון נייד</span>
- <span class="required">*</span>
- </label>
- <input type="tel" id="prof-phone" class="form-control" required placeholder="050-0000000">
- </div>
+          <div class="form-group">
+            <label class="form-label" for="prof-phone">
+              <span>מספר טלפון נייד (רשות)</span>
+            </label>
+            <input type="tel" id="prof-phone" class="form-control" placeholder="050-0000000">
+          </div>
 
- <div class="form-group">
- <label class="form-label" for="prof-email">
- <span>כתובת דואר אלקטרוני</span>
- <span class="required">*</span>
- </label>
- <input type="email" id="prof-email" class="form-control" required placeholder="teacher@school.org.il">
- </div>
+          <div class="form-group">
+            <label class="form-label" for="prof-email">
+              <span>כתובת דואר אלקטרוני (רשות)</span>
+            </label>
+            <input type="email" id="prof-email" class="form-control" placeholder="teacher@school.org.il">
+          </div>
 
  <div class="form-group">
  <label class="form-label" for="prof-job-scope">
@@ -196,12 +194,11 @@
 
  <div class="form-group">
  <label class="form-label" for="prof-principal-email">
- <span>דוא"ל מנהל/ת (לקבלת קישור לאישור)</span>
- <span class="required">*</span>
+ <span>דוא"ל מנהל/ת (לקבלת קישור לאישור) (רשות)</span>
  </label>
  
     <div style="display:flex; gap:8px; align-items:center;">
-      <input type="email" id="prof-principal-email" class="form-control" required placeholder="principal@school.gov.il" style="direction:ltr;">
+      <input type="email" id="prof-principal-email" class="form-control" placeholder="principal@school.gov.il" style="direction:ltr;">
       <button type="button" id="btn-test-principal-email" class="btn btn-outline-primary" style="white-space:nowrap; flex-shrink:0;" onclick="testSendPrincipalEmail()" title="שליחת מייל ניסיון לבדיקה">
         🧪 שלח מייל בדיקה
       </button>

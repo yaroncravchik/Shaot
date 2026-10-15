@@ -350,7 +350,7 @@ function renderUsersTable(users) {
         <div style="font-weight:700; color:#0c3058;">${nameCellHtml}</div>
         <div style="font-size:0.75rem; color:var(--on-surface-variant);">${u.email || ''}</div>
       </td>
-      <td><code>${u.id}</code></td>
+      <td><code>${u.username || u.id}</code></td>
       <td><code style="background:#f8f9fa; border:1px solid #dee2e6; color:#0c3058; padding:2px 6px; border-radius:4px; font-weight:600;">${userPassword}</code></td>
       <td><span class="badge ${roleMeta.cls}">${roleMeta.label}</span></td>
       <td><span class="badge" style="background:#f0f4f8; color:#0c3058;">${u.district || 'מרכז'}</span></td>
@@ -631,7 +631,7 @@ function openEditUserModal(userId) {
   document.getElementById('site-edit-first-name').value = firstName;
   document.getElementById('site-edit-last-name').value = lastName;
   document.getElementById('site-edit-district').value = user.district || 'מרכז';
-  document.getElementById('site-edit-username').value = user.id;
+  document.getElementById('site-edit-username').value = user.username || user.id;
   document.getElementById('site-edit-password').value = user.password || user.phone || '';
   document.getElementById('site-edit-email').value = user.email || '';
   document.getElementById('site-edit-phone').value = user.phone || '';
@@ -680,7 +680,7 @@ function updateEditTeacherSupervisors(selectedSupervisorId = null) {
   });
 }
 
-function handleEditUserSubmit(e) {
+async function handleEditUserSubmit(e) {
   e.preventDefault();
 
   const userId = document.getElementById('site-edit-user-id').value;
@@ -725,21 +725,19 @@ function handleEditUserSubmit(e) {
 
   const btn = document.getElementById('btn-site-save-user');
   btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div><span>מעדכן פרטים...</span>';
+  btn.innerHTML = '<div class="spinner"></div><span>מעדכן פרטים ושומר בענן...</span>';
 
-  setTimeout(() => {
-    try {
-      const updatedUser = API.updateUser(userId, updateData, currentSiteAdmin);
-      closeModal('modal-edit-user');
-      showToast(`פרטי המשתמש ${updatedUser.name} עודכנו בהצלחה!`, 'success', 'משתמש עודכן');
-      loadInitialData();
-    } catch (err) {
-      showToast(err.message || 'שגיאה בעדכון המשתמש', 'error');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = '<span>שמור שינויים</span>';
-    }
-  }, 400);
+  try {
+    const updatedUser = await API.updateUser(userId, updateData, currentSiteAdmin);
+    closeModal('modal-edit-user');
+    showToast(`פרטי המשתמש ${updatedUser.name} עודכנו בהצלחה!`, 'success', 'משתמש עודכן');
+    loadInitialData();
+  } catch (err) {
+    showToast(err.message || 'שגיאה בעדכון המשתמש', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>שמור שינויים</span>';
+  }
 }
 
 // ============================================================================

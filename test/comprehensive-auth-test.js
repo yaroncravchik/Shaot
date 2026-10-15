@@ -31,7 +31,7 @@ async function runTests() {
   for (const tc of testCases) {
     try {
       const u = await FirestoreDB.getUserByCredentials(tc.user, tc.pass);
-      if (u && (String(u.id) === String(tc.expectUser) || String(u.id_number) === String(tc.expectUser))) {
+      if (u && (String(u.id) === String(tc.expectUser) || String(u.username) === String(tc.expectUser) || String(u.id_number) === String(tc.expectUser))) {
         console.log(`✅ PASS: ${tc.label}`);
         passed++;
       } else {
@@ -44,7 +44,79 @@ async function runTests() {
     }
   }
 
-  console.log(`\nResults: ${passed} passed, ${failed} failed out of ${testCases.length}`);
+  // 19. Create user with custom username, password, NO phone, and NO email
+  await FirestoreDB.saveUser({
+    id: 'custom_teacher_test',
+    username: 'custom_teacher_test',
+    name: 'מורה מותאם אישית',
+    full_name: 'מורה מותאם אישית',
+    password: 'MyPassword2026',
+    role: 'teacher',
+    phone: '',
+    email: '',
+    district: 'מרכז'
+  });
+
+  try {
+    const u19 = await FirestoreDB.getUserByCredentials('custom_teacher_test', 'MyPassword2026');
+    if (u19 && (u19.id === 'custom_teacher_test' || u19.username === 'custom_teacher_test')) {
+      console.log('✅ PASS: 19. Teacher login with defined username & password (no phone, no email): custom_teacher_test / MyPassword2026');
+      passed++;
+    } else {
+      console.log('❌ FAIL: 19. Teacher login with defined username & password');
+      failed++;
+    }
+  } catch (e) {
+    console.log('❌ ERROR 19:', e.message);
+    failed++;
+  }
+
+  // 20. Case-insensitive username login
+  try {
+    const u20 = await FirestoreDB.getUserByCredentials('Custom_Teacher_Test', 'MyPassword2026');
+    if (u20 && (u20.id === 'custom_teacher_test' || u20.username === 'custom_teacher_test')) {
+      console.log('✅ PASS: 20. Case-insensitive username login: Custom_Teacher_Test / MyPassword2026');
+      passed++;
+    } else {
+      console.log('❌ FAIL: 20. Case-insensitive username login');
+      failed++;
+    }
+  } catch (e) {
+    console.log('❌ ERROR 20:', e.message);
+    failed++;
+  }
+
+  // 21. Update user username and password dynamically
+  await FirestoreDB.saveUser({
+    id: 'renamed_teacher_test',
+    username: 'renamed_teacher_test',
+    name: 'מורה שעודכן שמו',
+    password: 'UpdatedPassword777',
+    role: 'teacher',
+    phone: '',
+    email: ''
+  });
+  await FirestoreDB.deleteUser('custom_teacher_test');
+
+  try {
+    const u21 = await FirestoreDB.getUserByCredentials('renamed_teacher_test', 'UpdatedPassword777');
+    if (u21 && (u21.id === 'renamed_teacher_test' || u21.username === 'renamed_teacher_test')) {
+      console.log('✅ PASS: 21. User login after username and password update: renamed_teacher_test / UpdatedPassword777');
+      passed++;
+    } else {
+      console.log('❌ FAIL: 21. User login after username and password update');
+      failed++;
+    }
+  } catch (e) {
+    console.log('❌ ERROR 21:', e.message);
+    failed++;
+  }
+
+  // Cleanup test user
+  await FirestoreDB.deleteUser('renamed_teacher_test').catch(() => {});
+
+  const totalTests = testCases.length + 3;
+  console.log(`\nResults: ${passed} passed, ${failed} failed out of ${totalTests}`);
   if (failed > 0) {
     process.exit(1);
   }

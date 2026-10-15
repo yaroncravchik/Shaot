@@ -36,7 +36,14 @@ router.post('/', async (req, res) => {
       });
     }
 
-    const savedUser = await FirestoreDB.saveUser(userData);
+    const userId = String(userData.id || userData.username || userData.id_number || '').trim();
+    const cleanUserData = {
+      ...userData,
+      id: userId,
+      username: String(userData.username || userId).trim()
+    };
+
+    const savedUser = await FirestoreDB.saveUser(cleanUserData);
     return res.json({
       success: true,
       user: savedUser,
@@ -88,8 +95,19 @@ router.post('/batch', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = { ...req.body, id };
-    const updated = await FirestoreDB.saveUser(updateData);
+    const body = req.body || {};
+    const newUsername = String(body.username || body.newId || body.id || id).trim();
+
+    let updated;
+    if (newUsername && newUsername !== id) {
+      // Username/ID changed: save under newUsername, delete old doc id
+      updated = await FirestoreDB.saveUser({ ...body, id: newUsername, username: newUsername });
+      await FirestoreDB.deleteUser(id);
+      await FirestoreDB.cascadeTeacherIdChange(id, newUsername, body.name || body.full_name);
+    } else {
+      updated = await FirestoreDB.saveUser({ ...body, id, username: newUsername || id });
+    }
+
     return res.json({
       success: true,
       user: updated,

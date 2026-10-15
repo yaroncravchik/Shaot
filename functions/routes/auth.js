@@ -118,6 +118,7 @@ router.post('/login', async (req, res) => {
     const normalizedUser = {
       id: user.id || user.id_number,
       id_number: user.id_number || user.id,
+      username: user.username || user.id || user.id_number,
       name: user.name || user.full_name || '',
       full_name: user.full_name || user.name || '',
       role: user.role,

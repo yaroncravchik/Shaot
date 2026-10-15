@@ -864,9 +864,9 @@ const API = {
           const localUsers = this.getUsers();
 
           const strip = (s) => String(s || '').replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '').trim();
-          const remoteIds = new Set(remoteUsers.map(u => strip(u.id || u.id_number || '')));
+          const remoteIds = new Set(remoteUsers.map(u => strip(u.id || u.username || u.id_number || '')));
           const unsyncedToRemote = localUsers.filter(u => {
-            const uid = strip(u.id || u.id_number || '');
+            const uid = strip(u.id || u.username || u.id_number || '');
             return uid && !remoteIds.has(uid);
           });
 
@@ -881,13 +881,13 @@ const API = {
 
           const mergedMap = new Map();
           for (const u of localUsers) {
-            const key = strip(u && (u.id || u.id_number));
-            if (key) mergedMap.set(key, { ...u, id: key, id_number: key });
+            const key = strip(u && (u.username || u.id || u.id_number));
+            if (key) mergedMap.set(key, { ...u, id: key, username: u.username || key });
           }
           for (const u of remoteUsers) {
-            const key = strip(u && (u.id || u.id_number));
+            const key = strip(u && (u.username || u.id || u.id_number));
             if (key) {
-              mergedMap.set(key, { ...(mergedMap.get(key) || {}), ...u, id: key, id_number: key });
+              mergedMap.set(key, { ...(mergedMap.get(key) || {}), ...u, id: key, username: u.username || key });
             }
           }
           const mergedUsers = Array.from(mergedMap.values());
@@ -1593,9 +1593,11 @@ ${reviewUrl}
 
     const newTeacher = {
       id: cleanUsername,
+      username: cleanUsername,
       password: cleanPassword,
       phone: cleanPhone,
       name: fullName,
+      full_name: fullName,
       role: 'teacher',
       email: `${cleanUsername}@education.gov.il`,
       schoolName: schoolName ? schoolName.trim() : 'תיכון מחוזי מרכז',
@@ -1633,15 +1635,17 @@ ${reviewUrl}
     const cleanPhone = phone !== undefined && phone !== null ? String(phone).trim() : '';
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
-    if (users.some(u => String(u.id) === cleanUsername)) {
+    if (users.some(u => String(u.id) === cleanUsername || String(u.username) === cleanUsername)) {
       throw new Error('משתמש עם שם משתמש זה כבר קיים במערכת');
     }
 
     const newSupervisor = {
       id: cleanUsername,
+      username: cleanUsername,
       password: cleanPassword,
       phone: cleanPhone,
       name: fullName,
+      full_name: fullName,
       role: 'supervisor',
       email: `${cleanUsername}@education.gov.il`,
       district: district || 'מרכז'
@@ -1668,15 +1672,17 @@ ${reviewUrl}
     const cleanPhone = phone !== undefined && phone !== null ? String(phone).trim() : '';
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
-    if (users.some(u => u.id === cleanUsername)) {
+    if (users.some(u => u.id === cleanUsername || u.username === cleanUsername)) {
       throw new Error('משתמש עם שם משתמש זה כבר קיים במערכת');
     }
 
     const newAdmin = {
       id: cleanUsername,
+      username: cleanUsername,
       password: cleanPassword,
       phone: cleanPhone,
       name: fullName,
+      full_name: fullName,
       role: 'admin',
       email: email ? email.trim() : `${cleanUsername}@education.gov.il`,
       district: district || 'מרכז'
@@ -1707,17 +1713,19 @@ ${reviewUrl}
     const cleanPhone = phone !== undefined && phone !== null ? String(phone).trim() : '';
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
-    if (users.some(u => u.id === cleanUsername)) {
+    if (users.some(u => u.id === cleanUsername || u.username === cleanUsername)) {
       throw new Error('משתמש עם שם משתמש זה כבר קיים במערכת');
     }
 
-    const supervisor = users.find(u => u.id === supervisorId) || { name: 'אברהם מנחה' };
+    const supervisor = users.find(u => u.id === supervisorId || u.username === supervisorId) || { name: 'אברהם מנחה' };
 
     const newTeacher = {
       id: cleanUsername,
+      username: cleanUsername,
       password: cleanPassword,
       phone: cleanPhone,
       name: fullName,
+      full_name: fullName,
       role: 'teacher',
       email: email ? email.trim() : `${cleanUsername}@education.gov.il`,
       schoolName: schoolName ? schoolName.trim() : 'תיכון מחוזי',
@@ -1814,9 +1822,11 @@ ${reviewUrl}
 
       const newTeacher = {
         id: cleanUsername,
+        username: cleanUsername,
         password: cleanPassword,
         phone: cleanPhone,
         name: fullName,
+        full_name: fullName,
         role: 'teacher',
         email: t.email ? t.email.trim() : `${cleanUsername}@education.gov.il`,
         schoolName: t.schoolName ? t.schoolName.trim() : 'תיכון מחוזי',
@@ -1936,7 +1946,7 @@ ${reviewUrl}
   updateUser(userId, updateData, performedByUser = null) {
     initStorage();
     const users = this.getUsers();
-    const userIndex = users.findIndex(u => String(u.id) === String(userId) || (u.id_number && String(u.id_number) === String(userId)));
+    const userIndex = users.findIndex(u => String(u.id) === String(userId) || (u.id_number && String(u.id_number) === String(userId)) || (u.username && String(u.username) === String(userId)));
     if (userIndex < 0) {
       throw new Error('משתמש לא נמצא במערכת');
     }
@@ -1958,7 +1968,7 @@ ${reviewUrl}
     let newId = current.id;
     if (updateData.username && updateData.username.trim() !== current.id) {
       const cleanUsername = updateData.username.trim();
-      if (users.some(u => u.id === cleanUsername && u.id !== current.id)) {
+      if (users.some(u => (u.id === cleanUsername || u.username === cleanUsername) && u.id !== current.id)) {
         throw new Error('שם משתמש זה כבר קיים במערכת');
       }
       newId = cleanUsername;
@@ -1969,7 +1979,7 @@ ${reviewUrl}
     let supervisorId = current.supervisorId;
     if (updateData.supervisorId !== undefined) {
       supervisorId = updateData.supervisorId;
-      const sup = users.find(u => u.id === supervisorId);
+      const sup = users.find(u => u.id === supervisorId || u.username === supervisorId);
       supervisorName = sup ? sup.name : (updateData.supervisorName || current.supervisorName);
     }
 
@@ -1987,17 +1997,19 @@ ${reviewUrl}
     const updatedUser = {
       ...current,
       id: newId,
+      username: newId,
       name: newFullName,
+      full_name: newFullName,
       password: newPassword,
       phone: newPhone,
-      email: updateData.email !== undefined ? updateData.email.trim() : current.email,
+      email: updateData.email !== undefined ? updateData.email.trim() : (current.email || ''),
       district: updateData.district !== undefined ? updateData.district : current.district,
       schoolName: updateData.schoolName !== undefined ? updateData.schoolName.trim() : current.schoolName,
       schoolCode: updateData.schoolCode !== undefined ? updateData.schoolCode.trim() : current.schoolCode,
       municipality: updateData.municipality !== undefined ? updateData.municipality.trim() : current.municipality,
       supervisorId: supervisorId,
       supervisorName: supervisorName,
-      jobScope: updateData.jobScope !== undefined ? Number(updateData.jobScope) : current.jobScope
+      jobScope: updateData.jobScope !== undefined ? Number(updateData.jobScope) : (current.jobScope || 100)
     };
 
     users[userIndex] = updatedUser;
@@ -2037,7 +2049,7 @@ ${reviewUrl}
     try {
       if (typeof Auth !== 'undefined' && Auth.getCurrentUser) {
         const loggedInUser = Auth.getCurrentUser();
-        if (loggedInUser && loggedInUser.id === oldId) {
+        if (loggedInUser && (loggedInUser.id === oldId || loggedInUser.id === newId)) {
           Auth.setCurrentUser(updatedUser);
         }
       }
@@ -2054,6 +2066,20 @@ ${reviewUrl}
       action: `עדכון פרטי ${roleLabels[updatedUser.role] || 'משתמש'}: ${updatedUser.name} (${updatedUser.id})`
     });
     localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(audit));
+
+    // 5. Asynchronously persist to Cloud Firestore backend!
+    if (typeof fetch !== 'undefined') {
+      fetch('/api/users/' + encodeURIComponent(oldId), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...updatedUser,
+          oldId: oldId,
+          newId: newId,
+          username: newId
+        })
+      }).catch(err => console.warn('Firestore user update warning:', err));
+    }
 
     return updatedUser;
   },
