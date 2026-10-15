@@ -256,6 +256,93 @@ const HEBREW_MONTHS_NAME = [
  'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'
 ];
 
+/**
+ * Returns available reporting months according to the rule:
+ * On the 5th of each month, the report for that month opens for reporting.
+ * Past months remain open for reporting/viewing.
+ * Range: from latest unlocked month down to June 2026.
+ */
+function getAvailableReportingMonths(baseDate = new Date()) {
+  const currentYear = baseDate.getFullYear();
+  const currentMonth = baseDate.getMonth() + 1; // 1-12
+  const currentDay = baseDate.getDate();
+
+  let latestYear = currentYear;
+  let latestMonth = currentMonth;
+  if (currentDay < 5) {
+    latestMonth -= 1;
+    if (latestMonth < 1) {
+      latestMonth = 12;
+      latestYear -= 1;
+    }
+  }
+
+  const months = [];
+  let curY = latestYear;
+  let curM = latestMonth;
+  const earliestYear = 2026;
+  const earliestMonth = 6; // June 2026
+
+  while (curY > earliestYear || (curY === earliestYear && curM >= earliestMonth)) {
+    const isCurrent = (curY === latestYear && curM === latestMonth);
+    const mName = HEBREW_MONTHS_NAME[curM - 1] || curM;
+    months.push({
+      year: curY,
+      month: curM,
+      monthKey: `${curY}-${String(curM).padStart(2, '0')}`,
+      label: `${mName} ${curY}${isCurrent ? ' (חודש נוכחי)' : ''}`,
+      isCurrent,
+      isPast: !isCurrent,
+      isFuture: false,
+      isSelectable: true
+    });
+
+    curM--;
+    if (curM < 1) {
+      curM = 12;
+      curY--;
+    }
+  }
+
+  if (months.length === 0) {
+    months.push({
+      year: 2026,
+      month: 6,
+      monthKey: '2026-06',
+      label: 'יוני 2026 (חודש נוכחי)',
+      isCurrent: true,
+      isPast: false,
+      isFuture: false,
+      isSelectable: true
+    });
+  }
+
+  return months;
+}
+
+function isMonthOpenForReporting(year, month, checkDate = new Date()) {
+  const y = parseInt(year, 10);
+  const m = parseInt(month, 10);
+  const currentYear = checkDate.getFullYear();
+  const currentMonth = checkDate.getMonth() + 1;
+  const currentDay = checkDate.getDate();
+
+  let latestYear = currentYear;
+  let latestMonth = currentMonth;
+  if (currentDay < 5) {
+    latestMonth -= 1;
+    if (latestMonth < 1) {
+      latestMonth = 12;
+      latestYear -= 1;
+    }
+  }
+
+  if (y > latestYear || (y === latestYear && m > latestMonth)) {
+    return false;
+  }
+  return true;
+}
+
 // Status metadata & labels
 const REPORT_STATUSES = {
  draft: { label: 'טיוטה', badgeClass: 'badge-draft' },
@@ -850,6 +937,12 @@ const API = {
   },
   isSummerVacation(year, month, day) {
     return isSummerVacation(year, month, day);
+  },
+  getAvailableMonths(baseDate = new Date()) {
+    return getAvailableReportingMonths(baseDate);
+  },
+  isMonthOpenForReporting(year, month, checkDate = new Date()) {
+    return isMonthOpenForReporting(year, month, checkDate);
   },
 
  // Users & Auth
@@ -3028,6 +3121,8 @@ API.OVERTIME_REASONS = OVERTIME_REASONS;
 window.REPORT_STATUSES = REPORT_STATUSES;
 window.HEBREW_MONTHS_NAME = HEBREW_MONTHS_NAME;
 window.HEBREW_DAYS_NAME = HEBREW_DAYS_NAME;
+window.getAvailableReportingMonths = getAvailableReportingMonths;
+window.isMonthOpenForReporting = isMonthOpenForReporting;
 
 // ==========================================================================
 // 9. Reusable Graphic Signature Pad Component

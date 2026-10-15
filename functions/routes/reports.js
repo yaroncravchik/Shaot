@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const { FirestoreDB } = require('../db/firestore-db');
 const { sendPrincipalApprovalEmail } = require('../services/emailService');
 const { db } = require('../db/database');
-const { getAvailableMonths, generateMonthDays, HEBREW_DAY_NAMES, HEBREW_MONTH_NAMES } = require('../services/calendarService');
+const { getAvailableMonths, isMonthOpenForReporting, generateMonthDays, HEBREW_DAY_NAMES, HEBREW_MONTH_NAMES } = require('../services/calendarService');
 const { generateSingleReportExcel } = require('../services/excelService');
 const { generatePrincipalEmailHtml, generatePrincipalEmailPlainText } = require('../services/emailTemplate');
 
@@ -32,6 +32,25 @@ router.get('/', async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'שגיאה בטעינת דוחות מ-Cloud Firestore: ' + err.message
+    });
+  }
+});
+
+/**
+ * GET /api/reports/available-months
+ * Get list of currently open reporting months according to the 5th-of-month rule
+ */
+router.get('/available-months', (req, res) => {
+  try {
+    const months = getAvailableMonths();
+    return res.json({
+      success: true,
+      months
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: 'שגיאה בקבלת חודשי דיווח פתוחים: ' + err.message
     });
   }
 });
@@ -74,6 +93,13 @@ router.post('/', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'חובה לספק פרטי דוח ומזהה מורה'
+      });
+    }
+
+    if (reportData.year && reportData.month && !isMonthOpenForReporting(reportData.year, reportData.month)) {
+      return res.status(400).json({
+        success: false,
+        error: `חודש ${reportData.month}/${reportData.year} טרם נפתח לדיווח (הדיווח לכל חודש נפתח ב-5 לאותו חודש)`
       });
     }
     const reportId = reportData.id || `REP-${reportData.year || new Date().getFullYear()}-${String(reportData.month || 1).padStart(2, '0')}-${Date.now().toString().slice(-4)}`;

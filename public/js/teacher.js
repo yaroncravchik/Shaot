@@ -9,8 +9,26 @@ const overtimeReasonsList = (typeof OVERTIME_REASONS !== 'undefined' ? OVERTIME_
 let currentTeacher = null;
 let currentActiveReport = null;
 let autoSaveInterval = null;
-let selectedYear = 2026;
-let selectedMonth = 8;
+// Current reporting period calculation (Rule: on the 5th of each month, the report for that month opens)
+const activeReportingPeriod = (function() {
+  const now = new Date();
+  const cYear = now.getFullYear();
+  const cMonth = now.getMonth() + 1;
+  const cDay = now.getDate();
+  let y = cYear;
+  let m = cMonth;
+  if (cDay < 5) {
+    m -= 1;
+    if (m < 1) {
+      m = 12;
+      y -= 1;
+    }
+  }
+  return { year: y, month: m };
+})();
+
+let selectedYear = activeReportingPeriod.year;
+let selectedMonth = activeReportingPeriod.month;
 
 document.addEventListener('DOMContentLoaded', () => {
   currentTeacher = Auth.requireAuth(['teacher']);
@@ -37,21 +55,47 @@ function populateTeacherHeader(teacher) {
 
 function initMonthSelector() {
   const select = document.getElementById('select-report-month');
+  if (!select) return;
   select.innerHTML = '';
 
-  // Flexible window: 2 months back to 1 month ahead around August 2026
-  const options = [
-    { year: 2026, month: 9, label: 'ספטמבר 2026 (חודש הבא)' },
-    { year: 2026, month: 8, label: 'אוגוסט 2026 (חודש נוכחי)' },
-    { year: 2026, month: 7, label: 'יולי 2026' },
-    { year: 2026, month: 6, label: 'יוני 2026' }
-  ];
+  const options = (typeof getAvailableReportingMonths === 'function')
+    ? getAvailableReportingMonths()
+    : ((window.API && API.getAvailableMonths) ? API.getAvailableMonths() : []);
+
+  // If teacher already has existing reports in any earlier/other month, ensure it is available in the dropdown
+  try {
+    const existingReports = (currentTeacher && typeof API !== 'undefined' && API.getReports)
+      ? API.getReports({ teacherId: currentTeacher.id })
+      : [];
+    existingReports.forEach(r => {
+      const y = Number(r.year);
+      const m = Number(r.month);
+      if (!isNaN(y) && !isNaN(m) && !options.some(opt => opt.year === y && opt.month === m)) {
+        const mName = (typeof HEBREW_MONTHS_NAME !== 'undefined' ? HEBREW_MONTHS_NAME[m - 1] : m);
+        options.push({
+          year: y,
+          month: m,
+          label: `${mName} ${y}`,
+          isCurrent: false
+        });
+      }
+    });
+  } catch (err) {
+    console.warn('Could not inspect existing reports for month selector:', err);
+  }
+
+  // Sort descending: latest month on top
+  options.sort((a, b) => (b.year * 100 + b.month) - (a.year * 100 + a.month));
 
   options.forEach((opt, idx) => {
     const el = document.createElement('option');
     el.value = `${opt.year}-${opt.month}`;
     el.textContent = opt.label;
-    if (idx === 1) el.selected = true; // Default August
+    if (idx === 0) {
+      el.selected = true;
+      selectedYear = opt.year;
+      selectedMonth = opt.month;
+    }
     select.appendChild(el);
   });
 
@@ -272,6 +316,30 @@ function setupReportFormHandlers() {
 }
 
 function checkReportSubmissionEligibility(year, month, checkDate = new Date()) {
+  const y = parseInt(year, 10);
+  const m = parseInt(month, 10);
+  const currentYear = checkDate.getFullYear();
+  const currentMonth = checkDate.getMonth() + 1;
+  const currentDay = checkDate.getDate();
+
+  let latestYear = currentYear;
+  let latestMonth = currentMonth;
+  if (currentDay < 5) {
+    latestMonth -= 1;
+    if (latestMonth < 1) {
+      latestMonth = 12;
+      latestYear -= 1;
+    }
+  }
+
+  if (y > latestYear || (y === latestYear && m > latestMonth)) {
+    const mName = (typeof HEBREW_MONTHS_NAME !== 'undefined' ? HEBREW_MONTHS_NAME[m - 1] : m);
+    return {
+      allowed: false,
+      reason: `חודש ${mName} ${y} טרם נפתח למילוי. הדיווח לכל חודש נפתח ב-5 לאותו חודש.`
+    };
+  }
+
   return { allowed: true };
 }
 
@@ -698,6 +766,14 @@ function saveCurrentReportDraft(showFeedback = true) {
 }
 
 function submitCurrentReport() {
+  if (currentActiveReport && currentActiveReport.year && currentActiveReport.month) {
+    const elig = checkReportSubmissionEligibility(currentActiveReport.year, currentActiveReport.month);
+    if (!elig.allowed) {
+      showToast(elig.reason, 'error');
+      return;
+    }
+  }
+
   const declaration = document.getElementById('report-submit-declaration');
   if (declaration && !declaration.checked) {
     showToast('חובה לאשר את הצהרת הנכונות לפני הגשת הדוח', 'warning');
@@ -842,6 +918,7 @@ document.addEventListener('keydown', (e) => {
 // Global window bindings
 if (typeof window !== 'undefined') {
   window.checkReportSubmissionEligibility = checkReportSubmissionEligibility;
+  window.initMonthSelector = initMonthSelector;
   window.isDailyHoursExceeded = isDailyHoursExceeded;
   window.updateDayThresholdWarning = updateDayThresholdWarning;
   window.renderReportGrid = renderReportGrid;

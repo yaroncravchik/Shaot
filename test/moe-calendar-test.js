@@ -70,4 +70,40 @@ if (jun21InDays) {
   assert(jun21InDays.holiday_name.includes('החופש הגדול'), 'June 21 must be החופש הגדול');
 }
 
-console.log('✔ All MoE Calendar & Vacation checks passed successfully!');
+// 5. October 2026 Calendar & 5th of Month Opening Rule:
+const octDays = calFunctions.generateMonthDays(2026, 10);
+assert.strictEqual(octDays.length, 26, 'October 2026 must have 26 reporting days excluding Saturdays');
+const oct1 = octDays.find(d => d.day_number === 1);
+assert.strictEqual(oct1.is_holiday, 1, 'Oct 1 must be holiday');
+assert.strictEqual(oct1.holiday_name, 'הושענא רבה', 'Oct 1 is Hoshana Raba');
+const oct2 = octDays.find(d => d.day_number === 2);
+assert.strictEqual(oct2.is_holiday, 1, 'Oct 2 must be holiday');
+assert.strictEqual(oct2.holiday_name, 'שמחת תורה', 'Oct 2 is Simchat Torah');
+
+// Test 5th of month rule:
+// Today: Oct 15, 2026 (day >= 5) -> Oct 2026 is open!
+const dateOct15 = new Date(2026, 9, 15);
+assert.strictEqual(calFunctions.isMonthOpenForReporting(2026, 10, dateOct15), true, 'Oct 2026 must be open on Oct 15');
+assert.strictEqual(calFunctions.isMonthOpenForReporting(2026, 9, dateOct15), true, 'Sep 2026 (past) must be open on Oct 15');
+assert.strictEqual(calFunctions.isMonthOpenForReporting(2026, 11, dateOct15), false, 'Nov 2026 (future) must NOT be open on Oct 15');
+
+const octMonths = calFunctions.getAvailableMonths(dateOct15);
+assert.strictEqual(octMonths[0].year, 2026, 'Latest year is 2026');
+assert.strictEqual(octMonths[0].month, 10, 'Latest open month is October');
+assert.strictEqual(octMonths[0].isCurrent, true, 'October is current open month');
+assert(octMonths.some(m => m.month === 9), 'September is included in available months');
+assert(octMonths.some(m => m.month === 8), 'August is included in available months');
+
+// Before 5th of month: Oct 4, 2026 (day < 5) -> Oct 2026 is NOT yet open, latest is Sep 2026
+const dateOct4 = new Date(2026, 9, 4);
+assert.strictEqual(calFunctions.isMonthOpenForReporting(2026, 10, dateOct4), false, 'Oct 2026 must NOT be open on Oct 4');
+const oct4Months = calFunctions.getAvailableMonths(dateOct4);
+assert.strictEqual(oct4Months[0].month, 9, 'On Oct 4, latest open month must be September');
+
+// November 5, 2026 -> Nov 2026 opens!
+const dateNov5 = new Date(2026, 10, 5);
+assert.strictEqual(calFunctions.isMonthOpenForReporting(2026, 11, dateNov5), true, 'Nov 2026 must be open on Nov 5');
+const nov5Months = calFunctions.getAvailableMonths(dateNov5);
+assert.strictEqual(nov5Months[0].month, 11, 'On Nov 5, latest open month must be November');
+
+console.log('✔ All MoE Calendar & 5th-of-month opening checks passed successfully!');

@@ -78,8 +78,8 @@ async function runTests() {
 
   // 3. Calendar & Holiday Service
   test('3. Calendar Generation (Excluding Saturdays & Hebrew Holidays)', () => {
-    const months = getAvailableMonths(new Date(2026, 7, 15)); // August 2026
-    assert.strictEqual(months.length, 4);
+    const months = getAvailableMonths(new Date(2026, 7, 15)); // August 2026 (Aug, Jul, Jun)
+    assert.strictEqual(months.length, 3);
     assert.ok(months.some(m => m.month === 8 && m.year === 2026 && m.isCurrent));
 
     const t1Schedule = db.prepare('SELECT * FROM teacher_schedules WHERE user_id = ?').all('usr_teacher_1');

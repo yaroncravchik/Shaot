@@ -244,47 +244,94 @@ function isSummerVacation(year, month, day = null) {
 }
 
 /**
- * Returns available reporting months:
- * Selectable range: [Current Month - 2 months, Current Month + 1 month]
- * Open all month round (no strict cutoff lock, available for reporting)
+ * Returns available reporting months according to the rule:
+ * On the 5th of each month, the report for that month opens for reporting.
+ * Previous months remain open for reporting/viewing.
+ * Range: from latest unlocked month down to June 2026.
  */
 function getAvailableMonths(baseDate = new Date()) {
   const currentYear = baseDate.getFullYear();
   const currentMonth = baseDate.getMonth() + 1; // 1-12
+  const currentDay = baseDate.getDate();
+
+  let latestYear = currentYear;
+  let latestMonth = currentMonth;
+  if (currentDay < 5) {
+    latestMonth -= 1;
+    if (latestMonth < 1) {
+      latestMonth = 12;
+      latestYear -= 1;
+    }
+  }
 
   const months = [];
+  let curY = latestYear;
+  let curM = latestMonth;
+  const earliestYear = 2026;
+  const earliestMonth = 6; // June 2026 (start of reporting)
 
-  // Range from -2 to +1
-  for (let offset = -2; offset <= 1; offset++) {
-    let targetYear = currentYear;
-    let targetMonth = currentMonth + offset;
-
-    while (targetMonth < 1) {
-      targetMonth += 12;
-      targetYear -= 1;
-    }
-    while (targetMonth > 12) {
-      targetMonth -= 12;
-      targetYear += 1;
-    }
-
-    const isCurrent = offset === 0;
-    const isPast = offset < 0;
-    const isFuture = offset > 0;
-
+  while (curY > earliestYear || (curY === earliestYear && curM >= earliestMonth)) {
+    const isCurrent = (curY === latestYear && curM === latestMonth);
     months.push({
-      year: targetYear,
-      month: targetMonth,
-      monthKey: `${targetYear}-${String(targetMonth).padStart(2, '0')}`,
-      labelHebrew: `${HEBREW_MONTH_NAMES[targetMonth - 1]} ${targetYear}`,
+      year: curY,
+      month: curM,
+      monthKey: `${curY}-${String(curM).padStart(2, '0')}`,
+      labelHebrew: `${HEBREW_MONTH_NAMES[curM - 1]} ${curY}${isCurrent ? ' (חודש נוכחי)' : ''}`,
       isCurrent,
-      isPast,
-      isFuture,
+      isPast: !isCurrent,
+      isFuture: false,
+      isSelectable: true
+    });
+
+    curM--;
+    if (curM < 1) {
+      curM = 12;
+      curY--;
+    }
+  }
+
+  if (months.length === 0) {
+    months.push({
+      year: 2026,
+      month: 6,
+      monthKey: '2026-06',
+      labelHebrew: `${HEBREW_MONTH_NAMES[5]} 2026 (חודש נוכחי)`,
+      isCurrent: true,
+      isPast: false,
+      isFuture: false,
       isSelectable: true
     });
   }
 
   return months;
+}
+
+/**
+ * Checks if a specific year and month is open for reporting.
+ * A month opens on the 5th day of that month. Past months remain open.
+ */
+function isMonthOpenForReporting(year, month, checkDate = new Date()) {
+  const y = parseInt(year, 10);
+  const m = parseInt(month, 10);
+  const currentYear = checkDate.getFullYear();
+  const currentMonth = checkDate.getMonth() + 1;
+  const currentDay = checkDate.getDate();
+
+  let latestYear = currentYear;
+  let latestMonth = currentMonth;
+  if (currentDay < 5) {
+    latestMonth -= 1;
+    if (latestMonth < 1) {
+      latestMonth = 12;
+      latestYear -= 1;
+    }
+  }
+
+  // Target month cannot be in the future beyond latest open month
+  if (y > latestYear || (y === latestYear && m > latestMonth)) {
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -361,5 +408,6 @@ module.exports = {
   getMoEVacationInfo,
   isSummerVacation,
   getAvailableMonths,
+  isMonthOpenForReporting,
   generateMonthDays
 };
