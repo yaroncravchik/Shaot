@@ -1,7 +1,11 @@
-/**
- * Shalah Monthly Activity Hours Reporting System (מערכת דיווח שעות של"ח)
- * Authentication, Session Management, Role Switcher & Universal Header Renderer
- */
+function stripInvisibleChars(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '')
+    .replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 const Auth = {
   getCurrentUser() {
@@ -23,12 +27,14 @@ const Auth = {
   },
 
   async login(username, password) {
-    const cleanUsername = (typeof stripInvisibleChars === 'function' ? stripInvisibleChars(username) : String(username || '').replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '')).trim();
-    const cleanPassword = (typeof stripInvisibleChars === 'function' ? stripInvisibleChars(password) : String(password || '').replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '')).trim();
+    const cleanUsername = stripInvisibleChars(username);
+    const cleanPassword = stripInvisibleChars(password);
 
     if (!cleanUsername || !cleanPassword) {
       throw new Error('נא להזין שם משתמש וסיסמה');
     }
+
+    let lastBackendError = null;
 
     // 1. Authenticate against Cloud Firestore via backend API
     try {
@@ -61,6 +67,7 @@ const Auth = {
           }
         } else if (res.status === 401 || res.status === 400) {
           const data = await res.json().catch(() => ({}));
+          lastBackendError = data.error || null;
           console.warn('Backend login rejected, checking local storage cache...', data.error);
         }
       }
@@ -72,43 +79,91 @@ const Auth = {
     const users = API.getUsers();
     const cleanIdPlain = cleanUsername.replace(/[-\s]/g, '');
     const cleanPassPlain = cleanPassword.replace(/[-\s]/g, '');
+    const cleanDigits = cleanUsername.replace(/\D/g, '');
     const idCandidates = new Set([cleanUsername, cleanIdPlain]);
-    if (cleanIdPlain.startsWith('0')) idCandidates.add(cleanIdPlain.slice(1));
-    else if (/^\d+$/.test(cleanIdPlain)) idCandidates.add('0' + cleanIdPlain);
 
-    const strip = (s) => String(s || '').replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '').trim();
+    if (cleanDigits) {
+      idCandidates.add(cleanDigits);
+      if (cleanDigits.startsWith('972')) {
+        const local = '0' + cleanDigits.slice(3);
+        idCandidates.add(local);
+        idCandidates.add(local.slice(1));
+      } else if (cleanDigits.startsWith('0')) {
+        idCandidates.add(cleanDigits.slice(1));
+      } else if (/^\d+$/.test(cleanDigits)) {
+        idCandidates.add('0' + cleanDigits);
+      }
+    }
+
+    const inputWords = cleanUsername.split(' ').filter(w => w.length > 0);
+
     const found = users.find(u => {
-      const uId = strip(u.id);
-      const uIdNum = strip(u.id_number);
-      const uPhone = strip(u.phone).replace(/[-\s]/g, '');
-      const uName = strip(u.name || u.full_name);
-      const uFullName = strip(u.full_name || u.name);
+      const uId = stripInvisibleChars(u.id);
+      const uIdNum = stripInvisibleChars(u.id_number);
+      const uPhone = stripInvisibleChars(u.phone).replace(/[-\s]/g, '');
+      const uName = stripInvisibleChars(u.name || u.full_name);
+      const uFullName = stripInvisibleChars(u.full_name || u.name);
 
-      const matchUsername = (
+      const uEffectivePhone = uPhone || (uId.length === 9 && uId.startsWith('5') ? '0' + uId : '');
+
+      const matchId = (
         idCandidates.has(uId) ||
         (uIdNum && idCandidates.has(uIdNum)) ||
         (uPhone && idCandidates.has(uPhone)) ||
-        (uName && (uName === cleanUsername || cleanUsername.includes(uName))) ||
-        (uFullName && (uFullName === cleanUsername || cleanUsername.includes(uFullName)))
+        (uEffectivePhone && idCandidates.has(uEffectivePhone))
       );
-      if (!matchUsername) return false;
 
-      const uPass = strip(u.password).replace(/[-\s]/g, '');
+      // Name variations
+      const testNames = [uName, uFullName];
+      if (uName.includes('(')) {
+        testNames.push(uName.replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim());
+        testNames.push(uName.replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim());
+        const parenMatch = uName.match(/\((.*?)\)/);
+        if (parenMatch && parenMatch[1]) {
+          testNames.push(uName.replace(/\b\S+\s*\(/, parenMatch[1] + ' (').replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim());
+          testNames.push(parenMatch[1].trim());
+        }
+      }
+
+      let matchName = false;
+      for (const candName of testNames) {
+        if (!candName) continue;
+        if (candName === cleanUsername) {
+          matchName = true;
+          break;
+        }
+        if (cleanUsername.length >= 3 && (candName.includes(cleanUsername) || cleanUsername.includes(candName))) {
+          matchName = true;
+          break;
+        }
+        if (inputWords.length >= 2) {
+          const candWords = candName.split(' ');
+          if (inputWords.every(w => candWords.includes(w))) {
+            matchName = true;
+            break;
+          }
+        }
+      }
+
+      if (!matchId && !matchName) return false;
+
+      const uPass = stripInvisibleChars(u.password).replace(/[-\s]/g, '');
       const uIdPlain = uId.replace(/[-\s]/g, '');
 
       if (uPass && (uPass === cleanPassword || uPass === cleanPassPlain)) return true;
       if (uPhone && (uPhone === cleanPassword || uPhone === cleanPassPlain)) return true;
-      if (uPhone.startsWith('0') && uPhone.slice(1) === cleanPassPlain) return true;
-      if (!uPhone.startsWith('0') && ('0' + uPhone) === cleanPassPlain) return true;
+      if (uEffectivePhone && (uEffectivePhone === cleanPassword || uEffectivePhone === cleanPassPlain)) return true;
+      if (uEffectivePhone.startsWith('0') && uEffectivePhone.slice(1) === cleanPassPlain) return true;
+      if (!uEffectivePhone.startsWith('0') && ('0' + uEffectivePhone) === cleanPassPlain) return true;
       if (uIdPlain && (uIdPlain === cleanPassword || uIdPlain === cleanPassPlain)) return true;
       if (cleanPassPlain === '1234' || cleanPassPlain === '123456') return true;
-      if (cleanPassPlain.length === 4 && (uPhone.endsWith(cleanPassPlain) || uIdPlain.endsWith(cleanPassPlain))) return true;
+      if (cleanPassPlain.length === 4 && (uPhone.endsWith(cleanPassPlain) || uEffectivePhone.endsWith(cleanPassPlain) || uIdPlain.endsWith(cleanPassPlain))) return true;
 
       return false;
     });
 
     if (!found) {
-      throw new Error('שם המשתמש או הסיסמה שגויים. נא לפנות למנחה המחוזי.');
+      throw new Error(lastBackendError || 'פרטי ההזדהות שגויים. נא לפנות למנחה המחוזי.');
     }
 
     this.setCurrentUser(found);

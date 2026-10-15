@@ -4,8 +4,12 @@ const { db } = require('../db/database');
 const { FirestoreDB } = require('../db/firestore-db');
 
 function stripInvisibleChars(str) {
-  if (typeof str !== 'string') return str;
-  return str.replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '').trim();
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '')
+    .replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**

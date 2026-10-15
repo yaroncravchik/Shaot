@@ -44,8 +44,12 @@ const USERS_COL = 'users';
 const REPORTS_COL = 'reports';
 
 function stripInvisibleChars(str) {
-  if (typeof str !== 'string') return str;
-  return str.replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '').trim();
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '')
+    .replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 const FirestoreDB = {
@@ -84,18 +88,24 @@ const FirestoreDB = {
       const uPhonePlain = uPhone.replace(/[-\s]/g, '');
       const uIdPlain = uId.replace(/[-\s]/g, '');
 
+      // Effective phone number for users whose phone is empty but ID is a 9-digit cell number (starts with 5)
+      const uEffectivePhone = uPhonePlain || (uIdPlain.length === 9 && uIdPlain.startsWith('5') ? '0' + uIdPlain : '');
+
       // 1. Direct password match
       if (uPass && (uPass === cleanSecret || uPassPlain === cleanSecretPlain)) {
         return true;
       }
       // 2. Phone match
-      if (uPhone && (uPhone === cleanSecret || uPhonePlain === cleanSecretPlain)) {
+      if (uPhonePlain && (uPhonePlain === cleanSecret || uPhonePlain === cleanSecretPlain)) {
         return true;
       }
-      if (uPhonePlain.startsWith('0') && uPhonePlain.slice(1) === cleanSecretPlain) {
+      if (uEffectivePhone && (uEffectivePhone === cleanSecret || uEffectivePhone === cleanSecretPlain)) {
         return true;
       }
-      if (!uPhonePlain.startsWith('0') && ('0' + uPhonePlain) === cleanSecretPlain) {
+      if (uEffectivePhone.startsWith('0') && uEffectivePhone.slice(1) === cleanSecretPlain) {
+        return true;
+      }
+      if (!uEffectivePhone.startsWith('0') && ('0' + uEffectivePhone) === cleanSecretPlain) {
         return true;
       }
       // 3. ID number match
@@ -114,31 +124,29 @@ const FirestoreDB = {
       }
       // 5. Last 4 digits of phone or ID
       if (cleanSecretPlain.length === 4) {
-        if (uPhonePlain.endsWith(cleanSecretPlain) || uIdPlain.endsWith(cleanSecretPlain)) {
+        if (uPhonePlain.endsWith(cleanSecretPlain) || uEffectivePhone.endsWith(cleanSecretPlain) || uIdPlain.endsWith(cleanSecretPlain)) {
           return true;
         }
       }
       return false;
     };
 
-    // Build candidate identifiers (handling leading zero, dashes, international code)
+    // Build candidate identifiers (handling leading zero, dashes, parens, international code)
     const cleanIdPlain = cleanId.replace(/[-\s]/g, '');
+    const cleanDigits = cleanId.replace(/\D/g, '');
     const idCandidates = new Set([cleanId, cleanIdPlain]);
 
-    if (cleanIdPlain.startsWith('+972')) {
-      const local = '0' + cleanIdPlain.slice(4);
-      idCandidates.add(local);
-      idCandidates.add(local.slice(1));
-    } else if (cleanIdPlain.startsWith('972')) {
-      const local = '0' + cleanIdPlain.slice(3);
-      idCandidates.add(local);
-      idCandidates.add(local.slice(1));
-    }
-
-    if (cleanIdPlain.startsWith('0')) {
-      idCandidates.add(cleanIdPlain.slice(1));
-    } else if (/^\d+$/.test(cleanIdPlain)) {
-      idCandidates.add('0' + cleanIdPlain);
+    if (cleanDigits) {
+      idCandidates.add(cleanDigits);
+      if (cleanDigits.startsWith('972')) {
+        const local = '0' + cleanDigits.slice(3);
+        idCandidates.add(local);
+        idCandidates.add(local.slice(1));
+      } else if (cleanDigits.startsWith('0')) {
+        idCandidates.add(cleanDigits.slice(1));
+      } else if (/^\d+$/.test(cleanDigits)) {
+        idCandidates.add('0' + cleanDigits);
+      }
     }
 
     // 1. Check doc ID directly for all candidate IDs
@@ -180,30 +188,83 @@ const FirestoreDB = {
       }
     }
 
-    // 3. Query by Hebrew name / full_name
-    let nameSnap = await db.collection(USERS_COL).where('name', '==', cleanId).limit(1).get();
-    if (!nameSnap.empty) {
-      const u = { id: nameSnap.docs[0].id, ...nameSnap.docs[0].data() };
-      if (matchesPassword(u)) return u;
-    }
-    nameSnap = await db.collection(USERS_COL).where('full_name', '==', cleanId).limit(1).get();
-    if (!nameSnap.empty) {
-      const u = { id: nameSnap.docs[0].id, ...nameSnap.docs[0].data() };
-      if (matchesPassword(u)) return u;
+    // 3. Query by Hebrew name / full_name (with variations for nicknames and parens)
+    const nameVariations = new Set([cleanId]);
+    const withoutParens = cleanId.replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim();
+    if (withoutParens) nameVariations.add(withoutParens);
+    const parensStripped = cleanId.replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (parensStripped) nameVariations.add(parensStripped);
+
+    for (const nCand of nameVariations) {
+      if (!nCand) continue;
+      let nameSnap = await db.collection(USERS_COL).where('name', '==', nCand).limit(1).get();
+      if (!nameSnap.empty) {
+        const u = { id: nameSnap.docs[0].id, ...nameSnap.docs[0].data() };
+        if (matchesPassword(u)) return u;
+      }
+      nameSnap = await db.collection(USERS_COL).where('full_name', '==', nCand).limit(1).get();
+      if (!nameSnap.empty) {
+        const u = { id: nameSnap.docs[0].id, ...nameSnap.docs[0].data() };
+        if (matchesPassword(u)) return u;
+      }
     }
 
-    // 4. Memory fallback scan across all users in collection (handles whitespace, partial name, unindexed fields)
+    // 4. Memory fallback scan across all users in collection (handles whitespace, parenthesized nicknames, partial name, unindexed fields)
     try {
       const allUsers = await this.getAllUsers();
       for (const u of allUsers) {
-        const uName = stripInvisibleChars(String(u.name || u.full_name || '')).trim();
-        const uFullName = stripInvisibleChars(String(u.full_name || u.name || '')).trim();
+        const uName = stripInvisibleChars(String(u.name || ''));
+        const uFullName = stripInvisibleChars(String(u.full_name || ''));
         const uId = stripInvisibleChars(String(u.id_number || u.id || '')).replace(/[-\s]/g, '');
         const uPhone = stripInvisibleChars(String(u.phone || '')).replace(/[-\s]/g, '');
-        const uEmail = stripInvisibleChars(String(u.email || '')).trim().toLowerCase();
+        const uEmail = stripInvisibleChars(String(u.email || '')).toLowerCase();
 
-        const matchId = idCandidates.has(uId) || (uPhone && idCandidates.has(uPhone)) || (uEmail && uEmail === cleanId.toLowerCase());
-        const matchName = (uName && (uName === cleanId || uFullName === cleanId || cleanId.includes(uName) || uName.includes(cleanId)));
+        // Effective phone check
+        const uEffectivePhone = uPhone || (uId.length === 9 && uId.startsWith('5') ? '0' + uId : '');
+
+        const matchId = idCandidates.has(uId) ||
+          (uPhone && idCandidates.has(uPhone)) ||
+          (uEffectivePhone && idCandidates.has(uEffectivePhone)) ||
+          (uEmail && uEmail === cleanId.toLowerCase());
+
+        // Name matching: test raw, stripped parentheses, nickname extraction, and word containment
+        const testNames = [uName, uFullName];
+        if (uName.includes('(')) {
+          testNames.push(uName.replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim());
+          testNames.push(uName.replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim());
+          const parenMatch = uName.match(/\((.*?)\)/);
+          if (parenMatch && parenMatch[1]) {
+            testNames.push(uName.replace(/\b\S+\s*\(/, parenMatch[1] + ' (').replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim());
+            testNames.push(parenMatch[1].trim());
+          }
+        }
+        if (uFullName.includes('(')) {
+          testNames.push(uFullName.replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim());
+          testNames.push(uFullName.replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim());
+        }
+
+        const inputWords = cleanId.split(' ').filter(w => w.length > 0);
+
+        let matchName = false;
+        for (const candName of testNames) {
+          if (!candName) continue;
+          if (candName === cleanId) {
+            matchName = true;
+            break;
+          }
+          if (cleanId.length >= 3 && (candName.includes(cleanId) || cleanId.includes(candName))) {
+            matchName = true;
+            break;
+          }
+          // Word set match: e.g. "צבי" and "גד" in "ציקי צבי גד"
+          if (inputWords.length >= 2) {
+            const candWords = candName.split(' ');
+            if (inputWords.every(w => candWords.includes(w))) {
+              matchName = true;
+              break;
+            }
+          }
+        }
 
         if (matchId || matchName) {
           if (matchesPassword(u)) {

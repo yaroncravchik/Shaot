@@ -10,6 +10,16 @@ const STORAGE_KEYS = {
   AUDIT_LOGS: 'shalah_audit_logs_v3'
 };
 
+function stripInvisibleChars(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '')
+    .replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+window.stripInvisibleChars = stripInvisibleChars;
+
 // ==========================================================================
 // 1. Israeli Ministry of Education Holidays & Calendar Utilities
 // ==========================================================================
