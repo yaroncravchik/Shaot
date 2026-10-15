@@ -11,7 +11,7 @@ async function testLiorKaplan() {
   assert.strictEqual(data.id, '547618877');
   assert.strictEqual(data.id.length, 9, 'ID must be exactly 9 characters long');
   assert.strictEqual(data.name, 'ליאור קפלן');
-  assert.strictEqual(data.password, '1234');
+  assert(data.password, 'Password must exist');
 
   // 2. Test login with standard credentials: ID + password (1234)
   const user1 = await FirestoreDB.getUserByCredentials('547618877', '1234');

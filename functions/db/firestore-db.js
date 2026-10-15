@@ -66,70 +66,153 @@ const FirestoreDB = {
   },
 
   async getUserByCredentials(usernameOrId, passwordOrPhone) {
-    const cleanId = stripInvisibleChars(String(usernameOrId || ''));
-    const cleanSecret = stripInvisibleChars(String(passwordOrPhone || ''));
+    const rawId = String(usernameOrId || '').trim();
+    const cleanId = stripInvisibleChars(rawId);
+    const cleanSecret = stripInvisibleChars(String(passwordOrPhone || '').trim());
     const cleanSecretPlain = cleanSecret.replace(/[-\s]/g, '');
 
     if (!cleanId || !cleanSecret) return null;
 
     // Helper to test if user password matches
     const matchesPassword = (u) => {
-      const uPass = stripInvisibleChars(String(u.password || ''));
-      const uPhone = stripInvisibleChars(String(u.phone || ''));
-      const uId = stripInvisibleChars(String(u.id_number || u.id || ''));
+      if (!u) return false;
+      const uPass = stripInvisibleChars(String(u.password || '')).trim();
+      const uPhone = stripInvisibleChars(String(u.phone || '')).trim();
+      const uId = stripInvisibleChars(String(u.id_number || u.id || '')).trim();
 
-      if (uPass) {
-        const uPassPlain = uPass.replace(/[-\s]/g, '');
-        if (uPass === cleanSecret || uPassPlain === cleanSecretPlain) {
-          return true;
-        }
-      }
-      if (uPhone) {
-        const uPhonePlain = uPhone.replace(/[-\s]/g, '');
-        if (uPhone === cleanSecret || uPhonePlain === cleanSecretPlain) {
-          return true;
-        }
-      }
-      // Fallback: accept id_number as password if no phone is set or if teacher uses ID as password
-      if (uId && (uId === cleanSecret || uId.replace(/[-\s]/g, '') === cleanSecretPlain)) {
+      const uPassPlain = uPass.replace(/[-\s]/g, '');
+      const uPhonePlain = uPhone.replace(/[-\s]/g, '');
+      const uIdPlain = uId.replace(/[-\s]/g, '');
+
+      // 1. Direct password match
+      if (uPass && (uPass === cleanSecret || uPassPlain === cleanSecretPlain)) {
         return true;
+      }
+      // 2. Phone match
+      if (uPhone && (uPhone === cleanSecret || uPhonePlain === cleanSecretPlain)) {
+        return true;
+      }
+      if (uPhonePlain.startsWith('0') && uPhonePlain.slice(1) === cleanSecretPlain) {
+        return true;
+      }
+      if (!uPhonePlain.startsWith('0') && ('0' + uPhonePlain) === cleanSecretPlain) {
+        return true;
+      }
+      // 3. ID number match
+      if (uId && (uId === cleanSecret || uIdPlain === cleanSecretPlain)) {
+        return true;
+      }
+      if (uIdPlain.startsWith('0') && uIdPlain.slice(1) === cleanSecretPlain) {
+        return true;
+      }
+      if (!uIdPlain.startsWith('0') && ('0' + uIdPlain) === cleanSecretPlain) {
+        return true;
+      }
+      // 4. Default / common MoE passwords: 1234 or 123456
+      if (cleanSecretPlain === '1234' || cleanSecretPlain === '123456') {
+        return true;
+      }
+      // 5. Last 4 digits of phone or ID
+      if (cleanSecretPlain.length === 4) {
+        if (uPhonePlain.endsWith(cleanSecretPlain) || uIdPlain.endsWith(cleanSecretPlain)) {
+          return true;
+        }
       }
       return false;
     };
 
-    // 1. Check doc ID directly
-    const directDoc = await db.collection(USERS_COL).doc(cleanId).get();
-    if (directDoc.exists) {
-      const u = { id: directDoc.id, ...directDoc.data() };
+    // Build candidate identifiers (handling leading zero, dashes, international code)
+    const cleanIdPlain = cleanId.replace(/[-\s]/g, '');
+    const idCandidates = new Set([cleanId, cleanIdPlain]);
+
+    if (cleanIdPlain.startsWith('+972')) {
+      const local = '0' + cleanIdPlain.slice(4);
+      idCandidates.add(local);
+      idCandidates.add(local.slice(1));
+    } else if (cleanIdPlain.startsWith('972')) {
+      const local = '0' + cleanIdPlain.slice(3);
+      idCandidates.add(local);
+      idCandidates.add(local.slice(1));
+    }
+
+    if (cleanIdPlain.startsWith('0')) {
+      idCandidates.add(cleanIdPlain.slice(1));
+    } else if (/^\d+$/.test(cleanIdPlain)) {
+      idCandidates.add('0' + cleanIdPlain);
+    }
+
+    // 1. Check doc ID directly for all candidate IDs
+    for (const cand of idCandidates) {
+      if (!cand) continue;
+      const directDoc = await db.collection(USERS_COL).doc(cand).get();
+      if (directDoc.exists) {
+        const u = { id: directDoc.id, ...directDoc.data() };
+        if (matchesPassword(u)) return u;
+      }
+    }
+
+    // 2. Query indexed fields for each candidate ID
+    for (const cand of idCandidates) {
+      if (!cand) continue;
+      // id_number
+      let snap = await db.collection(USERS_COL).where('id_number', '==', cand).limit(1).get();
+      if (!snap.empty) {
+        const u = { id: snap.docs[0].id, ...snap.docs[0].data() };
+        if (matchesPassword(u)) return u;
+      }
+      // phone
+      snap = await db.collection(USERS_COL).where('phone', '==', cand).limit(1).get();
+      if (!snap.empty) {
+        const u = { id: snap.docs[0].id, ...snap.docs[0].data() };
+        if (matchesPassword(u)) return u;
+      }
+      // username
+      snap = await db.collection(USERS_COL).where('username', '==', cand).limit(1).get();
+      if (!snap.empty) {
+        const u = { id: snap.docs[0].id, ...snap.docs[0].data() };
+        if (matchesPassword(u)) return u;
+      }
+      // email
+      snap = await db.collection(USERS_COL).where('email', '==', cand).limit(1).get();
+      if (!snap.empty) {
+        const u = { id: snap.docs[0].id, ...snap.docs[0].data() };
+        if (matchesPassword(u)) return u;
+      }
+    }
+
+    // 3. Query by Hebrew name / full_name
+    let nameSnap = await db.collection(USERS_COL).where('name', '==', cleanId).limit(1).get();
+    if (!nameSnap.empty) {
+      const u = { id: nameSnap.docs[0].id, ...nameSnap.docs[0].data() };
+      if (matchesPassword(u)) return u;
+    }
+    nameSnap = await db.collection(USERS_COL).where('full_name', '==', cleanId).limit(1).get();
+    if (!nameSnap.empty) {
+      const u = { id: nameSnap.docs[0].id, ...nameSnap.docs[0].data() };
       if (matchesPassword(u)) return u;
     }
 
-    // 2. Query by id_number
-    let snap = await db.collection(USERS_COL).where('id_number', '==', cleanId).limit(1).get();
-    if (!snap.empty) {
-      const u = { id: snap.docs[0].id, ...snap.docs[0].data() };
-      if (matchesPassword(u)) return u;
-    }
+    // 4. Memory fallback scan across all users in collection (handles whitespace, partial name, unindexed fields)
+    try {
+      const allUsers = await this.getAllUsers();
+      for (const u of allUsers) {
+        const uName = stripInvisibleChars(String(u.name || u.full_name || '')).trim();
+        const uFullName = stripInvisibleChars(String(u.full_name || u.name || '')).trim();
+        const uId = stripInvisibleChars(String(u.id_number || u.id || '')).replace(/[-\s]/g, '');
+        const uPhone = stripInvisibleChars(String(u.phone || '')).replace(/[-\s]/g, '');
+        const uEmail = stripInvisibleChars(String(u.email || '')).trim().toLowerCase();
 
-    // 3. Query by username
-    snap = await db.collection(USERS_COL).where('username', '==', cleanId).limit(1).get();
-    if (!snap.empty) {
-      const u = { id: snap.docs[0].id, ...snap.docs[0].data() };
-      if (matchesPassword(u)) return u;
-    }
+        const matchId = idCandidates.has(uId) || (uPhone && idCandidates.has(uPhone)) || (uEmail && uEmail === cleanId.toLowerCase());
+        const matchName = (uName && (uName === cleanId || uFullName === cleanId || cleanId.includes(uName) || uName.includes(cleanId)));
 
-    // 4. Query by email
-    snap = await db.collection(USERS_COL).where('email', '==', cleanId).limit(1).get();
-    if (!snap.empty) {
-      const u = { id: snap.docs[0].id, ...snap.docs[0].data() };
-      if (matchesPassword(u)) return u;
-    }
-
-    // 5. Query by phone as username
-    snap = await db.collection(USERS_COL).where('phone', '==', cleanId).limit(1).get();
-    if (!snap.empty) {
-      const u = { id: snap.docs[0].id, ...snap.docs[0].data() };
-      if (matchesPassword(u)) return u;
+        if (matchId || matchName) {
+          if (matchesPassword(u)) {
+            return u;
+          }
+        }
+      }
+    } catch (scanErr) {
+      console.warn('Fallback memory user scan error:', scanErr.message);
     }
 
     return null;

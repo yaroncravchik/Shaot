@@ -81,7 +81,27 @@ function seed() {
  principal_id: null,
  principal_name: 'יורם פרידמן',
  principal_email: 'yoram@ironi-a.k12.il',
- supervisor_id: 'usr_supervisor_2'
+  supervisor_id: 'usr_supervisor_2'
+ },
+ // Principals
+ {
+ id: 'usr_principal_1',
+ role: 'principal',
+ id_number: '034567890',
+ phone: '0534567890',
+ full_name: 'שרה כהן',
+ email: 'shalah.system.reports@gmail.com',
+ school_code: '123456',
+ school_name: 'תיכון רבין כפר סבא',
+ district: 'מרכז',
+ municipality: 'כפר סבא',
+ job_percentage: 100,
+ consent_signed: 1,
+ consent_timestamp: '2026-08-01 07:00:00',
+ principal_id: null,
+ principal_name: null,
+ principal_email: null,
+ supervisor_id: null
  },
  // Supervisors
  {

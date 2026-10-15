@@ -78,11 +78,11 @@
               type="text" 
               id="login-id" 
               class="form-control" 
-              placeholder="הזן שם משתמש" 
+              placeholder="ת.ז. / מספר טלפון / שם מלא" 
               required
               autocomplete="username"
             >
-            <span class="form-text">שם המשתמש שהוגדר במערכת</span>
+            <span class="form-text">ניתן להזין מספר תעודת זהות, מספר טלפון או שם משתמש</span>
           </div>
 
           <div class="form-group">
@@ -94,11 +94,11 @@
               type="password" 
               id="login-phone" 
               class="form-control" 
-              placeholder="הזן סיסמה" 
+              placeholder="הזן סיסמה או מספר טלפון" 
               required
               autocomplete="current-password"
             >
-            <span class="form-text">הזן סיסמה לכניסה למערכת</span>
+            <span class="form-text">הזן סיסמה (ברירת מחדל: 1234 או מספר טלפון)</span>
           </div>
 
           <div id="login-error" class="form-error mb-2" style="display:none;"></div>
@@ -106,6 +106,32 @@
           <button type="submit" id="login-submit-btn" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 12px;">
             <span>כניסה למערכת</span>
           </button>
+
+          <div class="mt-4 pt-3" style="border-top: 1px solid var(--outline); font-size: 0.8125rem;">
+            <div style="font-weight: 600; color: #495057; margin-bottom: 8px;">משתמשי כניסה לדוגמה (לחץ לכניסה מהירה):</div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <button type="button" class="btn btn-outline-secondary btn-sm" style="text-align: right; justify-content: space-between;" onclick="fillLogin('012345678', '0501234567')">
+                <span>👨‍🏫 מורה: <strong>ישראל ישראלי</strong></span>
+                <span class="text-muted" style="font-size:0.75rem;">(ת.ז: 012345678 | סיסמה: 0501234567)</span>
+              </button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" style="text-align: right; justify-content: space-between;" onclick="fillLogin('0547500384', '1234')">
+                <span>📋 מנחה מחוזי: <strong>דודו זינגר</strong></span>
+                <span class="text-muted" style="font-size:0.75rem;">(טלפון: 0547500384 | סיסמה: 1234)</span>
+              </button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" style="text-align: right; justify-content: space-between;" onclick="fillLogin('011111111', '0521111111')">
+                <span>📋 מנחה מחוזי: <strong>דוד לוי</strong></span>
+                <span class="text-muted" style="font-size:0.75rem;">(ת.ז: 011111111 | סיסמה: 0521111111)</span>
+              </button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" style="text-align: right; justify-content: space-between;" onclick="fillLogin('099999999', '0549999999')">
+                <span>🏛️ ממונה מחוזי: <strong>רונן</strong></span>
+                <span class="text-muted" style="font-size:0.75rem;">(ת.ז: 099999999 | סיסמה: 0549999999)</span>
+              </button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" style="text-align: right; justify-content: space-between;" onclick="fillLogin('admin', 'Yaron111')">
+                <span>⚙️ מנהל אתר: <strong>admin</strong></span>
+                <span class="text-muted" style="font-size:0.75rem;">(משתמש: admin | סיסמה: Yaron111)</span>
+              </button>
+            </div>
+          </div>
         </form>
       </div>
     </div>
@@ -113,9 +139,19 @@
 
   <!-- Universal Footer Mount -->
   <div id="gov-footer-mount"></div>
-  <script src="js/api.js?v=1791986000000"></script>
-  <script src="js/auth.js?v=1791986000000"></script>
+  <script src="js/api.js?v=1792100000000"></script>
+  <script src="js/auth.js?v=1792100000000"></script>
   <script>
+    function fillLogin(u, p) {
+      document.getElementById('login-id').value = u;
+      document.getElementById('login-phone').value = p;
+      const form = document.getElementById('login-form');
+      if (form) {
+        form.dispatchEvent(new Event('submit', { cancelable: true }));
+      }
+    }
+    window.fillLogin = fillLogin;
+
     document.addEventListener('DOMContentLoaded', () => {
       Auth.renderHeader();
       Auth.renderFooter();
